@@ -1,0 +1,1158 @@
+{
+	"auto_complete":
+	{
+		"selected_items":
+		[
+			[
+				"sha",
+				"sharedController	QSCameraController *"
+			],
+			[
+				"keyboard",
+				"keyboardImpl	UIKeyboardImpl *"
+			],
+			[
+				"objc_getClass",
+				"objc_getClass(const char *name)	id"
+			],
+			[
+				"Bl",
+				"BluetoothManager	class"
+			],
+			[
+				"WEe",
+				"WeeAppPlugins"
+			],
+			[
+				"h",
+				"hour	NSInteger"
+			],
+			[
+				"comi",
+				"comicImageView	UIImageView *"
+			],
+			[
+				"comic",
+				"comicImageView	UIImageView *"
+			],
+			[
+				"aop",
+				"aoproximity"
+			],
+			[
+				"init",
+				"initWithFrame:(CGRect)	id"
+			],
+			[
+				"dispatch_get",
+				"dispatch_get_main_queue()	macro"
+			],
+			[
+				"initWith",
+				"initWithTitle:(NSString *) message:(NSString *) delegate:(id) cancelButtonTitle:(NSString *) otherButtonTitles:(NSString *), ..., nil	id"
+			],
+			[
+				"bac",
+				"backgroundQueue	dispatch_queue_t"
+			],
+			[
+				"na",
+				"navigationTitle	id"
+			],
+			[
+				"ECHO",
+				"ECHO_NOTHING"
+			],
+			[
+				"LOG_D",
+				"LOG_DEBUG	macro"
+			],
+			[
+				"pac",
+				"packageDict"
+			],
+			[
+				"Cydia",
+				"CydiaPackages"
+			],
+			[
+				"De",
+				"Description"
+			],
+			[
+				"e",
+				"e"
+			],
+			[
+				"packages",
+				"packagesList"
+			],
+			[
+				"packa",
+				"packagesList"
+			],
+			[
+				"pa",
+				"packageDictionary"
+			],
+			[
+				"ke",
+				"key"
+			],
+			[
+				"pack",
+				"packageDictionary"
+			],
+			[
+				"conne",
+				"connnection"
+			],
+			[
+				"con",
+				"connnection"
+			],
+			[
+				"iPhone",
+				"iPhoneOS6"
+			],
+			[
+				"JSON",
+				"JSONManager"
+			],
+			[
+				"parser",
+				"parseAndWriteToJSON"
+			],
+			[
+				"open",
+				"openAndStorePackagesFile"
+			],
+			[
+				"pat",
+				"patchPackagesFile"
+			],
+			[
+				"exp",
+				"except"
+			],
+			[
+				"store",
+				"storeDictInDatabase"
+			],
+			[
+				"last",
+				"lastUpdate"
+			],
+			[
+				"las",
+				"lastUpdateFile"
+			],
+			[
+				"real",
+				"readline"
+			],
+			[
+				"pathTo",
+				"pathToLastUpdateFile"
+			],
+			[
+				"pathT",
+				"pathToLastFile"
+			],
+			[
+				"down",
+				"downloadDir"
+			],
+			[
+				"path",
+				"pathToFile"
+			],
+			[
+				"Paths",
+				"pathsToPackagesFiles"
+			],
+			[
+				"upda",
+				"Update"
+			],
+			[
+				"wr",
+				"write"
+			],
+			[
+				"jso",
+				"jsonStuff"
+			],
+			[
+				"pak",
+				"packageDict"
+			],
+			[
+				"js",
+				"jsonStuff"
+			],
+			[
+				"jsn",
+				"jsonFile"
+			],
+			[
+				"red",
+				"readlines"
+			],
+			[
+				"Unicode",
+				"UnicodeDecodeError"
+			],
+			[
+				"line",
+				"lineCount"
+			],
+			[
+				"json",
+				"jsonList"
+			],
+			[
+				"key",
+				"keyFromString"
+			],
+			[
+				"paths",
+				"pathsToPackagesFiles"
+			],
+			[
+				"pars",
+				"parseAndWriteToJSON"
+			],
+			[
+				"des",
+				"destination"
+			],
+			[
+				"package",
+				"pathsToPackagesFiles"
+			],
+			[
+				"val",
+				"valueFromString"
+			],
+			[
+				"va",
+				"valueFromString"
+			],
+			[
+				"patch",
+				"patchPackagesFile"
+			],
+			[
+				"ex",
+				"exists"
+			],
+			[
+				"releaseL",
+				"releaseList"
+			],
+			[
+				"dif",
+				"diffLink"
+			],
+			[
+				"diff",
+				"difflink"
+			],
+			[
+				"par",
+				"partOfLine"
+			],
+			[
+				"abs",
+				"absoluteIndexLink"
+			],
+			[
+				"inde",
+				"indexFileLink"
+			],
+			[
+				"relea",
+				"releaseList"
+			],
+			[
+				"raw",
+				"rawIndex"
+			],
+			[
+				"ab",
+				"absoluteLinkToIndex"
+			],
+			[
+				"rel",
+				"releaseLinks"
+			],
+			[
+				"origin",
+				"origin"
+			],
+			[
+				"cl",
+				"close"
+			],
+			[
+				"extr",
+				"extractedFile"
+			],
+			[
+				"l",
+				"line"
+			],
+			[
+				"download",
+				"downloadDir"
+			],
+			[
+				"downl",
+				"downloadFromURL"
+			],
+			[
+				"rele",
+				"releaseLinksPath"
+			],
+			[
+				"dow",
+				"downloadDir"
+			],
+			[
+				"de",
+				"destination"
+			],
+			[
+				"b",
+				"bz2Links"
+			],
+			[
+				"URL",
+				"URLError"
+			],
+			[
+				"HTTP",
+				"HTTPError"
+			],
+			[
+				"bz2",
+				"bz2Links"
+			],
+			[
+				"re",
+				"repoMetadata"
+			],
+			[
+				"repo",
+				"repoMetadata"
+			],
+			[
+				"link",
+				"linkExtension"
+			],
+			[
+				"release",
+				"releaseLink"
+			],
+			[
+				"sto",
+				"storeReleaseLinks"
+			],
+			[
+				"initWi",
+				"initWithTitle:(NSString *) message:(NSString *) delegate:(id) cancelButtonTitle:(NSString *) otherButtonTitles:(NSString *), ..., nil	id"
+			],
+			[
+				"UI",
+				"UIView"
+			],
+			[
+				"pr",
+				"privmsg"
+			],
+			[
+				"pro",
+				"protocol"
+			],
+			[
+				"se",
+				"searchTerm"
+			],
+			[
+				"p",
+				"p4"
+			],
+			[
+				"a",
+				"addStudent"
+			],
+			[
+				"s",
+				"send"
+			],
+			[
+				"iTunes",
+				"iTunesDownloadPage"
+			],
+			[
+				"an",
+				"any"
+			],
+			[
+				"sys",
+				"system(const char *)	int"
+			],
+			[
+				"show",
+				"showPlot1"
+			],
+			[
+				"S",
+				"StandardRobot"
+			],
+			[
+				"time",
+				"timesteps"
+			],
+			[
+				"ro",
+				"robots"
+			],
+			[
+				"min",
+				"minimumTilesCleaned"
+			],
+			[
+				"getNu",
+				"getNumCleanedTiles"
+			],
+			[
+				"ran",
+				"random"
+			],
+			[
+				"setR",
+				"setRobotDirection"
+			],
+			[
+				"get",
+				"getNumTiles"
+			],
+			[
+				"rob",
+				"robot_type"
+			],
+			[
+				"num",
+				"num_trials"
+			],
+			[
+				"clea",
+				"cleanTileAtPosition"
+			],
+			[
+				"clean",
+				"cleanTiles"
+			],
+			[
+				"pos",
+				"position"
+			],
+			[
+				"SBA",
+				"SBApplication"
+			],
+			[
+				"alertView",
+				"alertView:(UIAlertView *) clickedButtonAtIndex:(NSInteger)	void"
+			],
+			[
+				"UIS",
+				"UISlider	class"
+			],
+			[
+				"ini",
+				"initWithFrame:(CGRect)	id"
+			],
+			[
+				"iP",
+				"iPhoneOS6"
+			],
+			[
+				"A",
+				"Applications"
+			],
+			[
+				"is",
+				"isystem"
+			],
+			[
+				"try",
+				"try	Try/Except/Else"
+			],
+			[
+				"this",
+				"thisDoesNotRaiseAnyErrors"
+			],
+			[
+				"actu",
+				"actionSheet:(UIActionSheet *) didDismissWithButtonIndex:(NSInteger)	void"
+			],
+			[
+				"actionSh",
+				"actionSheet:(UIActionSheet *) clickedButtonAtIndex:(NSInteger)	void"
+			],
+			[
+				"fi",
+				"fixedPoint"
+			],
+			[
+				"so",
+				"socialVC	SLComposeViewController *"
+			],
+			[
+				"SLComp",
+				"SLComposeViewControllerResult	enum"
+			]
+		]
+	},
+	"buffers":
+	[
+		{
+			"file": "/opt/theos/include/PhotoLibrary/PLCameraController.h",
+			"settings":
+			{
+				"buffer_size": 13939,
+				"line_ending": "Unix"
+			}
+		},
+		{
+			"file": "/opt/theos/include/PhotoLibrary/PLCameraControllerDelegate-Protocol.h",
+			"settings":
+			{
+				"buffer_size": 2088,
+				"line_ending": "Unix"
+			}
+		},
+		{
+			"file": "Tweak.xm",
+			"settings":
+			{
+				"buffer_size": 1045,
+				"line_ending": "Unix"
+			}
+		},
+		{
+			"file": "QSCameraController.h",
+			"settings":
+			{
+				"buffer_size": 226,
+				"line_ending": "Unix"
+			}
+		},
+		{
+			"contents": "#import \"QSCameraController.h\"\n#import <PhotoLibrary/PLCameraController.h>\n\n\n@implementation QSCameraController\n{\n	PLCameraController *_camController;\n}\n\n+ (instancetype)sharedController\n{\n	static QSCameraController *sharedController;\n	if (!sharedController) {\n		sharedController = [[self alloc] init];\n	}\n	return sharedController;\n}\n\n- (id)init\n{\n	if ((self = [super init])) {\n		_camController = [PLCameraController sharedInstance];\n		if (_camController.delegate)\n	}\n}\n\n\n\n@end",
+			"file": "QSCameraController.m",
+			"file_size": 443,
+			"file_write_time": 1361754491000000,
+			"settings":
+			{
+				"buffer_size": 477,
+				"line_ending": "Unix"
+			}
+		}
+	],
+	"build_system": "Packages/Python/Python.sublime-build",
+	"command_palette":
+	{
+		"height": 187.0,
+		"selected_items":
+		[
+			[
+				"sftp",
+				"SFTP: Browse Server…"
+			],
+			[
+				"bros",
+				"SFTP: Browse Server…"
+			],
+			[
+				"brow",
+				"SFTP: Browse Server…"
+			],
+			[
+				"br",
+				"SFTP: Browse Server…"
+			],
+			[
+				"ed",
+				"SFTP: Edit Server…"
+			],
+			[
+				"brows",
+				"SFTP: Browse Server…"
+			],
+			[
+				"Br",
+				"SFTP: Browse Server…"
+			],
+			[
+				"S",
+				"SFTP: Browse Server…"
+			],
+			[
+				"bro",
+				"SFTP: Browse Server…"
+			],
+			[
+				"Install ",
+				"Package Control: Install Package"
+			],
+			[
+				"add",
+				"Project: Add Folder"
+			],
+			[
+				"Package Control: ",
+				"Package Control: Discover Packages"
+			]
+		],
+		"width": 449.0
+	},
+	"console":
+	{
+		"height": 125.0
+	},
+	"distraction_free":
+	{
+		"menu_visible": true,
+		"show_minimap": false,
+		"show_open_files": false,
+		"show_tabs": false,
+		"side_bar_visible": false,
+		"status_bar_visible": false
+	},
+	"file_history":
+	[
+		"/Users/aditya/code/projects/quickshoot/QSCameraController.h",
+		"/Users/aditya/code/projects/quickshoot/QSCameraController.m",
+		"/opt/theos/include/PhotoLibrary/PLCameraControllerDelegate-Protocol.h",
+		"/Users/aditya/code/random/alwaysonproximity/Tweak.xm",
+		"/Users/aditya/code/projects/quickshoot/QSCameraControllerDelegate.h",
+		"/Users/aditya/code/projects/quickshoot/Tweak.xm",
+		"/opt/theos/include/PhotoLibrary/PLCameraController",
+		"/opt/theos/include/SpringBoard/SpringBoard.h",
+		"/opt/theos/include/SpringBoard/SBUserAgent.h",
+		"/opt/theos/include/SpringBoard/MCProfileConnectionObserver-Protocol.h",
+		"/opt/theos/documentation/makefiles.docbook",
+		"/Users/aditya/Desktop/UIKit_Dump/UIKeyboardImpl.h",
+		"/Users/aditya/code/random/kbtests/Tweak.xm",
+		"/Users/aditya/code/SwipeSelection/Tweak.xm",
+		"/Users/aditya/code/olympus/Classes/OLCellularToggle.m",
+		"/Users/aditya/code/olympus/Tweak.xm",
+		"/opt/iOSOpenDev/frameworks/SoftwareUpdateServices.framework/Headers/SoftwareUpdateServices.h",
+		"/Users/aditya/Desktop/UIKit_Dump/UIKeyboardLayoutStar.h",
+		"/Users/aditya/code/SwipeSelection/Makefile",
+		"/Users/aditya/code/SwipeSelection/Tweak.mm",
+		"/Users/aditya/Library/Application Support/Sublime Text 2/Packages/User/Preferences.sublime-settings",
+		"/Users/aditya/Library/Application Support/Sublime Text 2/Packages/Default/Preferences.sublime-settings",
+		"/Users/aditya/code/projects/libworkspace/LibWorkspace.h",
+		"/Users/aditya/code/projects/libworkspace/Tweak.xm",
+		"/Users/aditya/Desktop/meh.m",
+		"/Users/aditya/code/projects/libworkspace/Function names .rtf",
+		"/opt/theos/include/BackBoardServices/BKSWorkspace.h",
+		"/opt/theos/include/SpringBoard/SBWorkspaceEventQueue.h",
+		"/opt/theos/include/SpringBoard/SBWorkspaceEventQueueLockAssertion.h",
+		"/opt/theos/include/SpringBoard/BKSWorkspaceDelegate-Protocol.h",
+		"/opt/theos/include/SpringBoard/SBAlertManager.h",
+		"/opt/theos/include/SpringBoard/SBWorkspace.h",
+		"/opt/theos/include/SpringBoard/SBAlertItemsController.h",
+		"/opt/theos/include/SpringBoard/SBWorkspaceEvent.h",
+		"/opt/theos/include/BulletinBoard/BBServer.h",
+		"/opt/theos/include/BulletinBoard/BBSettingsGateway.h",
+		"/Users/aditya/pushtorepo",
+		"/opt/theos/include/BulletinBoard/BBNotificationBehaviorUtilitiesClient.h",
+		"/Users/aditya/code/random/dndtests/Tweak.xm",
+		"/Users/aditya/code/random/dndtests/Makefile",
+		"/Users/aditya/code/random/scoper/Tweak.xm",
+		"/opt/theos/include/SpringBoard/SBApplicationIcon.h",
+		"/opt/theos/include/SpringBoard/SBIconLabelImage.h",
+		"/opt/theos/include/SpringBoard/SBIconModel.h",
+		"/opt/theos/include/SpringBoard/SBIcon.h",
+		"/Users/aditya/code/olympus/theos/include/Preferences/PSEditableTableCell.h",
+		"/Users/aditya/code/olympus/theos/include/Preferences/PSTableCell.h",
+		"/Users/aditya/code/olympus/theos/include/Preferences/PSControlTableCell.h",
+		"/Users/aditya/code/olympus/Classes/OLWiFiToggle.m",
+		"/Users/aditya/code/olympus/Classes/OLViewController.m",
+		"/Users/aditya/code/olympus/theos/include/SpringBoard/SBBrightnessController.h",
+		"/Users/aditya/code/olympus/Classes/OLBTToggle.m",
+		"/Users/aditya/code/olympus/theos/include/Preferences/PSImageCell.h",
+		"/Users/aditya/code/olympus/OlympusListener.h",
+		"/Users/aditya/code/olympus/Classes/OLViewController.",
+		"/Users/aditya/Desktop/PrefsFrameworkDump/PSControlTableCell.h",
+		"/Users/aditya/Desktop/PrefsFrameworkDump/PSTableCell.h",
+		"/Users/aditya/Desktop/PrefsAppDump/SettingsNetworkController.h",
+		"/opt/theos/include/IMFoundation/IMMobileNetworkManager.h",
+		"/Users/aditya/Desktop/PrefsFrameworkDump/PSSwitchTableCell.h",
+		"/opt/theos/include/IMFoundation/IMNetworkManager.h",
+		"/opt/theos/include/Preferences/PSSpecifier.h",
+		"/opt/theos/include/Preferences/Preferences.h",
+		"/Users/aditya/Desktop/prefsDump/PreferencesAppController.h",
+		"/Users/aditya/Desktop/prefsDump/PrefsListController.h",
+		"/Users/aditya/code/random/ncxkcd/NCxkcdController.m",
+		"/Users/aditya/code/random/bckp/NCXKCDController.m",
+		"/Users/aditya/code/random/bckp/Makefile",
+		"/Users/aditya/code/random/ncxkcd/BBWeeAppController-Protocol.h",
+		"/Users/aditya/code/random/weexkcd/WeeXKCDController.m",
+		"/Users/aditya/code/random/ncxkcd/ncxkcdController.m",
+		"/Users/aditya/code/random/test/testController.m",
+		"/Users/aditya/code/random/WeeXKCD/WeeXKCDController.m",
+		"/Users/aditya/Desktop/MobileDevice.h",
+		"/Users/aditya/Library/Application Support/Sublime Text 2/Packages/SublimeClang/SublimeClang.sublime-settings",
+		"/Users/aditya/code/random/backupxkcd/WeeXKCDController.m",
+		"/Users/aditya/code/random/bozocache/main.c",
+		"/usr/include/assert.h",
+		"/Users/aditya/MobileDevice.h",
+		"/Users/aditya/code/random/WeeXKCD/WeeXKCDController.h",
+		"/opt/theos/include/SpringBoard/SBStatusBarDataManager.h",
+		"/opt/theos/include/SpringBoard/SBUIController.h",
+		"/Applications/Xcode.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS6.1.sdk/System/Library/Frameworks/Foundation.framework/Headers/NSObjCRuntime.h",
+		"/Users/aditya/Documents/listener/listener/listener.m",
+		"/Users/aditya/code/random/alwaysonproximity/aoptoggle/Toggle.mm",
+		"/Users/aditya/Library/Application Support/Sublime Text 2/Packages/User/SublimeClang.sublime-settings",
+		"/opt/theos/makefiles/package.mk",
+		"/Users/aditya/code/Wolfram-Alpha-Quick-Search/Tweak.mm",
+		"/Users/aditya/code/Wolfram-Alpha-Quick-Search/SPSpotlightManager.h",
+		"/opt/theos/include/SpringBoard/SBBannerController.h",
+		"/opt/theos/include/SpringBoard/SBBulletinBannerController.h",
+		"/var/folders/2c/g0wpjpqn1h347vh9l9_nblnw0000gp/T/sublime-sftp-browse-1359636959/caughtinflux/var/www/index.html",
+		"/Users/aditya/code/displaycandy/layersnapshotter.h",
+		"/Users/aditya/code/cydia/MobileCydia.mm",
+		"/Users/aditya/code/cydia/Cydia/LoadingView.mm",
+		"/Users/aditya/code/cydia/Cydia/LoadingViewController.mm",
+		"/Users/aditya/code/cydia/Cydia/LoadingView.h",
+		"/Users/aditya/code/cydia/iPhonePrivate.h",
+		"/Users/aditya/Desktop/JB_Checker.py",
+		"/Users/aditya/Desktop/iOS6-Private-Frameworks/IMFoundation.framework/IMMobileNetworkManager.h",
+		"/opt/theos/include/SpringBoard/SBBulletinSystemStateAdapter.h",
+		"/Users/aditya/Desktop/iOS6-Private-Frameworks/BulletinBoard.framework/BBServer.h",
+		"/opt/theos/include/BulletinBoard/BBBehaviorOverride.h",
+		"/opt/theos/include/BulletinBoard/BBSettingsGateway",
+		"/Users/aditya/Desktop/PrefAppDump/QuietHoursStateController.h",
+		"/opt/theos/include/SpringBoard/SBAwayBulletinListController.h",
+		"/Users/aditya/Desktop/PrefAppDump/PrefsListController.h",
+		"/opt/theos/include/SpringBoard/SBAwayMediaControlsView.h",
+		"/opt/theos/include/BulletinBoard/BBSystemStateProvider.h",
+		"/opt/theos/include/BulletinBoard/BBBehaviorOverrideEffectiveInterval.h",
+		"/Users/aditya/Desktop/PreferencesDump/BulletinBoardDNDController.h",
+		"/Users/aditya/Desktop/PreferencesDump/DNDSwitchCell.h",
+		"/Users/aditya/Desktop/dsc_extractor.cpp?txt",
+		"/opt/theos/include/Preferences/PSListController.h",
+		"/opt/theos/include/SpringBoard/SBAwayView.h",
+		"/opt/theos/include/SpringBoard/SBAwayDateView.h",
+		"/opt/theos/include/SpringBoard/SBAwayController.h",
+		"/var/folders/2c/g0wpjpqn1h347vh9l9_nblnw0000gp/T/sublime-sftp-browse-1358675946/caughtinflux/var/www/index.html",
+		"/Users/aditya/code/random/scoper/testerprefs/testerprefs.mm",
+		"/usr/include/servers/bootstrap_defs.h",
+		"/Users/aditya/code/projects/itweak/daemon/ma",
+		"/Users/aditya/code/projects/itweak/daemon/Makefile",
+		"/Users/aditya/Library/Application Support/Sublime Text 2/Packages/User/sftp_servers/caughtinflux",
+		"/var/folders/2c/g0wpjpqn1h347vh9l9_nblnw0000gp/T/sublime-sftp-browse-1358223860/caughtinflux/var/www/index.html",
+		"/var/folders/2c/g0wpjpqn1h347vh9l9_nblnw0000gp/T/sublime-sftp-browse-1358222649/caughtinflux/var/www/index.html",
+		"/var/folders/2c/g0wpjpqn1h347vh9l9_nblnw0000gp/T/sublime-sftp-browse-1358143721/caughtinflux/var/www/index.html",
+		"/Users/aditya/Downloads/jetstrap-screen-1/screen-ca69e6a07f-home.html",
+		"/Users/aditya/Downloads/jetstrap-project-1/assets/css/bootstrap.css"
+	],
+	"find":
+	{
+		"height": 35.0
+	},
+	"find_in_files":
+	{
+		"height": 0.0,
+		"where_history":
+		[
+		]
+	},
+	"find_state":
+	{
+		"case_sensitive": false,
+		"find_history":
+		[
+			"struct",
+			"NSObject<OS",
+			"delegate",
+			"preview",
+			"takePhoto",
+			"takePhotot",
+			"capturePho",
+			"photo",
+			"delegate",
+			"preview",
+			"enabled",
+			"aut",
+			"UI",
+			"resetIdle",
+			"idle",
+			"autoLock",
+			"idle",
+			"autoLock",
+			"autoDelete",
+			"longPress",
+			"isLongPress",
+			"NSTimer",
+			"touchDownIn",
+			"touchDow",
+			"delete",
+			"clang",
+			"sublime",
+			"hasStarted",
+			"BOOL",
+			"swipe",
+			"SBAlert",
+			"isSBAlert",
+			"key",
+			"manager",
+			"applicationForBundle",
+			"scheduled",
+			"settings",
+			"override",
+			"overrides",
+			"schedule",
+			"sched",
+			"displayName",
+			"dis",
+			"cellular",
+			"nav",
+			"Navi",
+			"navigation",
+			"nav",
+			"WeeXKCDController",
+			"statusBar",
+			"self",
+			"retain",
+			"release",
+			"NSString",
+			"launch",
+			"deferred",
+			"show",
+			"suppress",
+			"clamShell",
+			"scrollView",
+			"install",
+			"LoadingViewController",
+			"controller",
+			"sched",
+			"override",
+			"overrides",
+			"descri",
+			"des",
+			"quiet",
+			"doNotDisturb",
+			"server",
+			"BBServe",
+			"settingsGateways",
+			"delete",
+			"- (id)",
+			"mediaControls",
+			"toggle",
+			"topBar",
+			"lcd",
+			"TP",
+			"date",
+			"time",
+			"fade",
+			"fadeTo",
+			"timer",
+			"media",
+			"view",
+			"SBAwayView",
+			"1103",
+			"remove",
+			"installedApp",
+			"call",
+			"incomingCall",
+			"set",
+			"inCall",
+			"close",
+			"print",
+			"UIRemoteApp",
+			"UIApplication",
+			"i386",
+			"files",
+			"extensions",
+			"mm",
+			"v.doesClear",
+			"channel",
+			"string",
+			"results",
+			"class Search",
+			"display_results",
+			"#address=double-click.net/127.0.0.1",
+			"context",
+			"dsimiss",
+			"accessibility",
+			"notify",
+			"cellula",
+			"restart",
+			"cellular",
+			"EDGE",
+			"‘Description’);",
+			"Description",
+			"ESP",
+			"lock",
+			"enable",
+			"lockScreen",
+			"lock",
+			"number",
+			"lock",
+			"background"
+		],
+		"highlight": false,
+		"in_selection": false,
+		"preserve_case": false,
+		"regex": false,
+		"replace_history":
+		[
+			"_enabled",
+			"NCXKCDController",
+			"strong"
+		],
+		"reverse": false,
+		"show_context": true,
+		"use_buffer2": true,
+		"whole_word": false,
+		"wrap": false
+	},
+	"groups":
+	[
+		{
+			"selected": 4,
+			"sheets":
+			[
+				{
+					"buffer": 0,
+					"file": "/opt/theos/include/PhotoLibrary/PLCameraController.h",
+					"settings":
+					{
+						"buffer_size": 13939,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								9962,
+								9962
+							]
+						],
+						"settings":
+						{
+							"incomplete_sync": null,
+							"remote_loading": false,
+							"synced": false,
+							"syntax": "Packages/C++/C++.tmLanguage",
+							"tab_size": 4,
+							"translate_tabs_to_spaces": true
+						},
+						"translation.x": 0.0,
+						"translation.y": 3026.0,
+						"zoom_level": 1.0
+					},
+					"type": "text"
+				},
+				{
+					"buffer": 1,
+					"file": "/opt/theos/include/PhotoLibrary/PLCameraControllerDelegate-Protocol.h",
+					"settings":
+					{
+						"buffer_size": 2088,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								0,
+								0
+							]
+						],
+						"settings":
+						{
+							"incomplete_sync": null,
+							"remote_loading": false,
+							"synced": false,
+							"syntax": "Packages/C++/C++.tmLanguage"
+						},
+						"translation.x": 0.0,
+						"translation.y": 0.0,
+						"zoom_level": 1.0
+					},
+					"type": "text"
+				},
+				{
+					"buffer": 2,
+					"file": "Tweak.xm",
+					"settings":
+					{
+						"buffer_size": 1045,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								0,
+								0
+							]
+						],
+						"settings":
+						{
+							"incomplete_sync": null,
+							"remote_loading": false,
+							"synced": false,
+							"syntax": "Packages/Objective-C/Objective-C++.tmLanguage"
+						},
+						"translation.x": 0.0,
+						"translation.y": 0.0,
+						"zoom_level": 1.0
+					},
+					"type": "text"
+				},
+				{
+					"buffer": 3,
+					"file": "QSCameraController.h",
+					"settings":
+					{
+						"buffer_size": 226,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								219,
+								219
+							]
+						],
+						"settings":
+						{
+							"incomplete_sync": null,
+							"remote_loading": false,
+							"synced": false,
+							"syntax": "Packages/C++/C++.tmLanguage"
+						},
+						"translation.x": 0.0,
+						"translation.y": 0.0,
+						"zoom_level": 1.0
+					},
+					"type": "text"
+				},
+				{
+					"buffer": 4,
+					"file": "QSCameraController.m",
+					"settings":
+					{
+						"buffer_size": 477,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								464,
+								464
+							]
+						],
+						"settings":
+						{
+							"incomplete_sync": null,
+							"remote_loading": false,
+							"synced": false,
+							"syntax": "Packages/Objective-C/Objective-C.tmLanguage"
+						},
+						"translation.x": 0.0,
+						"translation.y": 0.0,
+						"zoom_level": 1.0
+					},
+					"type": "text"
+				}
+			]
+		}
+	],
+	"incremental_find":
+	{
+		"height": 34.0
+	},
+	"input":
+	{
+		"height": 31.0
+	},
+	"layout":
+	{
+		"cells":
+		[
+			[
+				0,
+				0,
+				1,
+				1
+			]
+		],
+		"cols":
+		[
+			0.0,
+			1.0
+		],
+		"rows":
+		[
+			0.0,
+			1.0
+		]
+	},
+	"menu_visible": true,
+	"output.clang":
+	{
+		"height": 100.0
+	},
+	"output.exec":
+	{
+		"height": 100.0
+	},
+	"output.sftp":
+	{
+		"height": 100.0
+	},
+	"replace":
+	{
+		"height": 64.0
+	},
+	"save_all_on_build": true,
+	"select_file":
+	{
+		"height": 0.0,
+		"selected_items":
+		[
+			[
+				"",
+				"/Users/aditya/code/CS6.00x/meh.py"
+			]
+		],
+		"width": 0.0
+	},
+	"select_project":
+	{
+		"height": 0.0,
+		"selected_items":
+		[
+		],
+		"width": 0.0
+	},
+	"show_minimap": false,
+	"show_open_files": false,
+	"show_tabs": true,
+	"side_bar_visible": true,
+	"side_bar_width": 182.0,
+	"status_bar_visible": true
+}

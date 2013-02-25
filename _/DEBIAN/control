@@ -1,0 +1,10 @@
+Package: com.caughtinflux.quickshoot
+Name: QuickShoot
+Depends: mobilesubstrate
+Version: 0.0.1-7
+Architecture: iphoneos-arm
+Description: An awesome MobileSubstrate tweak!
+Maintainer: flux
+Author: flux
+Section: Tweaks
+Installed-Size: 40
