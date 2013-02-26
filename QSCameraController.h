@@ -1,11 +1,9 @@
 #import <Foundation/Foundation.h>
+#import <UIKit/UIKit.h>
 #import <PhotoLibrary/PLCameraControllerDelegate-Protocol.h>
 
-@interface QSCameraController : NSObject <PLCameraControllerDelegate>
+@interface QSCameraController : NSObject <PLCameraControllerDelegate, UIAlertViewDelegate>
 
-@property (nonatomic, retain) NSDictionary *photoDict;
-
-+ (instancetype)sharedController;
 - (void)takePhoto;
 
 @end

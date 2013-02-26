@@ -4,6 +4,50 @@
 		"selected_items":
 		[
 			[
+				"kRe",
+				"kRetrySaveAlertTag	macro"
+			],
+			[
+				"currentO",
+				"currentSession	AVCaptureSession *"
+			],
+			[
+				"init",
+				"initWithTitle:(NSString *) message:(NSString *) delegate:(id) cancelButtonTitle:(NSString *) otherButtonTitles:(NSString *), ..., nil	id"
+			],
+			[
+				"phot",
+				"photoDict	NSDictionary *"
+			],
+			[
+				"NSE",
+				"NSError	class"
+			],
+			[
+				"ALAS",
+				"ALAssetOrientation	typedef"
+			],
+			[
+				"kPLCam",
+				"kPLCameraPhotoImageKey"
+			],
+			[
+				"object",
+				"objectForKey:(id)	id"
+			],
+			[
+				"photo",
+				"photoDict	NSDictionary *"
+			],
+			[
+				"setDe",
+				"setDelegate:(id)	void"
+			],
+			[
+				"canCa",
+				"canCapturePhoto	BOOL"
+			],
+			[
 				"sha",
 				"sharedController	QSCameraController *"
 			],
@@ -38,10 +82,6 @@
 			[
 				"aop",
 				"aoproximity"
-			],
-			[
-				"init",
-				"initWithFrame:(CGRect)	id"
 			],
 			[
 				"dispatch_get",
@@ -474,101 +514,22 @@
 			[
 				"ini",
 				"initWithFrame:(CGRect)	id"
-			],
-			[
-				"iP",
-				"iPhoneOS6"
-			],
-			[
-				"A",
-				"Applications"
-			],
-			[
-				"is",
-				"isystem"
-			],
-			[
-				"try",
-				"try	Try/Except/Else"
-			],
-			[
-				"this",
-				"thisDoesNotRaiseAnyErrors"
-			],
-			[
-				"actu",
-				"actionSheet:(UIActionSheet *) didDismissWithButtonIndex:(NSInteger)	void"
-			],
-			[
-				"actionSh",
-				"actionSheet:(UIActionSheet *) clickedButtonAtIndex:(NSInteger)	void"
-			],
-			[
-				"fi",
-				"fixedPoint"
-			],
-			[
-				"so",
-				"socialVC	SLComposeViewController *"
-			],
-			[
-				"SLComp",
-				"SLComposeViewControllerResult	enum"
 			]
 		]
 	},
 	"buffers":
 	[
-		{
-			"file": "/opt/theos/include/PhotoLibrary/PLCameraController.h",
-			"settings":
-			{
-				"buffer_size": 13939,
-				"line_ending": "Unix"
-			}
-		},
-		{
-			"file": "/opt/theos/include/PhotoLibrary/PLCameraControllerDelegate-Protocol.h",
-			"settings":
-			{
-				"buffer_size": 2088,
-				"line_ending": "Unix"
-			}
-		},
-		{
-			"file": "Tweak.xm",
-			"settings":
-			{
-				"buffer_size": 1045,
-				"line_ending": "Unix"
-			}
-		},
-		{
-			"file": "QSCameraController.h",
-			"settings":
-			{
-				"buffer_size": 226,
-				"line_ending": "Unix"
-			}
-		},
-		{
-			"contents": "#import \"QSCameraController.h\"\n#import <PhotoLibrary/PLCameraController.h>\n\n\n@implementation QSCameraController\n{\n	PLCameraController *_camController;\n}\n\n+ (instancetype)sharedController\n{\n	static QSCameraController *sharedController;\n	if (!sharedController) {\n		sharedController = [[self alloc] init];\n	}\n	return sharedController;\n}\n\n- (id)init\n{\n	if ((self = [super init])) {\n		_camController = [PLCameraController sharedInstance];\n		if (_camController.delegate)\n	}\n}\n\n\n\n@end",
-			"file": "QSCameraController.m",
-			"file_size": 443,
-			"file_write_time": 1361754491000000,
-			"settings":
-			{
-				"buffer_size": 477,
-				"line_ending": "Unix"
-			}
-		}
 	],
 	"build_system": "Packages/Python/Python.sublime-build",
 	"command_palette":
 	{
-		"height": 187.0,
+		"height": 107.0,
 		"selected_items":
 		[
+			[
+				"subime",
+				"Preferences: SublimeClang Settings – Default"
+			],
 			[
 				"sftp",
 				"SFTP: Browse Server…"
@@ -635,12 +596,16 @@
 	},
 	"file_history":
 	[
-		"/Users/aditya/code/projects/quickshoot/QSCameraController.h",
 		"/Users/aditya/code/projects/quickshoot/QSCameraController.m",
 		"/opt/theos/include/PhotoLibrary/PLCameraControllerDelegate-Protocol.h",
+		"/opt/theos/include/PhotoLibrary/PLCameraController.h",
+		"/Users/aditya/code/projects/quickshoot/QSCameraController.h",
+		"/opt/theos/include/SpringBoard/SBScreenShotter.h",
+		"/Users/aditya/Library/Application Support/Sublime Text 2/Packages/User/SublimeClang.sublime-settings",
+		"/Users/aditya/Library/Application Support/Sublime Text 2/Packages/SublimeClang/SublimeClang.sublime-settings",
+		"/Users/aditya/code/projects/quickshoot/Tweak.xm",
 		"/Users/aditya/code/random/alwaysonproximity/Tweak.xm",
 		"/Users/aditya/code/projects/quickshoot/QSCameraControllerDelegate.h",
-		"/Users/aditya/code/projects/quickshoot/Tweak.xm",
 		"/opt/theos/include/PhotoLibrary/PLCameraController",
 		"/opt/theos/include/SpringBoard/SpringBoard.h",
 		"/opt/theos/include/SpringBoard/SBUserAgent.h",
@@ -709,7 +674,6 @@
 		"/Users/aditya/code/random/test/testController.m",
 		"/Users/aditya/code/random/WeeXKCD/WeeXKCDController.m",
 		"/Users/aditya/Desktop/MobileDevice.h",
-		"/Users/aditya/Library/Application Support/Sublime Text 2/Packages/SublimeClang/SublimeClang.sublime-settings",
 		"/Users/aditya/code/random/backupxkcd/WeeXKCDController.m",
 		"/Users/aditya/code/random/bozocache/main.c",
 		"/usr/include/assert.h",
@@ -720,7 +684,6 @@
 		"/Applications/Xcode.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS6.1.sdk/System/Library/Frameworks/Foundation.framework/Headers/NSObjCRuntime.h",
 		"/Users/aditya/Documents/listener/listener/listener.m",
 		"/Users/aditya/code/random/alwaysonproximity/aoptoggle/Toggle.mm",
-		"/Users/aditya/Library/Application Support/Sublime Text 2/Packages/User/SublimeClang.sublime-settings",
 		"/opt/theos/makefiles/package.mk",
 		"/Users/aditya/code/Wolfram-Alpha-Quick-Search/Tweak.mm",
 		"/Users/aditya/code/Wolfram-Alpha-Quick-Search/SPSpotlightManager.h",
@@ -760,9 +723,7 @@
 		"/Users/aditya/Library/Application Support/Sublime Text 2/Packages/User/sftp_servers/caughtinflux",
 		"/var/folders/2c/g0wpjpqn1h347vh9l9_nblnw0000gp/T/sublime-sftp-browse-1358223860/caughtinflux/var/www/index.html",
 		"/var/folders/2c/g0wpjpqn1h347vh9l9_nblnw0000gp/T/sublime-sftp-browse-1358222649/caughtinflux/var/www/index.html",
-		"/var/folders/2c/g0wpjpqn1h347vh9l9_nblnw0000gp/T/sublime-sftp-browse-1358143721/caughtinflux/var/www/index.html",
-		"/Users/aditya/Downloads/jetstrap-screen-1/screen-ca69e6a07f-home.html",
-		"/Users/aditya/Downloads/jetstrap-project-1/assets/css/bootstrap.css"
+		"/var/folders/2c/g0wpjpqn1h347vh9l9_nblnw0000gp/T/sublime-sftp-browse-1358143721/caughtinflux/var/www/index.html"
 	],
 	"find":
 	{
@@ -780,6 +741,31 @@
 		"case_sensitive": false,
 		"find_history":
 		[
+			"currentImage",
+			"geota",
+			"loca",
+			"location",
+			"app",
+			"camer",
+			"library",
+			"write",
+			"save",
+			"show",
+			"image",
+			"ready",
+			"sound",
+			"cannot",
+			"failed",
+			"start",
+			"-fobjc-arc",
+			"current",
+			"session",
+			"stop",
+			"end",
+			"cameraController:(id)arg1 ",
+			"output",
+			"sampleBuffer",
+			"%log",
 			"struct",
 			"NSObject<OS",
 			"delegate",
@@ -882,32 +868,7 @@
 			"i386",
 			"files",
 			"extensions",
-			"mm",
-			"v.doesClear",
-			"channel",
-			"string",
-			"results",
-			"class Search",
-			"display_results",
-			"#address=double-click.net/127.0.0.1",
-			"context",
-			"dsimiss",
-			"accessibility",
-			"notify",
-			"cellula",
-			"restart",
-			"cellular",
-			"EDGE",
-			"‘Description’);",
-			"Description",
-			"ESP",
-			"lock",
-			"enable",
-			"lockScreen",
-			"lock",
-			"number",
-			"lock",
-			"background"
+			"mm"
 		],
 		"highlight": false,
 		"in_selection": false,
@@ -915,6 +876,7 @@
 		"regex": false,
 		"replace_history":
 		[
+			"NSLog(@\"QS: %@, %@\", NSStringFromSelector(_cmd), arg1);",
 			"_enabled",
 			"NCXKCDController",
 			"strong"
@@ -923,161 +885,13 @@
 		"show_context": true,
 		"use_buffer2": true,
 		"whole_word": false,
-		"wrap": false
+		"wrap": true
 	},
 	"groups":
 	[
 		{
-			"selected": 4,
 			"sheets":
 			[
-				{
-					"buffer": 0,
-					"file": "/opt/theos/include/PhotoLibrary/PLCameraController.h",
-					"settings":
-					{
-						"buffer_size": 13939,
-						"regions":
-						{
-						},
-						"selection":
-						[
-							[
-								9962,
-								9962
-							]
-						],
-						"settings":
-						{
-							"incomplete_sync": null,
-							"remote_loading": false,
-							"synced": false,
-							"syntax": "Packages/C++/C++.tmLanguage",
-							"tab_size": 4,
-							"translate_tabs_to_spaces": true
-						},
-						"translation.x": 0.0,
-						"translation.y": 3026.0,
-						"zoom_level": 1.0
-					},
-					"type": "text"
-				},
-				{
-					"buffer": 1,
-					"file": "/opt/theos/include/PhotoLibrary/PLCameraControllerDelegate-Protocol.h",
-					"settings":
-					{
-						"buffer_size": 2088,
-						"regions":
-						{
-						},
-						"selection":
-						[
-							[
-								0,
-								0
-							]
-						],
-						"settings":
-						{
-							"incomplete_sync": null,
-							"remote_loading": false,
-							"synced": false,
-							"syntax": "Packages/C++/C++.tmLanguage"
-						},
-						"translation.x": 0.0,
-						"translation.y": 0.0,
-						"zoom_level": 1.0
-					},
-					"type": "text"
-				},
-				{
-					"buffer": 2,
-					"file": "Tweak.xm",
-					"settings":
-					{
-						"buffer_size": 1045,
-						"regions":
-						{
-						},
-						"selection":
-						[
-							[
-								0,
-								0
-							]
-						],
-						"settings":
-						{
-							"incomplete_sync": null,
-							"remote_loading": false,
-							"synced": false,
-							"syntax": "Packages/Objective-C/Objective-C++.tmLanguage"
-						},
-						"translation.x": 0.0,
-						"translation.y": 0.0,
-						"zoom_level": 1.0
-					},
-					"type": "text"
-				},
-				{
-					"buffer": 3,
-					"file": "QSCameraController.h",
-					"settings":
-					{
-						"buffer_size": 226,
-						"regions":
-						{
-						},
-						"selection":
-						[
-							[
-								219,
-								219
-							]
-						],
-						"settings":
-						{
-							"incomplete_sync": null,
-							"remote_loading": false,
-							"synced": false,
-							"syntax": "Packages/C++/C++.tmLanguage"
-						},
-						"translation.x": 0.0,
-						"translation.y": 0.0,
-						"zoom_level": 1.0
-					},
-					"type": "text"
-				},
-				{
-					"buffer": 4,
-					"file": "QSCameraController.m",
-					"settings":
-					{
-						"buffer_size": 477,
-						"regions":
-						{
-						},
-						"selection":
-						[
-							[
-								464,
-								464
-							]
-						],
-						"settings":
-						{
-							"incomplete_sync": null,
-							"remote_loading": false,
-							"synced": false,
-							"syntax": "Packages/Objective-C/Objective-C.tmLanguage"
-						},
-						"translation.x": 0.0,
-						"translation.y": 0.0,
-						"zoom_level": 1.0
-					},
-					"type": "text"
-				}
 			]
 		}
 	],
