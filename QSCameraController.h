@@ -2,8 +2,11 @@
 #import <UIKit/UIKit.h>
 #import <PhotoLibrary/PLCameraControllerDelegate-Protocol.h>
 
+
+typedef void (^QSCompletionHandler)(void);
+
 @interface QSCameraController : NSObject <PLCameraControllerDelegate, UIAlertViewDelegate>
 
-- (void)takePhoto;
+- (void)takePhotoWithCompletionHandler:(QSCompletionHandler)completionHandler;
 
 @end
