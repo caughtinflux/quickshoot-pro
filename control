@@ -3,8 +3,7 @@ Name: QuickShoot
 Depends: mobilesubstrate
 Version: 1.0
 Architecture: iphoneos-arm
-Description: Double tap the camera Icon to take a photo, and quickly. Handy for those times when you need to take a photo quickly, and the slowness of the camera app makes you miss a great opportunity. This tweak is 
-not meant to be used maliciously, and /will/ play the shutter sound when capturing an image.
+Description: Double tap the camera Icon to take a photo, and quickly.
 Maintainer: flux
 Author: flux
 Section: Tweaks
