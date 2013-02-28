@@ -4,6 +4,26 @@
 		"selected_items":
 		[
 			[
+				"QSC",
+				"QSCameraController	class"
+			],
+			[
+				"capture",
+				"capturePhoto	void"
+			],
+			[
+				"auto",
+				"_autofocus:(BOOL) autoExpose:(BOOL)	void"
+			],
+			[
+				"SBIcon",
+				"SBIconModel"
+			],
+			[
+				"SBIconView",
+				"SBIconViewDelegate"
+			],
+			[
 				"kRe",
 				"kRetrySaveAlertTag	macro"
 			],
@@ -494,33 +514,21 @@
 			[
 				"clean",
 				"cleanTiles"
-			],
-			[
-				"pos",
-				"position"
-			],
-			[
-				"SBA",
-				"SBApplication"
-			],
-			[
-				"alertView",
-				"alertView:(UIAlertView *) clickedButtonAtIndex:(NSInteger)	void"
-			],
-			[
-				"UIS",
-				"UISlider	class"
-			],
-			[
-				"ini",
-				"initWithFrame:(CGRect)	id"
 			]
 		]
 	},
 	"buffers":
 	[
+		{
+			"file": "Tweak.xm",
+			"settings":
+			{
+				"buffer_size": 1195,
+				"line_ending": "Unix"
+			}
+		}
 	],
-	"build_system": "Packages/Python/Python.sublime-build",
+	"build_system": "Packages/User/TunnelledInstall.sublime-build",
 	"command_palette":
 	{
 		"height": 107.0,
@@ -597,9 +605,31 @@
 	"file_history":
 	[
 		"/Users/aditya/code/projects/quickshoot/QSCameraController.m",
-		"/opt/theos/include/PhotoLibrary/PLCameraControllerDelegate-Protocol.h",
-		"/opt/theos/include/PhotoLibrary/PLCameraController.h",
 		"/Users/aditya/code/projects/quickshoot/QSCameraController.h",
+		"/opt/theos/include/PhotoLibrary/PLCameraController.h",
+		"/opt/theos/include/PhotoLibrary/PLCameraControllerDelegate-Protocol.h",
+		"/Users/aditya/Library/Application Support/Sublime Text 2/Packages/User/TunnelledInstall.sublime-build",
+		"/opt/theos/include/SpringBoard/SBIconView.h",
+		"/opt/theos/include/SpringBoard/SBApplicationIcon.h",
+		"/opt/theos/include/SpringBoard/SBLeafIcon.h",
+		"/opt/theos/include/SpringBoard/SBIcon.h",
+		"/opt/theos/include/SpringBoard/SBIconController.h",
+		"/Users/aditya/code/projects/quickshoot/make",
+		"/Users/aditya/code/projects/quickshoot/clean",
+		"/opt/theos/include/SpringBoard/SBIconViewMap.h",
+		"/opt/theos/include/SpringBoard/SBIconModel.h",
+		"/opt/theos/include/SpringBoard/SBIconModel",
+		"/opt/theos/include/SpringBoard/SBIconCont",
+		"/Users/aditya/code/projects/quickshoot/SBIconViewObserver-Protocol.h",
+		"/opt/theos/include/SpringBoard/SBIconViewMapDelegate-Protocol.h",
+		"/opt/theos/include/SpringBoard/SBIconViewObserver-Protocol.h",
+		"/opt/theos/include/SpringBoard/SBIconObserver-Protocol.h",
+		"/opt/theos/include/SpringBoard/SBIconIndexNodeObserver-Protocol.h",
+		"/opt/theos/include/SpringBoard/SBIconImageView.h",
+		"/Users/aditya/code/random/camtests/Tweak.xm",
+		"/opt/theos/include/PhotoLibrary/PLCameraView.h",
+		"/opt/theos/include/PhotoLibraryServices/PLAssetsSaver.h",
+		"/Users/aditya/code/random/camtests/camtests.plist",
 		"/opt/theos/include/SpringBoard/SBScreenShotter.h",
 		"/Users/aditya/Library/Application Support/Sublime Text 2/Packages/User/SublimeClang.sublime-settings",
 		"/Users/aditya/Library/Application Support/Sublime Text 2/Packages/SublimeClang/SublimeClang.sublime-settings",
@@ -641,10 +671,7 @@
 		"/Users/aditya/code/random/dndtests/Tweak.xm",
 		"/Users/aditya/code/random/dndtests/Makefile",
 		"/Users/aditya/code/random/scoper/Tweak.xm",
-		"/opt/theos/include/SpringBoard/SBApplicationIcon.h",
 		"/opt/theos/include/SpringBoard/SBIconLabelImage.h",
-		"/opt/theos/include/SpringBoard/SBIconModel.h",
-		"/opt/theos/include/SpringBoard/SBIcon.h",
 		"/Users/aditya/code/olympus/theos/include/Preferences/PSEditableTableCell.h",
 		"/Users/aditya/code/olympus/theos/include/Preferences/PSTableCell.h",
 		"/Users/aditya/code/olympus/theos/include/Preferences/PSControlTableCell.h",
@@ -704,26 +731,7 @@
 		"/opt/theos/include/BulletinBoard/BBSettingsGateway",
 		"/Users/aditya/Desktop/PrefAppDump/QuietHoursStateController.h",
 		"/opt/theos/include/SpringBoard/SBAwayBulletinListController.h",
-		"/Users/aditya/Desktop/PrefAppDump/PrefsListController.h",
-		"/opt/theos/include/SpringBoard/SBAwayMediaControlsView.h",
-		"/opt/theos/include/BulletinBoard/BBSystemStateProvider.h",
-		"/opt/theos/include/BulletinBoard/BBBehaviorOverrideEffectiveInterval.h",
-		"/Users/aditya/Desktop/PreferencesDump/BulletinBoardDNDController.h",
-		"/Users/aditya/Desktop/PreferencesDump/DNDSwitchCell.h",
-		"/Users/aditya/Desktop/dsc_extractor.cpp?txt",
-		"/opt/theos/include/Preferences/PSListController.h",
-		"/opt/theos/include/SpringBoard/SBAwayView.h",
-		"/opt/theos/include/SpringBoard/SBAwayDateView.h",
-		"/opt/theos/include/SpringBoard/SBAwayController.h",
-		"/var/folders/2c/g0wpjpqn1h347vh9l9_nblnw0000gp/T/sublime-sftp-browse-1358675946/caughtinflux/var/www/index.html",
-		"/Users/aditya/code/random/scoper/testerprefs/testerprefs.mm",
-		"/usr/include/servers/bootstrap_defs.h",
-		"/Users/aditya/code/projects/itweak/daemon/ma",
-		"/Users/aditya/code/projects/itweak/daemon/Makefile",
-		"/Users/aditya/Library/Application Support/Sublime Text 2/Packages/User/sftp_servers/caughtinflux",
-		"/var/folders/2c/g0wpjpqn1h347vh9l9_nblnw0000gp/T/sublime-sftp-browse-1358223860/caughtinflux/var/www/index.html",
-		"/var/folders/2c/g0wpjpqn1h347vh9l9_nblnw0000gp/T/sublime-sftp-browse-1358222649/caughtinflux/var/www/index.html",
-		"/var/folders/2c/g0wpjpqn1h347vh9l9_nblnw0000gp/T/sublime-sftp-browse-1358143721/caughtinflux/var/www/index.html"
+		"/Users/aditya/Desktop/PrefAppDump/PrefsListController.h"
 	],
 	"find":
 	{
@@ -741,6 +749,27 @@
 		"case_sensitive": false,
 		"find_history":
 		[
+			"expose",
+			"autoexpose",
+			"exposure",
+			"model",
+			"CDStruct",
+			"iconViewForIcon",
+			"iconFor",
+			"iconView",
+			"observer",
+			"iconView",
+			"IconImageView",
+			"iconView",
+			"iconImageView",
+			"imageView",
+			"image",
+			"view",
+			"iconVi",
+			"display",
+			"saveCameraImage",
+			"saveImage",
+			"cameraController:(id)arg1",
 			"currentImage",
 			"geota",
 			"loca",
@@ -847,28 +876,7 @@
 			"lcd",
 			"TP",
 			"date",
-			"time",
-			"fade",
-			"fadeTo",
-			"timer",
-			"media",
-			"view",
-			"SBAwayView",
-			"1103",
-			"remove",
-			"installedApp",
-			"call",
-			"incomingCall",
-			"set",
-			"inCall",
-			"close",
-			"print",
-			"UIRemoteApp",
-			"UIApplication",
-			"i386",
-			"files",
-			"extensions",
-			"mm"
+			"time"
 		],
 		"highlight": false,
 		"in_selection": false,
@@ -890,8 +898,39 @@
 	"groups":
 	[
 		{
+			"selected": 0,
 			"sheets":
 			[
+				{
+					"buffer": 0,
+					"file": "Tweak.xm",
+					"settings":
+					{
+						"buffer_size": 1195,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								980,
+								980
+							]
+						],
+						"settings":
+						{
+							"incomplete_sync": null,
+							"remote_loading": false,
+							"synced": false,
+							"syntax": "Packages/Objective-C/Objective-C++.tmLanguage",
+							"translate_tabs_to_spaces": false
+						},
+						"translation.x": 0.0,
+						"translation.y": 0.0,
+						"zoom_level": 1.0
+					},
+					"type": "text"
+				}
 			]
 		}
 	],
@@ -967,6 +1006,6 @@
 	"show_open_files": false,
 	"show_tabs": true,
 	"side_bar_visible": true,
-	"side_bar_width": 182.0,
+	"side_bar_width": 214.0,
 	"status_bar_visible": true
 }
