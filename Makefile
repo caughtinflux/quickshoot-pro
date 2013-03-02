@@ -8,5 +8,3 @@ QuickShoot_FRAMEWORKS = UIKit Foundation AVFoundation
 QuickShoot_PRIVATE_FRAMEWORKS = PhotoLibrary SpringBoardServices
 
 include $(THEOS_MAKE_PATH)/tweak.mk
-SUBPROJECTS += quickshootprefs
-include $(THEOS_MAKE_PATH)/aggregate.mk
