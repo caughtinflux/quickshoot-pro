@@ -1,0 +1,10 @@
+{
+    entry = {
+	bundle = quickshootprefs;
+	cell = PSLinkCell;
+	detail = quickshootprefsListController;
+	icon = quickshootprefs.png;
+	isController = 1;
+	label = quickshootprefs;
+    };
+}
