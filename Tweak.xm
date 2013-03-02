@@ -37,7 +37,7 @@
 %end
 
 
-// Hooks for the lockscreen bit.
+// Camera Grabber Hooks
 %hook UITapGestureRecognizer
 - (UITapGestureRecognizer *)initWithTarget:(id)target action:(SEL)action
 {
@@ -49,11 +49,28 @@
 }
 %end
 
-%hook SBAwayController
-- (void)handleCameraTapGesture:(UITapGestureRecognizer *)tapGesture
+%hook SBAwayLockBar
+- (void)setShowsSlideShowButton:(BOOL)shouldShow
 {
-	[[QSCameraController sharedInstance] takePhotoWithCompletionHandler:^(BOOL success){
-		return;
-	}];
+	%orig;
+	if (shouldShow) {
+		UIButton *slideshowButton = MSHookIvar<UIButton *>(self, "_slideshowButton");
+
+		UITapGestureRecognizer *doubleTapGR = [[UITapGestureRecognizer alloc] initWithTarget:[%c(SBAwayController) sharedAwayController] action:@selector(handleCameraTapGesture:)];
+		doubleTapGR.numberOfTapsRequired = 2;
+		[slideshowButton addGestureRecognizer:doubleTapGR];
+		[doubleTapGR release];
+	}
+}
+%end
+
+%hook SBAwayController
+- (void)handleCameraTapGesture:(UITapGestureRecognizer *)recognizer
+{
+	if (recognizer.numberOfTouchesRequired == 2) {
+		[[QSCameraController sharedInstance] takePhotoWithCompletionHandler:^(BOOL success){
+			;
+		}];
+	}
 }
 %end
