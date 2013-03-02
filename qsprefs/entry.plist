@@ -1,0 +1,10 @@
+{
+    entry = {
+	bundle = QSPrefs;
+	cell = PSLinkCell;
+	detail = QSPrefsListController;
+	icon = QSPrefs.png;
+	isController = 1;
+	label = QSPrefs;
+    };
+}
