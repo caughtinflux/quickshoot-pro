@@ -1,9 +1,23 @@
 #import "QSCameraController.h"
+
 #import <PhotoLibrary/PLCameraController.h>
 #import <PhotoLibraryServices/PLAssetsSaver.h>
+#import <SpringBoardServices/SBSAccelerometer.h>
 #import <AVFoundation/AVFoundation.h>
 
+#define DEBUG
+
+#ifdef DEBUG
+#   define DLog(fmt, ...) NSLog((@"%s [Line %d] " fmt), __PRETTY_FUNCTION__, __LINE__, ##__VA_ARGS__);
+#else
+#   define DLog(...)
+#endif
+
+
 @interface QSCameraController () {}
+
+// I know I don't really have to declare these...
+- (NSDictionary *)_dictionaryBySubstitutingCorrectOrientationInDictionary:(NSDictionary *)photoDict;
 - (void)_saveCameraImageToLibrary:(NSDictionary *)dict;
 - (void)_cleanup;
 
@@ -18,10 +32,18 @@
 {
     QSCompletionHandler  _completionHandler;
     BOOL                 _isCapturingImage;
+    SBSAccelerometer    *_accelerometer;
+    UIDeviceOrientation  _orientationAtTimeOfCapture;
+
+    struct {
+        NSUInteger hasStartedSession:1;
+        NSUInteger hasForcedAutofocus:1;
+    } _cameraCheckFlags;
 }
 
 + (instancetype)sharedInstance
 {
+    DLog(@"");
     static QSCameraController *sharedInstance;
     if (!sharedInstance) {
         sharedInstance = [[QSCameraController alloc] init];
@@ -31,7 +53,8 @@
 
 - (void)takePhotoWithCompletionHandler:(QSCompletionHandler)complHandler
 {
-    if (complHandler) {
+    DLog(@"");
+    if (complHandler != nil) {
         _completionHandler = [complHandler copy];
     }
     else {
@@ -47,19 +70,48 @@
     _isCapturingImage = YES;
     [[PLCameraController sharedInstance] startPreview];
     ((PLCameraController *)[PLCameraController sharedInstance]).delegate = self;
+
+    // Set Camera Properties
+    if (self.flashMode && [[PLCameraController sharedInstance] isFlashAvailable]) {
+        [[PLCameraController sharedInstance] setFlashMode:self.flashMode];
+    }
+    if (self.enableHDR && [[PLCameraController sharedInstance] supportsHDR]) {
+        [[PLCameraController sharedInstance] setHDREnabled:self.enableHDR];
+    }
+    if (self.cameraMode && [[PLCameraController sharedInstance] hasFrontCamera]) {
+        [[PLCameraController sharedInstance] setCameraMode:self.cameraMode];
+    }
 }
 
 - (void)cameraControllerSessionDidStart:(PLCameraController *)camController
 {
-    if ([[PLCameraController sharedInstance] canCapturePhoto]) {
-        [[PLCameraController sharedInstance] _autofocus:YES autoExpose:YES];
-        [[PLCameraController sharedInstance] autofocus];
-        [[PLCameraController sharedInstance] capturePhoto];
-    }
-    else {
-        UIAlertView *alert = [[UIAlertView alloc] initWithTitle:@"QuickShoot" message:@"Cannot capture photo." delegate:self cancelButtonTitle:@"Dismiss" otherButtonTitles:@"Retry", nil];
-        [alert show];
-        [alert release];
+    DLog(@"");
+
+    _accelerometer = [[SBSAccelerometer alloc] init];
+
+    _cameraCheckFlags.hasStartedSession = 1;
+
+    // I'm using [[PLCameraController sharedInstance] foo], because SublimeClang doesn't autocomplete otherwise. Oh well.
+    
+    // These are all asynchronous methods
+    [[PLCameraController sharedInstance] _autofocus:YES autoExpose:YES];
+    _cameraCheckFlags.hasForcedAutofocus = YES;
+}
+   
+
+- (void)cameraControllerFocusDidEnd:(PLCameraController *)camController
+{
+    DLog(@"");
+    if (_cameraCheckFlags.hasForcedAutofocus && _cameraCheckFlags.hasStartedSession) {
+        if ([[PLCameraController sharedInstance] canCapturePhoto]) {
+            _orientationAtTimeOfCapture = _accelerometer.currentDeviceOrientation;
+            [[PLCameraController sharedInstance] capturePhoto]; 
+        }
+        else {
+           UIAlertView *alert = [[UIAlertView alloc] initWithTitle:@"QuickShoot" message:@"Cannot capture photo." delegate:self cancelButtonTitle:@"Dismiss" otherButtonTitles:@"Retry", nil];
+            [alert show];
+            [alert release];
+        }
     }
 }
 
@@ -78,12 +130,26 @@
         [alert release]; 
     }
     else {
-        [self _saveCameraImageToLibrary:photoDict];
+        [self _saveCameraImageToLibrary:[self _dictionaryBySubstitutingCorrectOrientationInDictionary:photoDict]];
     }
+}
+
+- (NSDictionary *)_dictionaryBySubstitutingCorrectOrientationInDictionary:(NSDictionary *)photoDict
+{
+    NSMutableDictionary *modifiedDictionary = [photoDict mutableCopy];
+    NSMutableDictionary *modifiedProperties = [modifiedDictionary[@"kPLCameraPhotoPropertiesKey"] mutableCopy];
+    modifiedProperties[@"Orientation"] = [NSNumber numberWithInt:_orientationAtTimeOfCapture];
+    
+    modifiedDictionary[@"kPLCameraPhotoPropertiesKey"] = modifiedProperties;
+
+    [modifiedProperties release];
+
+    return [modifiedDictionary autorelease];
 }
 
 - (void)_saveCameraImageToLibrary:(NSDictionary *)dict
 {
+    DLog(@"%@", dict);
     [[PLAssetsSaver sharedAssetsSaver] saveCameraImage:dict metadata:nil additionalProperties:nil requestEnqueuedBlock:nil]; // magick method. Now, if only I could find what the block's signature is.
     [self _cleanup];
 }
@@ -101,6 +167,7 @@
 
 - (void)_cleanup
 {
+    // Cleanup!
     if (_completionHandler) {
         _completionHandler(YES);
         [_completionHandler release];
@@ -109,8 +176,20 @@
 
     [[PLCameraController sharedInstance] setDelegate:nil];
 
+    _orientationAtTimeOfCapture = 0;
+    _cameraMode = 0;
+    _flashMode = 0;
+    _enableHDR = NO;
+
+    _cameraCheckFlags.hasForcedAutofocus = 0;
+    _cameraCheckFlags.hasStartedSession  = 0;
+
+    [_accelerometer release];
+    _accelerometer = nil;
+
     _isCapturingImage = NO;
-    NSLog(@"QS: End of %s", __func__);
+
+    DLog(@"");
 }
 
 #ifdef DEBUG

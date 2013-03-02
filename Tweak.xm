@@ -1,36 +1,59 @@
 #import "QSCameraController.h"
 
 #import <UIKit/UIKit.h>
-#import <SpringBoard/SBIconController.h>
-#import <SpringBoard/SBIconModel.h>
-#import <SpringBoard/SBIconViewMap.h>
+
 #import <SpringBoard/SBIconView.h>
-#import <SpringBoard/SBApplicationIcon.h>
+#import <SpringBoard/SBIcon.h>
+
+@interface SBAwayController : NSObject
++ (SBAwayController *)sharedAwayController;
+@end
 
 
-%hook SpringBoard
-- (void)applicationDidFinishLaunching:(id)app
+%hook SBIconView
+- (void)setIcon:(SBIcon *)icon
 {
 	%orig;
-	SBIconModel *iconModel = (SBIconModel *)[[%c(SBIconController) sharedInstance] model];
-	SBApplicationIcon *cameraAppIcon = [iconModel leafIconForIdentifier:@"com.apple.camera"];
-	SBIconView *cameraIconView = [[%c(SBIconViewMap) homescreenMap] iconViewForIcon:cameraAppIcon];
-
-	UITapGestureRecognizer *doubleTapGR = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(qs_doubleTapRecognizerFired:)];
-	doubleTapGR.numberOfTapsRequired = 2;
-	[cameraIconView addGestureRecognizer:doubleTapGR];
-	[doubleTapGR release];
-	[cameraIconView setUserInteractionEnabled:YES];
+	if ([[(SBIcon *)icon leafIdentifier] isEqualToString:@"com.apple.camera"]) {
+		UITapGestureRecognizer *doubleTapGR = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(qs_doubleTapRecognizerFired:)];
+		doubleTapGR.numberOfTapsRequired = 2;
+		[(SBIconView *)self addGestureRecognizer:doubleTapGR];
+		[doubleTapGR release];
+		[(SBIconView *)self setUserInteractionEnabled:YES];
+	}
 }
 
 %new
 - (void)qs_doubleTapRecognizerFired:(UITapGestureRecognizer *)dtr
 {
+	[(SBIcon *)[self icon] setBadge:@"•••"];
+	[(SBIcon *)[self icon] noteBadgeDidChange];
 	[[QSCameraController sharedInstance] takePhotoWithCompletionHandler:^(BOOL success){
-		// empty, for nothing has to be done here.
-		// leaving it in, for maybe I will need it in the future!
+		[(SBIcon *)[self icon] setBadge:nil];
+		[(SBIcon *)[self icon] noteBadgeDidChange];
 		return;
 	}];
 }
+%end
 
+
+// Hooks for the lockscreen bit.
+%hook UITapGestureRecognizer
+- (UITapGestureRecognizer *)initWithTarget:(id)target action:(SEL)action
+{
+	self = %orig;
+	if (self && (target == [%c(SBAwayController) sharedAwayController]) && (action == @selector(handleCameraTapGesture:))) {
+		[(UITapGestureRecognizer *)self setNumberOfTapsRequired:2];
+	}
+	return self;
+}
+%end
+
+%hook SBAwayController
+- (void)handleCameraTapGesture:(UITapGestureRecognizer *)tapGesture
+{
+	[[QSCameraController sharedInstance] takePhotoWithCompletionHandler:^(BOOL success){
+		return;
+	}];
+}
 %end
