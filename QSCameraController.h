@@ -4,9 +4,9 @@
 
 // These values are the same that are accepted by PLCameraController
 typedef enum {
-	QSCameraModeRear  = 0,
-	QSCameraModeFront = 1,
-} QSCameraMode;
+	QSCameraDeviceRear  = 0,
+	QSCameraDeviceFront = 1,
+} QSCameraDevice; // UIImagePickerControllerCameraDevice
 
 typedef enum {
 	QSFlashModeAuto =  0,
@@ -19,7 +19,7 @@ typedef void (^QSCompletionHandler)(BOOL); // the BOOL argument is most probably
 @interface QSCameraController : NSObject <PLCameraControllerDelegate, UIAlertViewDelegate>
 
 // these properties have to be set every time a photo is to be taken, they are zeroed out after every captur.
-@property(nonatomic, assign) QSCameraMode cameraMode;
+@property(nonatomic, assign) QSCameraDevice cameraDevice;
 @property(nonatomic, assign) QSFlashMode flashMode;
 @property(nonatomic, assign) BOOL enableHDR;
  

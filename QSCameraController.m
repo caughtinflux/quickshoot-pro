@@ -5,6 +5,8 @@
 #import <SpringBoardServices/SBSAccelerometer.h>
 #import <AVFoundation/AVFoundation.h>
 
+#define DEBUG
+
 #ifdef DEBUG
 #   define DLog(fmt, ...) NSLog((@"%s [Line %d] " fmt), __PRETTY_FUNCTION__, __LINE__, ##__VA_ARGS__);
 #else
@@ -66,19 +68,23 @@
     }
     
     _isCapturingImage = YES;
-    [[PLCameraController sharedInstance] startPreview];
-    ((PLCameraController *)[PLCameraController sharedInstance]).delegate = self;
 
     // Set Camera Properties
-    if (self.flashMode && [[PLCameraController sharedInstance] isFlashAvailable]) {
+    if (self.flashMode && [[PLCameraController sharedInstance] hasFlash]) {
+        DLog(@"Enabling flash");
         [[PLCameraController sharedInstance] setFlashMode:self.flashMode];
     }
     if (self.enableHDR && [[PLCameraController sharedInstance] supportsHDR]) {
+        DLog(@"Enabling HDR");
         [[PLCameraController sharedInstance] setHDREnabled:self.enableHDR];
     }
-    if (self.cameraMode && [[PLCameraController sharedInstance] hasFrontCamera]) {
-        [[PLCameraController sharedInstance] setCameraMode:self.cameraMode];
+    if (self.cameraDevice && [[PLCameraController sharedInstance] hasFrontCamera]) {
+        DLog(@"Setting Camera mode");
+        [[PLCameraController sharedInstance] setCameraDevice:(UIImagePickerControllerCameraDevice)self.cameraDevice];
     }
+    
+    [[PLCameraController sharedInstance] startPreview];
+    ((PLCameraController *)[PLCameraController sharedInstance]).delegate = self;
 }
 
 - (void)cameraControllerSessionDidStart:(PLCameraController *)camController
@@ -175,7 +181,7 @@
     [[PLCameraController sharedInstance] setDelegate:nil];
 
     _orientationAtTimeOfCapture = 0;
-    _cameraMode = 0;
+    _cameraDevice = 0;
     _flashMode = 0;
     _enableHDR = NO;
 
