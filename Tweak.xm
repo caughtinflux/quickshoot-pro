@@ -57,7 +57,6 @@ static BOOL           _preferredHDRMode;
 *	Application Icon Hook
 *
 */
-%group Common
 %hook SBIconView
 - (void)setIcon:(SBIcon *)icon
 {
@@ -93,6 +92,23 @@ static BOOL           _preferredHDRMode;
 }
 %end
 
+
+/*
+*
+*	Camera Grabber Hooks
+*
+*/
+%hook UITapGestureRecognizer 
+- (UITapGestureRecognizer *)initWithTarget:(id)target action:(SEL)action
+{
+	self = %orig;
+	if (self && (target == [%c(SBAwayController) sharedAwayController]) && (action == @selector(handleCameraTapGesture:))) {
+		[(UITapGestureRecognizer *)self setNumberOfTapsRequired:2];
+	}
+	return self;
+}
+%end
+
 %hook SBAwayController
 - (void)handleCameraTapGesture:(UITapGestureRecognizer *)recognizer
 {
@@ -107,43 +123,6 @@ static BOOL           _preferredHDRMode;
 	}
 }
 %end
-%end
-
-
-/*
-*
-*	Camera Grabber Hooks
-*
-*/
-%group iPhone
-%hook UITapGestureRecognizer 
-- (UITapGestureRecognizer *)initWithTarget:(id)target action:(SEL)action
-{
-	self = %orig;
-	if (self && (target == [%c(SBAwayController) sharedAwayController]) && (action == @selector(handleCameraTapGesture:))) {
-		[(UITapGestureRecognizer *)self setNumberOfTapsRequired:2];
-	}
-	return self;
-}
-%end
-%end
-
-/*
-%group iPad
-%hook UIButton
-- (void)addTarget:(id)target action:(SEL)action forControlEvents:(UIControlEvents)controlEvents
-{
-	%orig;
-	if ((target == [[[%c(SBAwayController) sharedAwayController] awayView] lockBar]) && action == @selector(_slideshowButtonActivated:)) {
-		UITapGestureRecognizer *doubleTapGR = [[UITapGestureRecognizer alloc] initWithTarget:[%c(SBAwayController) sharedAwayController] action:@selector(handleCameraTapGesture:)];
-		doubleTapGR.numberOfTapsRequired = 2;
-		[(UIButton *)self addGestureRecognizer:doubleTapGR];
-		[doubleTapGR release];
-	}
-}
-%end
-%end
-*/
 
 /*
 *
@@ -183,14 +162,14 @@ static QSCameraDevice QSCameraDeviceFromString(NSString *string)
 		return QSCameraDeviceRear;
 }
 
-static void QSSetCameraControllerPreferences(void)
+static inline void QSSetCameraControllerPreferences(void)
 {
 	[[QSCameraController sharedInstance] setCameraDevice:_preferredCameraDevice];
 	[[QSCameraController sharedInstance] setFlashMode:_preferredFlashMode];
 	[[QSCameraController sharedInstance] setEnableHDR:_preferredHDRMode];
 }
 
-NSString * QSGetMachineName(void)
+static inline NSString * QSGetMachineName(void)
 {
     struct utsname systemInfo;
     uname(&systemInfo);
@@ -201,15 +180,7 @@ NSString * QSGetMachineName(void)
 %ctor
 {
 	@autoreleasepool {
-		// Initialize the correct hooks.
-		%init(Common);
-		NSString *device = QSGetMachineName();
-		if (([device hasPrefix:@"iPhone"]) || ([device hasPrefix:@"iPod"])) {
-			%init(iPhone);
-		}
-		else {
-			// %init(iPad); iPad Hooks Not Working atm
-		}
+		%init;
 		CFNotificationCenterAddObserver(CFNotificationCenterGetDarwinNotifyCenter(),
 										NULL,
 										(CFNotificationCallback)&QSUpdatePrefs,
