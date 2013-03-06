@@ -1,6 +1,7 @@
 .DS_Store
 _
 debs/
+*.deb
 
 *.sublime*
 reference.txt

@@ -5,6 +5,14 @@
 #import <SpringBoardServices/SBSAccelerometer.h>
 #import <AVFoundation/AVFoundation.h>
 
+#define kPLCameraModePhoto 0
+#define kPLCameraModeVideo 1
+
+/*
+*
+*   Logging Macros
+*
+*/
 #define DEBUG
 
 #ifdef DEBUG
@@ -13,27 +21,31 @@
 #   define DLog(...)
 #endif
 
+#define ALog(fmt, ...) NSLog((@"%s" fmt), __PRETTY_FUNCTION__, ##__VA_ARGS__);
+
+
 
 @interface QSCameraController () {}
 
-// I know I don't really have to declare these...
-- (NSDictionary *)_dictionaryBySubstitutingCorrectOrientationInDictionary:(NSDictionary *)photoDict;
-- (void)_saveCameraImageToLibrary:(NSDictionary *)dict;
-- (void)_cleanup;
+- (void)_setupCameraController;
 
-#ifdef DEBUG
-- (void)_testCaptureWithNilHandler;
-- (void)_testError;
-#endif
+// These declarations are here so warnings are emitted when something isn't typed correctly
+- (void)_saveCameraImageToLibrary:(NSDictionary *)dict;
+- (void)_cleanupImageCaptureWithResult:(BOOL)result;
+
+- (void)_saveCameraVideoToLibraryWithInfo:(NSDictionary *)dict;
+- (void)_cleanupVideoCaptureWithResult:(BOOL)result;
 
 @end
 
 @implementation QSCameraController 
 {
-    QSCompletionHandler  _completionHandler;
     BOOL                 _isCapturingImage;
-    SBSAccelerometer    *_accelerometer;
-    UIDeviceOrientation  _orientationAtTimeOfCapture;
+    BOOL                 _isCapturingVideo;
+
+    QSCompletionHandler  _completionHandler;
+    QSCompletionHandler  _videoStartHandler;
+    QSCompletionHandler  _videoStopHandler;
 
     struct {
         NSUInteger hasStartedSession:1;
@@ -51,6 +63,11 @@
     return sharedInstance;
 }
 
+/*
+*
+*   Public Methods
+*
+*/
 - (void)takePhotoWithCompletionHandler:(QSCompletionHandler)complHandler
 {
     DLog(@"");
@@ -61,7 +78,7 @@
         _completionHandler = [(^(BOOL success){return;}) copy]; // easier to keep an empty stub, than to be all "is it nil?!?!!!" everywhere
     }
 
-    if (_isCapturingImage) {
+    if (_isCapturingImage || _isCapturingVideo) {
         _completionHandler(NO);
         [_completionHandler release];
         return;
@@ -69,58 +86,96 @@
     
     _isCapturingImage = YES;
 
-    // Set Camera Properties
-    if (self.flashMode && [[PLCameraController sharedInstance] hasFlash]) {
-        DLog(@"Enabling flash");
-        [[PLCameraController sharedInstance] setFlashMode:self.flashMode];
-    }
-    if (self.enableHDR && [[PLCameraController sharedInstance] supportsHDR]) {
-        DLog(@"Enabling HDR");
-        [[PLCameraController sharedInstance] setHDREnabled:self.enableHDR];
-    }
-    if (self.cameraDevice && [[PLCameraController sharedInstance] hasFrontCamera]) {
-        DLog(@"Setting Camera mode");
-        [[PLCameraController sharedInstance] setCameraDevice:(UIImagePickerControllerCameraDevice)self.cameraDevice];
-    }
+    [self _setupCameraController];
     
     [[PLCameraController sharedInstance] startPreview];
     ((PLCameraController *)[PLCameraController sharedInstance]).delegate = self;
 }
 
+- (void)startVideoCaptureWithCompletionHandler:(QSCompletionHandler)videoStartHandler
+{
+    DLog(@"");
+    if (videoStartHandler != nil) {
+        _videoStartHandler = [videoStartHandler copy];
+    }
+    else {
+        _videoStartHandler = [(^(BOOL success){return;}) copy];
+    }
+
+    if (_isCapturingImage || _isCapturingVideo) {
+        _videoStartHandler(NO);
+        [_videoStartHandler release];
+        _videoStartHandler = nil;
+        return;
+    }
+
+    _isCapturingVideo = YES;
+
+    if ([[PLCameraController sharedInstance] supportsVideoCapture]) {
+        [[PLCameraController sharedInstance] setDelegate:self];
+        [[PLCameraController sharedInstance] setCameraMode:kPLCameraModeVideo];
+        [[PLCameraController sharedInstance] startPreview];
+        [self _setupCameraController];
+    }
+    else {
+        UIAlertView *alert = [[UIAlertView alloc] initWithTitle:@"QuickShoot" message:@"Video capture is unsupported at this time." delegate:nil cancelButtonTitle:@"Dismiss" otherButtonTitles:nil];
+        [alert show];
+        [alert release];
+    }
+}
+
+- (void)stopVideoCaptureWithCompletionHandler:(QSCompletionHandler)videoStopHandler
+{
+    DLog(@"");
+    if (videoStopHandler != nil) {
+        _videoStopHandler = [videoStopHandler copy];
+    }
+    else {
+        _videoStopHandler = [(^(BOOL success){return;}) copy];
+    }
+
+    [[PLCameraController sharedInstance] stopVideoCapture];
+}
+
+
+/*
+*
+*   PLCameraController Delegate Methods
+*
+*/
 - (void)cameraControllerSessionDidStart:(PLCameraController *)camController
 {
     DLog(@"");
 
-    _accelerometer = [[SBSAccelerometer alloc] init];
-
     _cameraCheckFlags.hasStartedSession = 1;
-
-    // I'm using [[PLCameraController sharedInstance] foo], because SublimeClang doesn't autocomplete otherwise. Oh well.
-    
-    // These are all asynchronous methods
     [[PLCameraController sharedInstance] _autofocus:YES autoExpose:YES];
     _cameraCheckFlags.hasForcedAutofocus = YES;
 }
    
-
 - (void)cameraControllerFocusDidEnd:(PLCameraController *)camController
 {
     DLog(@"");
-    if (_cameraCheckFlags.hasForcedAutofocus && _cameraCheckFlags.hasStartedSession) {
-        if ([[PLCameraController sharedInstance] canCapturePhoto]) {
-            _orientationAtTimeOfCapture = _accelerometer.currentDeviceOrientation;
-            [[PLCameraController sharedInstance] capturePhoto]; 
+    if (_isCapturingImage) {
+        if (_cameraCheckFlags.hasForcedAutofocus && _cameraCheckFlags.hasStartedSession) {
+            if ([[PLCameraController sharedInstance] canCapturePhoto]) {
+                [[PLCameraController sharedInstance] capturePhoto]; 
+            }
+            else {
+                UIAlertView *alert = [[UIAlertView alloc] initWithTitle:@"QuickShoot" message:@"Cannot capture photo." delegate:self cancelButtonTitle:@"Dismiss" otherButtonTitles:@"Retry", nil];
+                [alert show];
+                [alert release];
+            }
         }
-        else {
-           UIAlertView *alert = [[UIAlertView alloc] initWithTitle:@"QuickShoot" message:@"Cannot capture photo." delegate:self cancelButtonTitle:@"Dismiss" otherButtonTitles:@"Retry", nil];
-            [alert show];
-            [alert release];
-        }
+    }
+    else if (_isCapturingVideo && _cameraCheckFlags.hasStartedSession) {
+        NSLog(@"QS: starting video capture");
+        [(PLCameraController *)[PLCameraController sharedInstance] startVideoCapture];
     }
 }
 
 - (void)cameraController:(PLCameraController *)camController capturedPhoto:(NSDictionary *)photoDict error:(NSError *)error
 {
+    DLog(@"");
     [[PLCameraController sharedInstance] stopPreview];
 
     if (photoDict == nil || error) {
@@ -134,28 +189,66 @@
         [alert release]; 
     }
     else {
-        [self _saveCameraImageToLibrary:[self _dictionaryBySubstitutingCorrectOrientationInDictionary:photoDict]];
+        [self _saveCameraImageToLibrary:photoDict];
     }
 }
 
-- (NSDictionary *)_dictionaryBySubstitutingCorrectOrientationInDictionary:(NSDictionary *)photoDict
+- (void)cameraControllerVideoCaptureDidStart:(PLCameraController *)camController
 {
-    NSMutableDictionary *modifiedDictionary = [photoDict mutableCopy];
-    NSMutableDictionary *modifiedProperties = [modifiedDictionary[@"kPLCameraPhotoPropertiesKey"] mutableCopy];
-    modifiedProperties[@"Orientation"] = [NSNumber numberWithInt:_orientationAtTimeOfCapture];
-    
-    modifiedDictionary[@"kPLCameraPhotoPropertiesKey"] = modifiedProperties;
-
-    [modifiedProperties release];
-
-    return [modifiedDictionary autorelease];
+    DLog(@"");
+    _videoStartHandler(YES);
+    [_videoStartHandler release];
+    _videoStartHandler = nil;
 }
 
+- (void)cameraControllerVideoCaptureDidStop:(PLCameraController *)camController withReason:(NSInteger)reason userInfo:(NSDictionary *)userInfo
+{
+    DLog(@"");
+    [[PLCameraController sharedInstance] stopPreview];
+    if ([userInfo[@"kPLCameraVideoIsUnplayable"] boolValue]) {
+        // check if the video is unplayable before saving
+        UIAlertView *alert = [[UIAlertView alloc] initWithTitle:@"QuickShoot" message:@"An error occurred while capturing the video. Please try again." delegate:nil cancelButtonTitle:@"Dismiss" otherButtonTitles:nil];
+        [alert show];
+        [alert release];
+
+        [self _cleanupVideoCaptureWithResult:NO];
+    }
+    else if (userInfo) {
+        [[PLCameraController sharedInstance] setCameraMode:kPLCameraModePhoto]; // set it back to photo mode
+        [self _saveCameraVideoToLibraryWithInfo:userInfo];
+    }
+}
+
+
+- (void)_setupCameraController
+{
+    // helper function
+    DLog(@"");
+
+    if (self.flashMode && [[PLCameraController sharedInstance] hasFlash]) {
+        DLog(@"Enabling flash");
+        [[PLCameraController sharedInstance] setFlashMode:self.flashMode];
+    }
+    if (self.enableHDR && [[PLCameraController sharedInstance] supportsHDR]) {
+        DLog(@"Enabling HDR");
+        [[PLCameraController sharedInstance] setHDREnabled:self.enableHDR];
+    }
+    if (self.cameraDevice && [[PLCameraController sharedInstance] hasFrontCamera]) {
+        DLog(@"Setting Camera mode");
+        [[PLCameraController sharedInstance] setCameraDevice:(UIImagePickerControllerCameraDevice)self.cameraDevice];
+    }
+}
+
+/*
+*
+*   Image Capture Methods
+*
+*/
 - (void)_saveCameraImageToLibrary:(NSDictionary *)dict
 {
     DLog(@"%@", dict);
     [[PLAssetsSaver sharedAssetsSaver] saveCameraImage:dict metadata:nil additionalProperties:nil requestEnqueuedBlock:nil]; // magick method. Now, if only I could find what the block's signature is.
-    [self _cleanup];
+    [self _cleanupImageCaptureWithResult:YES];
 }
 
 - (void)alertView:(UIAlertView *)alert clickedButtonAtIndex:(NSInteger)clickedButtonIndex
@@ -165,22 +258,21 @@
         [_completionHandler release];
     }
     else {
-        [self _cleanup];
+        [self _cleanupImageCaptureWithResult:NO];
     }
 }
 
-- (void)_cleanup
+- (void)_cleanupImageCaptureWithResult:(BOOL)result
 {
     // Cleanup!
     if (_completionHandler) {
-        _completionHandler(YES);
+        _completionHandler(result);
         [_completionHandler release];
         _completionHandler = nil;
     }
 
     [[PLCameraController sharedInstance] setDelegate:nil];
 
-    _orientationAtTimeOfCapture = 0;
     _cameraDevice = 0;
     _flashMode = 0;
     _enableHDR = NO;
@@ -188,24 +280,38 @@
     _cameraCheckFlags.hasForcedAutofocus = 0;
     _cameraCheckFlags.hasStartedSession  = 0;
 
-    [_accelerometer release];
-    _accelerometer = nil;
-
     _isCapturingImage = NO;
 
     DLog(@"");
 }
 
-#ifdef DEBUG
-- (void)_testCaptureWithNilHandler
+/*
+*
+*   Video Capture Methods
+*
+*/
+- (void)_saveCameraVideoToLibraryWithInfo:(NSDictionary *)dict
 {
-    [self takePhotoWithCompletionHandler:nil];
+    DLog(@"");
+    [[PLAssetsSaver sharedAssetsSaver] saveCameraVideoAtPath:dict[@"kPLCameraControllerVideoPath"] withMetadata:dict[@"kPLCameraControllerVideoMetadata"] thumbnailImage:dict[@"kPLCameraControllerVideoPreviewSurface"] createPreviewWellImage:NO progressStack:nil videoHandler:nil requestEnqueuedBlock:NULL completionBlock:NULL];
+    [self _cleanupVideoCaptureWithResult:YES];
 }
 
-- (void)_testError
+- (void)_cleanupVideoCaptureWithResult:(BOOL)result
 {
-    [self cameraController:[PLCameraController sharedInstance] capturedPhoto:nil error:nil];
+    DLog(@"");
+    if (_videoStopHandler) {
+        _videoStopHandler(result);
+        [_videoStopHandler release];
+        _videoStopHandler = nil;
+    }
+
+    _isCapturingVideo = NO;
+
+    [[PLCameraController sharedInstance] setDelegate:nil];
+
+    _cameraDevice = 0;
+    _flashMode = 0;
 }
-#endif
 
 @end
