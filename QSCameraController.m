@@ -48,6 +48,8 @@
     QSCompletionHandler  _videoStopHandler;
 
     struct {
+        NSUInteger previewStarted:1;
+        NSUInteger modeChanged:1;
         NSUInteger hasStartedSession:1;
         NSUInteger hasForcedAutofocus:1;
     } _cameraCheckFlags;
@@ -75,7 +77,7 @@
         _completionHandler = [complHandler copy];
     }
     else {
-        _completionHandler = [(^(BOOL success){return;}) copy]; // easier to keep an empty stub, than to be all "is it nil?!?!!!" everywhere
+        _completionHandler = [(^(BOOL success){}) copy]; // easier to keep an empty stub, than to be all "is it nil?!?!!!" everywhere
     }
 
     if (_isCapturingImage || _isCapturingVideo) {
@@ -99,7 +101,7 @@
         _videoStartHandler = [videoStartHandler copy];
     }
     else {
-        _videoStartHandler = [(^(BOOL success){return;}) copy];
+        _videoStartHandler = [(^(BOOL success){}) copy];
     }
 
     if (_isCapturingImage || _isCapturingVideo) {
@@ -131,9 +133,8 @@
         _videoStopHandler = [videoStopHandler copy];
     }
     else {
-        _videoStopHandler = [(^(BOOL success){return;}) copy];
+        _videoStopHandler = [(^(BOOL success){}) copy];
     }
-
     [[PLCameraController sharedInstance] stopVideoCapture];
 }
 
@@ -143,6 +144,22 @@
 *   PLCameraController Delegate Methods
 *
 */
+
+- (void)cameraControllerModeDidChange:(PLCameraController *)camController
+{
+    DLog(@"");
+    _cameraCheckFlags.modeChanged = 1;
+}
+
+- (void)cameraControllerPreviewDidStart:(PLCameraController *)camController
+{
+    DLog(@"");
+    _cameraCheckFlags.previewStarted = 1;
+    if (_cameraCheckFlags.modeChanged) {
+        [(PLCameraController *)[PLCameraController sharedInstance] startVideoCapture];
+    }
+}
+
 - (void)cameraControllerSessionDidStart:(PLCameraController *)camController
 {
     DLog(@"");
@@ -167,10 +184,6 @@
             }
         }
     }
-    else if (_isCapturingVideo && _cameraCheckFlags.hasStartedSession) {
-        NSLog(@"QS: starting video capture");
-        [(PLCameraController *)[PLCameraController sharedInstance] startVideoCapture];
-    }
 }
 
 - (void)cameraController:(PLCameraController *)camController capturedPhoto:(NSDictionary *)photoDict error:(NSError *)error
@@ -181,12 +194,12 @@
     if (photoDict == nil || error) {
         UIAlertView *alert = [[UIAlertView alloc] initWithTitle:@"QuickShoot"
                                                         message:[NSString stringWithFormat:@"An error occurred while capturing the image.\n Error %i: %@", error.code, error.localizedDescription]
-                                                       delegate:self
+                                                       delegate:nil
                                               cancelButtonTitle:@"Dismiss"
-                                              otherButtonTitles:@"Retry",
-                              nil];
+                                              otherButtonTitles:nil];
         [alert show];
         [alert release]; 
+        [self _cleanupImageCaptureWithResult:NO];
     }
     else {
         [self _saveCameraImageToLibrary:photoDict];
@@ -251,19 +264,9 @@
     [self _cleanupImageCaptureWithResult:YES];
 }
 
-- (void)alertView:(UIAlertView *)alert clickedButtonAtIndex:(NSInteger)clickedButtonIndex
-{
-    if (!(clickedButtonIndex == alert.cancelButtonIndex)) {
-        [self takePhotoWithCompletionHandler:_completionHandler];
-        [_completionHandler release];
-    }
-    else {
-        [self _cleanupImageCaptureWithResult:NO];
-    }
-}
-
 - (void)_cleanupImageCaptureWithResult:(BOOL)result
 {
+    DLog(@"");
     // Cleanup!
     if (_completionHandler) {
         _completionHandler(result);
@@ -277,6 +280,7 @@
     _flashMode = 0;
     _enableHDR = NO;
 
+    _cameraCheckFlags.previewStarted = 1;
     _cameraCheckFlags.hasForcedAutofocus = 0;
     _cameraCheckFlags.hasStartedSession  = 0;
 
@@ -307,6 +311,11 @@
     }
 
     _isCapturingVideo = NO;
+
+    _cameraCheckFlags.previewStarted     = 0;
+    _cameraCheckFlags.hasForcedAutofocus = 0;
+    _cameraCheckFlags.hasStartedSession  = 0;
+    _cameraCheckFlags.modeChanged        = 0;
 
     [[PLCameraController sharedInstance] setDelegate:nil];
 
