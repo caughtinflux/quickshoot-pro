@@ -3,8 +3,8 @@
 	bundle = QSPrefs;
 	cell = PSLinkCell;
 	detail = QSPrefsListController;
-	icon = /Applications/Camera.app/Camera-spotlight.png;
+	icon = QSProPrefs.png;
 	isController = 1;
-	label = QuickShoot;
+	label = "QuickShoot Pro";
     };
 }

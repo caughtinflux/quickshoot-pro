@@ -18,7 +18,7 @@
 			<key>default</key>
 			<string>kQSFlashModeAuto</string>
 			<key>defaults</key>
-			<string>com.caughtinflux.qsprefs</string>
+			<string>com.caughtinflux.qsproprefs</string>
 			<key>detail</key>
 			<string>PSListItemsController</string>
 			<key>key</key>
@@ -42,7 +42,7 @@
 				<string>camera-flash</string>
 			</array>
 			<key>PostNotification</key>
-			<string>com.caughtinflux.quickshoot.prefschanged</string>
+			<string>com.caughtinflux.quickshootpro.prefschanged</string>
 		</dict>
 		<dict>
 			<key>cell</key>
@@ -50,7 +50,7 @@
 			<key>default</key>
 			<string>kQSCameraDeviceRear</string>
 			<key>defaults</key>
-			<string>com.caughtinflux.qsprefs</string>
+			<string>com.caughtinflux.qsproprefs</string>
 			<key>detail</key>
 			<string>PSListItemsController</string>
 			<key>key</key>
@@ -72,7 +72,7 @@
 				<string>front-facing-camera</string>
 			</array>
 			<key>PostNotification</key>
-			<string>com.caughtinflux.quickshoot.prefschanged</string>
+			<string>com.caughtinflux.quickshootpro.prefschanged</string>
 
 		</dict>
 		<dict>
@@ -81,13 +81,27 @@
 			<key>default</key>
 			<false/>
 			<key>defaults</key>
-			<string>com.caughtinflux.qsprefs</string>
+			<string>com.caughtinflux.qsproprefs</string>
 			<key>key</key>
 			<string>kQSHDREnabled</string>
 			<key>label</key>
 			<string>HDR</string>
 			<key>PostNotification</key>
-			<string>com.caughtinflux.quickshoot.prefschanged</string>
+			<string>com.caughtinflux.quickshootpro.prefschanged</string>
+		</dict>
+		<dict>
+			<key>cell</key>
+			<string>PSSwitchCell</string>
+			<key>default</key>
+			<true/>
+			<key>defaults</key>
+			<string>com.caughtinflux.qsproprefs</string>
+			<key>key</key>
+			<string>kQSWaitForFocus</string>
+			<key>label</key>
+			<string>Anti-Shake</string>
+			<key>PostNotification</key>
+			<string>com.caughtinflux.quickshootpro.prefschanged</string>
 		</dict>
 
 		<dict>
@@ -96,7 +110,7 @@
 			<key>label</key>
 			<string>Support</string>
 			<key>footerText</key>
-			<string>QuickShoot is © 2013 Aditya KD (caughtinflux)</string>
+			<string>QuickShoot Pro is © 2013 Aditya KD (caughtinflux)</string>
 			<key>isStaticText</key>
 			<true/>
 		</dict>
@@ -118,6 +132,6 @@
 		</dict>
 	</array>
 	<key>title</key>
-	<string>QuickShoot</string>
+	<string>QuickShoot Pro</string>
 </dict>
 </plist>

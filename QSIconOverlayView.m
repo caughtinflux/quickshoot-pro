@@ -43,19 +43,18 @@
 - (void)imageCaptureCompleted
 {
 	UIImageView *doneImageView = [[[UIImageView alloc] initWithImage:[self _bundleImageNamed:@"Done"]] autorelease];
-	
-	CGPoint center = self.center;
-	center.y -= 10;
-	doneImageView.center = center;
+	CGRect frame = doneImageView.frame;
+	frame.origin.x = _irisImageView.bounds.size.width * 0.20;
+	frame.origin.y = _irisImageView.bounds.origin.y;
+	doneImageView.frame = frame;
 
 	[self _stopBlinkingFocus]; // removes the focus rect from _irisImageView
 	[_irisImageView addSubview:doneImageView];
 
 	QSIconOverlayView __block *wSelf = self;
-
+	// keep the done image on the icon for 1.5 seconds
 	double delayInSeconds = 1.5;
     dispatch_time_t popTime = dispatch_time(DISPATCH_TIME_NOW, (int64_t)(delayInSeconds * NSEC_PER_SEC));
-
 	dispatch_after(popTime, dispatch_get_main_queue(), ^{
 		[doneImageView removeFromSuperview];
 		[wSelf _animateIrisViewOut];
@@ -90,8 +89,8 @@
 		
 		newFrame.size.height = imageHeight;
 		newFrame.size.width = imageWidth;
-		newFrame.origin.x -= (imageWidth / 2.0);
-		newFrame.origin.y -= (imageHeight / 2.0);
+		newFrame.origin.x -= (imageWidth * 0.5);
+		newFrame.origin.y -= (imageHeight * 0.5);
 		// circularly animate the iris view to its original rect.
 		_irisImageView.frame = newFrame;
 	} completion:^(BOOL finished){
@@ -110,8 +109,8 @@
 	[UIView animateWithDuration:0.4 animations:^{
 
 		CGRect zeroFrame = wSelf->_irisImageView.frame;
-		zeroFrame.origin.x += (imageWidth / 2.0);
-		zeroFrame.origin.y += (imageHeight / 2.0);
+		zeroFrame.origin.x += (imageWidth * 0.5);
+		zeroFrame.origin.y += (imageHeight * 0.5);
 		zeroFrame.size.height = 0;
 		zeroFrame.size.width  = 0;
 
@@ -128,11 +127,8 @@
 	if (!_focusRectImageView) {
 		_focusRectImageView = [[UIImageView alloc] initWithImage:[self _bundleImageNamed:@"Loading"]];
 	}
+	_focusRectImageView.center = (CGPoint){(_irisImageView.bounds.size.width * 0.5), (_irisImageView.bounds.size.height * 0.5)};
 	[_irisImageView addSubview:_focusRectImageView];
-	CGPoint center = self.center;
-	center.x -= 5;
-	center.y -= 5;
-	_focusRectImageView.center = center;
 
 	QSIconOverlayView __block *wSelf = self;
 	[UIView animateWithDuration:0.4f delay:0.0f options:(UIViewAnimationOptionCurveEaseInOut | UIViewAnimationOptionRepeat |  UIViewAnimationOptionAutoreverse) animations:^{

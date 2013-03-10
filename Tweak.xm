@@ -9,7 +9,7 @@
 
 #import <sys/utsname.h>
 
-#define kPrefPath [NSHomeDirectory() stringByAppendingString:@"/Library/Preferences/com.caughtinflux.qsprefs.plist"]
+#define kPrefPath [NSHomeDirectory() stringByAppendingString:@"/Library/Preferences/com.caughtinflux.qsproprefs.plist"]
 
 @interface SBAwayView : UIView
 - (id)lockBar;
@@ -32,7 +32,6 @@ static QSFlashMode QSFlashModeFromString(NSString *string);
 static QSCameraDevice QSCameraDeviceFromString(NSString *string);
 
 // these are inlines, so no errors are thrown if I don't use them. also, they're tiny
-static inline void QSSetCameraControllerPreferences(void);
 static inline NSString * QSGetMachineName(void);
 
 
@@ -41,18 +40,17 @@ static inline NSString * QSGetMachineName(void);
 *   Preference Key Constants
 *
 */
-NSString * const QSFlashModeKey    = @"kQSFlashMode";
-NSString * const QSCameraDeviceKey = @"kQSCameraDevice";
-NSString * const QSHDRModeKey      = @"kQSHDREnabled";
+static NSString * const QSFlashModeKey    = @"kQSFlashMode";
+static NSString * const QSCameraDeviceKey = @"kQSCameraDevice";
+static NSString * const QSHDRModeKey      = @"kQSHDREnabled";
+static NSString * const QSWaitForFocusKey = @"kQSWaitForFocus";
+
 
 /*
 *
 *   Variables
 *
 */
-static QSCameraDevice  _preferredCameraDevice;
-static QSFlashMode     _preferredFlashMode;
-static BOOL            _preferredHDRMode;
 static BOOL            _isCapturingImage;
 
 
@@ -83,14 +81,18 @@ static BOOL            _isCapturingImage;
         return;
     }
 
-
     _isCapturingImage = YES;
-
-    QSSetCameraControllerPreferences();
 
     SBIconImageView *imageView = [self iconImageView];
     QSIconOverlayView *overlayView = [[[QSIconOverlayView alloc] initWithFrame:imageView.frame] autorelease];
     [self setUserInteractionEnabled:NO];
+
+    dispatch_time_t popTime = dispatch_time(DISPATCH_TIME_NOW, (int64_t)(10 * NSEC_PER_SEC));
+    dispatch_after(popTime, dispatch_get_main_queue(), ^(void){
+        // create a failsafe, which runs after 10 seconds
+        [self setUserInteractionEnabled:YES];
+    });
+
     overlayView.animationCompletionHandler = ^{
         [overlayView removeFromSuperview];
         [self setUserInteractionEnabled:YES];
@@ -126,7 +128,6 @@ static BOOL            _isCapturingImage;
 - (void)handleCameraTapGesture:(UITapGestureRecognizer *)recognizer
 {
     if (recognizer.numberOfTapsRequired == 2) {
-        QSSetCameraControllerPreferences();
         [[QSCameraController sharedInstance] takePhotoWithCompletionHandler:^(BOOL success){
             ;
         }];
@@ -145,9 +146,11 @@ static BOOL            _isCapturingImage;
 static void QSUpdatePrefs(CFNotificationCenterRef center, void *observer, CFStringRef name, const void *object, CFDictionaryRef userInfo)
 {
     NSDictionary *prefs = [[NSDictionary alloc] initWithContentsOfFile:kPrefPath];
-    _preferredCameraDevice = QSCameraDeviceFromString(prefs[QSCameraDeviceKey]);
-    _preferredFlashMode = QSFlashModeFromString(prefs[QSFlashModeKey]);
-    _preferredHDRMode = [prefs[QSHDRModeKey] boolValue];
+
+    [QSCameraController sharedInstance].cameraDevice = QSCameraDeviceFromString(prefs[QSCameraDeviceKey]);
+    [QSCameraController sharedInstance].flashMode = QSFlashModeFromString(prefs[QSFlashModeKey]);
+    [QSCameraController sharedInstance].enableHDR = [prefs[QSHDRModeKey] boolValue];
+    [QSCameraController sharedInstance].waitForFocusCompletion = [prefs[QSWaitForFocusKey] boolValue];
 
     [prefs release];
 }
@@ -172,13 +175,6 @@ static QSCameraDevice QSCameraDeviceFromString(NSString *string)
         return QSCameraDeviceFront;
     else
         return QSCameraDeviceRear;
-}
-
-static inline void QSSetCameraControllerPreferences(void)
-{
-    [[QSCameraController sharedInstance] setCameraDevice:_preferredCameraDevice];
-    [[QSCameraController sharedInstance] setFlashMode:_preferredFlashMode];
-    [[QSCameraController sharedInstance] setEnableHDR:_preferredHDRMode];
 }
 
 static inline NSString * QSGetMachineName(void)

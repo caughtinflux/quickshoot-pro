@@ -275,17 +275,12 @@
 
     [[PLCameraController sharedInstance] setDelegate:nil];
 
-    _cameraDevice = 0;
-    _flashMode = 0;
-    _enableHDR = NO;
-
     _cameraCheckFlags.previewStarted = 1;
     _cameraCheckFlags.hasForcedAutofocus = 0;
     _cameraCheckFlags.hasStartedSession  = 0;
+    _cameraCheckFlags.modeChanged = 0;
 
     _isCapturingImage = NO;
-
-    DLog(@"");
 }
 
 /*
@@ -317,9 +312,6 @@
     _cameraCheckFlags.modeChanged        = 0;
 
     [[PLCameraController sharedInstance] setDelegate:nil];
-
-    _cameraDevice = 0;
-    _flashMode = 0;
 }
 
 @end

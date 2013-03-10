@@ -18,10 +18,11 @@ typedef void (^QSCompletionHandler)(BOOL); // the BOOL argument is most probably
 
 @interface QSCameraController : NSObject <PLCameraControllerDelegate, UIAlertViewDelegate>
 
-// these properties have to be set every time a photo is to be taken, they are zeroed out after every capture.
+// these properties have to be set every time a photo is to be taken, they are zeroed out after every capture. Why
 @property(nonatomic, assign) QSCameraDevice cameraDevice;
 @property(nonatomic, assign) QSFlashMode flashMode;
 @property(nonatomic, assign) BOOL enableHDR;
+@property(nonatomic, assign) BOOL waitForFocusCompletion;
  
 + (instancetype)sharedInstance;
 // The completion handler is copied

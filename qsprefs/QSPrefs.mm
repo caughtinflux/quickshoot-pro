@@ -2,6 +2,7 @@
 #import <UIKit/UIKit.h>
 #import <Preferences/Preferences.h>
 #import <MessageUI/MessageUI.h>
+#import <sys/utsname.h>
 
 #define kQSVersion @"1.3"
 
@@ -40,9 +41,13 @@
 {
 	MFMailComposeViewController *mailController = [[MFMailComposeViewController alloc] init];
     mailController.mailComposeDelegate = self;
+
+    struct utsname systemInfo;
+    uname(&systemInfo);
+    NSString *machine = [NSString stringWithCString:systemInfo.machine encoding:NSUTF8StringEncoding];
  
     [mailController setSubject:[NSString stringWithFormat:@"QuickShoot Version %@", kQSVersion]];
- 
+	[mailController setMessageBody:machine isHTML:NO]; 
     [mailController setToRecipients:@[@"caughtinflux@me.com"]];
   
     // Present the mail composition interface.
