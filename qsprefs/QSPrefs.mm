@@ -45,9 +45,10 @@
     struct utsname systemInfo;
     uname(&systemInfo);
     NSString *machine = [NSString stringWithCString:systemInfo.machine encoding:NSUTF8StringEncoding];
+	NSString *messageBody = [[machine stringByAppendingString:@" "] stringByAppendingString:[UIDevice currentDevice].systemVersion];
  
     [mailController setSubject:[NSString stringWithFormat:@"QuickShoot Version %@", kQSVersion]];
-	[mailController setMessageBody:machine isHTML:NO]; 
+	[mailController setMessageBody:messageBody isHTML:NO]; 
     [mailController setToRecipients:@[@"caughtinflux@me.com"]];
   
     // Present the mail composition interface.
