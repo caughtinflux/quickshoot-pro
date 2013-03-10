@@ -8,11 +8,8 @@
 #define kPLCameraModePhoto 0
 #define kPLCameraModeVideo 1
 
-/*
-*
-*   Logging Macros
-*
-*/
+#pragma mark - Logging Macros
+
 #ifdef DEBUG
 #   define DLog(fmt, ...) NSLog((@"%s [Line %d] " fmt), __PRETTY_FUNCTION__, __LINE__, ##__VA_ARGS__);
 #else
@@ -64,11 +61,8 @@
     return sharedInstance;
 }
 
-/*
-*
-*   Public Methods
-*
-*/
+
+#pragma mark - Public Methods
 - (void)takePhotoWithCompletionHandler:(QSCompletionHandler)complHandler
 {
     DLog(@"");
@@ -138,12 +132,7 @@
 }
 
 
-/*
-*
-*   PLCameraController Delegate Methods
-*
-*/
-
+#pragma mark - PLCameraController Delegate
 - (void)cameraControllerModeDidChange:(PLCameraController *)camController
 {
     DLog(@"");
@@ -251,11 +240,8 @@
     }
 }
 
-/*
-*
-*   Image Capture Methods
-*
-*/
+
+#pragma mark - Image Capture Methods
 - (void)_saveCameraImageToLibrary:(NSDictionary *)dict
 {
     DLog(@"%@", dict);
@@ -283,11 +269,8 @@
     _isCapturingImage = NO;
 }
 
-/*
-*
-*   Video Capture Methods
-*
-*/
+
+#pragma mark - Video Capture Methods
 - (void)_saveCameraVideoToLibraryWithInfo:(NSDictionary *)dict
 {
     DLog(@"");

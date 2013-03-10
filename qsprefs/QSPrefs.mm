@@ -45,7 +45,7 @@
     struct utsname systemInfo;
     uname(&systemInfo);
     NSString *machine = [NSString stringWithCString:systemInfo.machine encoding:NSUTF8StringEncoding];
-	NSString *messageBody = [[machine stringByAppendingString:@" "] stringByAppendingString:[UIDevice currentDevice].systemVersion];
+	NSString *messageBody = [[machine stringByAppendingString:@", iOS "] stringByAppendingString:[UIDevice currentDevice].systemVersion];
  
     [mailController setSubject:[NSString stringWithFormat:@"QuickShoot Version %@", kQSVersion]];
 	[mailController setMessageBody:messageBody isHTML:NO]; 

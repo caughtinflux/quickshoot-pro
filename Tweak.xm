@@ -1,16 +1,14 @@
 #import <UIKit/UIKit.h>
-
 #import "QSCameraController.h"
 #import "QSIconOverlayView.h"
-
 #import <SpringBoard/SBIconView.h>
 #import <SpringBoard/SBIconImageView.h>
 #import <SpringBoard/SBIcon.h>
-
 #import <sys/utsname.h>
 
 #define kPrefPath [NSHomeDirectory() stringByAppendingString:@"/Library/Preferences/com.caughtinflux.qsproprefs.plist"]
 
+#pragma mark - Lockscreen Class Interfaces
 @interface SBAwayView : UIView
 - (id)lockBar;
 @end
@@ -21,11 +19,7 @@
 @end
 
 
-/*
-*
-*   Function Declarations
-*
-*/
+#pragma mark - Function Declarations
 static void QSUpdatePrefs(CFNotificationCenterRef center, void *observer, CFStringRef name, const void *object, CFDictionaryRef userInfo);
 
 static QSFlashMode QSFlashModeFromString(NSString *string);
@@ -35,30 +29,18 @@ static QSCameraDevice QSCameraDeviceFromString(NSString *string);
 static inline NSString * QSGetMachineName(void);
 
 
-/*
-*
-*   Preference Key Constants
-*
-*/
+#pragma mark - Preference Key Constants
 static NSString * const QSFlashModeKey    = @"kQSFlashMode";
 static NSString * const QSCameraDeviceKey = @"kQSCameraDevice";
 static NSString * const QSHDRModeKey      = @"kQSHDREnabled";
 static NSString * const QSWaitForFocusKey = @"kQSWaitForFocus";
 
 
-/*
-*
-*   Variables
-*
-*/
+#pragma mark - Static Variables
 static BOOL            _isCapturingImage;
 
 
-/*
-*
-*   Application Icon Hook
-*
-*/
+#pragma mark - Application Icon Hook
 %hook SBIconView
 - (void)setIcon:(SBIcon *)icon
 {
@@ -108,11 +90,7 @@ static BOOL            _isCapturingImage;
 %end
 
 
-/*
-*
-*   Camera Grabber Hooks
-*
-*/
+#pragma mark - Camera Grabber Hooks
 %hook UITapGestureRecognizer 
 - (UITapGestureRecognizer *)initWithTarget:(id)target action:(SEL)action
 {
@@ -138,11 +116,8 @@ static BOOL            _isCapturingImage;
 }
 %end
 
-/*
-*
-*   Function Definitions
-*
-*/
+
+#pragma mark - Function Definitions
 static void QSUpdatePrefs(CFNotificationCenterRef center, void *observer, CFStringRef name, const void *object, CFDictionaryRef userInfo)
 {
     NSDictionary *prefs = [[NSDictionary alloc] initWithContentsOfFile:kPrefPath];
