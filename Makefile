@@ -1,7 +1,5 @@
 TARGET = iphone:clang:latest:6.0
 
-DEBUG = 1
-
 include theos/makefiles/common.mk
 
 TWEAK_NAME = QuickShootPro

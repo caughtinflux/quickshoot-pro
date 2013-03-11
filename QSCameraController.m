@@ -83,6 +83,16 @@ static void QSDeviceOrientationChangedCallback(CFNotificationCenterRef center, v
     ((PLCameraController *)[PLCameraController sharedInstance]).delegate = self;
 }
 
+- (void)startVideoCaptureWithHandler:(QSCompletionHandler)handler
+{
+    return;
+}
+
+- (void)stopVideoCaptureWithHandler
+{
+    [[PLCameraController sharedInstance] stopVideoCapture];
+}
+
 #pragma mark - PLCameraController Delegate
 - (void)cameraControllerModeDidChange:(PLCameraController *)camController
 {
@@ -94,9 +104,6 @@ static void QSDeviceOrientationChangedCallback(CFNotificationCenterRef center, v
 {
     DLog(@"");
     _cameraCheckFlags.previewStarted = 1;
-    if (_cameraCheckFlags.modeChanged) {
-        [(PLCameraController *)[PLCameraController sharedInstance] startVideoCapture];
-    }
 }
 
 - (void)cameraControllerSessionDidStart:(PLCameraController *)camController
@@ -126,6 +133,11 @@ static void QSDeviceOrientationChangedCallback(CFNotificationCenterRef center, v
     }
 }
 
+- (void)cameraController:(PLCameraController *)camController cleanApertureDidChange:(CGRect)apertureRect
+{
+    DLog(@"");
+}
+
 - (void)cameraController:(PLCameraController *)camController capturedPhoto:(NSDictionary *)photoDict error:(NSError *)error
 {
     DLog(@"");
@@ -146,6 +158,12 @@ static void QSDeviceOrientationChangedCallback(CFNotificationCenterRef center, v
     }
 }
 
+- (void)cameraControllerVideoCaptureDidStop:(PLCameraController *)camController withReason:(int)reason userInfo:(NSDictionary *)userInfo
+{
+    DLog(@"");
+}
+
+#pragma mark - Helper Methods
 - (void)_setupCameraController
 {
     // helper function
@@ -191,13 +209,10 @@ static void QSDeviceOrientationChangedCallback(CFNotificationCenterRef center, v
 
     _isCapturingImage = NO;
 }
-
 @end
 
 #pragma mark  - Orientation Callback
 static void QSDeviceOrientationChangedCallback(CFNotificationCenterRef center, void *observer, CFStringRef name, const void *object, CFDictionaryRef userInfo)
 {
-    DLog(@"Received orientation update");
-    DLog(@"Current Orientation: %i", [UIDevice currentDevice].orientation);
     [[QSCameraController sharedInstance] setCurrentOrientation:[UIDevice currentDevice].orientation];
 }

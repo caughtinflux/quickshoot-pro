@@ -27,5 +27,7 @@ typedef void (^QSCompletionHandler)(BOOL); // the BOOL argument is most probably
 + (instancetype)sharedInstance;
 // The completion handlers are copied
 - (void)takePhotoWithCompletionHandler:(QSCompletionHandler)completionHandler;
+- (void)startVideoCaptureWithHandler:(QSCompletionHandler)handler;
+- (void)stopVideoCaptureWithHandler;
 
 @end
