@@ -160,7 +160,7 @@
 - (void)cameraControllerFocusDidEnd:(PLCameraController *)camController
 {
     DLog(@"");
-    if (_isCapturingImage) {
+    if (_isCapturingImage && self.waitForFocusCompletion) {
         if (_cameraCheckFlags.hasForcedAutofocus && _cameraCheckFlags.hasStartedSession) {
             if ([[PLCameraController sharedInstance] canCapturePhoto]) {
                 [[PLCameraController sharedInstance] capturePhoto]; 

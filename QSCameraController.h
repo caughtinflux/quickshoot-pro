@@ -18,7 +18,6 @@ typedef void (^QSCompletionHandler)(BOOL); // the BOOL argument is most probably
 
 @interface QSCameraController : NSObject <PLCameraControllerDelegate, UIAlertViewDelegate>
 
-// These properties are held on throughout the lifetime of the shared instance
 @property(nonatomic, assign) QSCameraDevice cameraDevice;
 @property(nonatomic, assign) QSFlashMode flashMode;
 @property(nonatomic, assign) BOOL enableHDR;
