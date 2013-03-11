@@ -22,11 +22,10 @@ typedef void (^QSCompletionHandler)(BOOL); // the BOOL argument is most probably
 @property(nonatomic, assign) QSFlashMode flashMode;
 @property(nonatomic, assign) BOOL enableHDR;
 @property(nonatomic, assign) BOOL waitForFocusCompletion;
+@property(nonatomic, assign) UIDeviceOrientation currentOrientation;
  
 + (instancetype)sharedInstance;
 // The completion handlers are copied
 - (void)takePhotoWithCompletionHandler:(QSCompletionHandler)completionHandler;
-- (void)startVideoCaptureWithCompletionHandler:(QSCompletionHandler)videoStartCompletionHandler;
-- (void)stopVideoCaptureWithCompletionHandler:(QSCompletionHandler)videoStopCompletionHandler;
 
 @end

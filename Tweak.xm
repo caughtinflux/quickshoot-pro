@@ -1,6 +1,7 @@
 #import <UIKit/UIKit.h>
 #import "QSCameraController.h"
 #import "QSIconOverlayView.h"
+#import <SpringBoard/SpringBoard.h>
 #import <SpringBoard/SBIconView.h>
 #import <SpringBoard/SBIconImageView.h>
 #import <SpringBoard/SBIcon.h>
@@ -37,7 +38,7 @@ static NSString * const QSWaitForFocusKey = @"kQSWaitForFocus";
 
 
 #pragma mark - Static Variables
-static BOOL            _isCapturingImage;
+static BOOL _isCapturingImage;
 
 
 #pragma mark - Application Icon Hook
@@ -116,6 +117,18 @@ static BOOL            _isCapturingImage;
 }
 %end
 
+
+#pragma mark - SpringBoard Hook (Rotation Events)
+%hook SpringBoard
+- (void)applicationDidFinishLaunching:(UIApplication *)application
+{
+    %orig;
+    [(SpringBoard *)[UIApplication sharedApplication] setWantsOrientationEvents:YES];
+    [(SpringBoard *)[UIApplication sharedApplication] updateOrientationAndAccelerometerSettings];
+    [[UIDevice currentDevice] beginGeneratingDeviceOrientationNotifications];
+    [QSCameraController sharedInstance]; // make sure the object is created, hence setting it up to receive orientation notifs.
+}
+%end
 
 #pragma mark - Function Definitions
 static void QSUpdatePrefs(CFNotificationCenterRef center, void *observer, CFStringRef name, const void *object, CFDictionaryRef userInfo)

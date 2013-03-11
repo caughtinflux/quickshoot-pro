@@ -2,8 +2,7 @@
 
 #import <PhotoLibrary/PLCameraController.h>
 #import <PhotoLibraryServices/PLAssetsSaver.h>
-#import <SpringBoardServices/SBSAccelerometer.h>
-#import <AVFoundation/AVFoundation.h>
+#import <SpringBoard/SpringBoard.h>
 
 #define kPLCameraModePhoto 0
 #define kPLCameraModeVideo 1
@@ -27,11 +26,9 @@
 // These declarations are here so warnings are emitted when something isn't typed correctly
 - (void)_saveCameraImageToLibrary:(NSDictionary *)dict;
 - (void)_cleanupImageCaptureWithResult:(BOOL)result;
-
-- (void)_saveCameraVideoToLibraryWithInfo:(NSDictionary *)dict;
-- (void)_cleanupVideoCaptureWithResult:(BOOL)result;
-
 @end
+
+static void QSDeviceOrientationChangedCallback(CFNotificationCenterRef center, void *observer, CFStringRef name, const void *object, CFDictionaryRef userInfo);
 
 @implementation QSCameraController 
 {
@@ -39,8 +36,6 @@
     BOOL                 _isCapturingVideo;
 
     QSCompletionHandler  _completionHandler;
-    QSCompletionHandler  _videoStartHandler;
-    QSCompletionHandler  _videoStopHandler;
 
     struct {
         NSUInteger previewStarted:1;
@@ -57,10 +52,12 @@
     static dispatch_once_t onceToken;
     dispatch_once(&onceToken, ^{
         sharedInstance = [[self alloc] init];
+
+        // set up rotation notifications
+        CFNotificationCenterAddObserver(CFNotificationCenterGetLocalCenter(), NULL, QSDeviceOrientationChangedCallback, (CFStringRef)UIDeviceOrientationDidChangeNotification, NULL, CFNotificationSuspensionBehaviorCoalesce);
     });
     return sharedInstance;
 }
-
 
 #pragma mark - Public Methods
 - (void)takePhotoWithCompletionHandler:(QSCompletionHandler)complHandler
@@ -86,51 +83,6 @@
     [[PLCameraController sharedInstance] startPreview];
     ((PLCameraController *)[PLCameraController sharedInstance]).delegate = self;
 }
-
-- (void)startVideoCaptureWithCompletionHandler:(QSCompletionHandler)videoStartHandler
-{
-    DLog(@"");
-    if (videoStartHandler != nil) {
-        _videoStartHandler = [videoStartHandler copy];
-    }
-    else {
-        _videoStartHandler = [(^(BOOL success){}) copy];
-    }
-
-    if (_isCapturingImage || _isCapturingVideo) {
-        _videoStartHandler(NO);
-        [_videoStartHandler release];
-        _videoStartHandler = nil;
-        return;
-    }
-
-    _isCapturingVideo = YES;
-
-    if ([[PLCameraController sharedInstance] supportsVideoCapture]) {
-        [[PLCameraController sharedInstance] setDelegate:self];
-        [[PLCameraController sharedInstance] setCameraMode:kPLCameraModeVideo];
-        [[PLCameraController sharedInstance] startPreview];
-        [self _setupCameraController];
-    }
-    else {
-        UIAlertView *alert = [[UIAlertView alloc] initWithTitle:@"QuickShoot" message:@"Video capture is unsupported at this time." delegate:nil cancelButtonTitle:@"Dismiss" otherButtonTitles:nil];
-        [alert show];
-        [alert release];
-    }
-}
-
-- (void)stopVideoCaptureWithCompletionHandler:(QSCompletionHandler)videoStopHandler
-{
-    DLog(@"");
-    if (videoStopHandler != nil) {
-        _videoStopHandler = [videoStopHandler copy];
-    }
-    else {
-        _videoStopHandler = [(^(BOOL success){}) copy];
-    }
-    [[PLCameraController sharedInstance] stopVideoCapture];
-}
-
 
 #pragma mark - PLCameraController Delegate
 - (void)cameraControllerModeDidChange:(PLCameraController *)camController
@@ -163,6 +115,7 @@
     if (_isCapturingImage && self.waitForFocusCompletion) {
         if (_cameraCheckFlags.hasForcedAutofocus && _cameraCheckFlags.hasStartedSession) {
             if ([[PLCameraController sharedInstance] canCapturePhoto]) {
+                [[PLCameraController sharedInstance] setCaptureOrientation:self.currentOrientation];
                 [[PLCameraController sharedInstance] capturePhoto]; 
             }
             else {
@@ -194,33 +147,6 @@
     }
 }
 
-- (void)cameraControllerVideoCaptureDidStart:(PLCameraController *)camController
-{
-    DLog(@"");
-    _videoStartHandler(YES);
-    [_videoStartHandler release];
-    _videoStartHandler = nil;
-}
-
-- (void)cameraControllerVideoCaptureDidStop:(PLCameraController *)camController withReason:(NSInteger)reason userInfo:(NSDictionary *)userInfo
-{
-    DLog(@"");
-    [[PLCameraController sharedInstance] stopPreview];
-    if ([userInfo[@"kPLCameraVideoIsUnplayable"] boolValue]) {
-        // check if the video is unplayable before saving
-        UIAlertView *alert = [[UIAlertView alloc] initWithTitle:@"QuickShoot" message:@"An error occurred while capturing the video. Please try again." delegate:nil cancelButtonTitle:@"Dismiss" otherButtonTitles:nil];
-        [alert show];
-        [alert release];
-
-        [self _cleanupVideoCaptureWithResult:NO];
-    }
-    else if (userInfo) {
-        [[PLCameraController sharedInstance] setCameraMode:kPLCameraModePhoto]; // set it back to photo mode
-        [self _saveCameraVideoToLibraryWithInfo:userInfo];
-    }
-}
-
-
 - (void)_setupCameraController
 {
     // helper function
@@ -239,7 +165,6 @@
         [[PLCameraController sharedInstance] setCameraDevice:(UIImagePickerControllerCameraDevice)self.cameraDevice];
     }
 }
-
 
 #pragma mark - Image Capture Methods
 - (void)_saveCameraImageToLibrary:(NSDictionary *)dict
@@ -268,32 +193,12 @@
     _isCapturingImage = NO;
 }
 
-
-#pragma mark - Video Capture Methods
-- (void)_saveCameraVideoToLibraryWithInfo:(NSDictionary *)dict
-{
-    DLog(@"");
-    [[PLAssetsSaver sharedAssetsSaver] saveCameraVideoAtPath:dict[@"kPLCameraControllerVideoPath"] withMetadata:dict[@"kPLCameraControllerVideoMetadata"] thumbnailImage:dict[@"kPLCameraControllerVideoPreviewSurface"] createPreviewWellImage:NO progressStack:nil videoHandler:nil requestEnqueuedBlock:NULL completionBlock:NULL];
-    [self _cleanupVideoCaptureWithResult:YES];
-}
-
-- (void)_cleanupVideoCaptureWithResult:(BOOL)result
-{
-    DLog(@"");
-    if (_videoStopHandler) {
-        _videoStopHandler(result);
-        [_videoStopHandler release];
-        _videoStopHandler = nil;
-    }
-
-    _isCapturingVideo = NO;
-
-    _cameraCheckFlags.previewStarted     = 0;
-    _cameraCheckFlags.hasForcedAutofocus = 0;
-    _cameraCheckFlags.hasStartedSession  = 0;
-    _cameraCheckFlags.modeChanged        = 0;
-
-    [[PLCameraController sharedInstance] setDelegate:nil];
-}
-
 @end
+
+#pragma mark  - Orientation Callback
+static void QSDeviceOrientationChangedCallback(CFNotificationCenterRef center, void *observer, CFStringRef name, const void *object, CFDictionaryRef userInfo)
+{
+    DLog(@"Received orientation update");
+    DLog(@"Current Orientation: %i", [UIDevice currentDevice].orientation);
+    [[QSCameraController sharedInstance] setCurrentOrientation:[UIDevice currentDevice].orientation];
+}
