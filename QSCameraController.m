@@ -47,7 +47,6 @@ static void QSDeviceOrientationChangedCallback(CFNotificationCenterRef center, v
 
 + (instancetype)sharedInstance
 {
-    DLog(@"");
     static QSCameraController *sharedInstance;
     static dispatch_once_t onceToken;
     dispatch_once(&onceToken, ^{
