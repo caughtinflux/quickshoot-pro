@@ -2,11 +2,11 @@
 #import <UIKit/UIKit.h>
 #import <PhotoLibrary/PLCameraControllerDelegate-Protocol.h>
 
-// These values are the same that are accepted by PLCameraController
+// These values are accepted by PLCameraController as-is
 typedef enum {
 	QSCameraDeviceRear  = 0,
 	QSCameraDeviceFront = 1,
-} QSCameraDevice; // UIImagePickerControllerCameraDevice
+} QSCameraDevice; // it's the same as UIImagePickerControllerCameraDevice
 
 typedef enum {
 	QSFlashModeAuto =  0,
@@ -18,14 +18,14 @@ typedef void (^QSCompletionHandler)(BOOL); // the BOOL argument is most probably
 
 @interface QSCameraController : NSObject <PLCameraControllerDelegate, UIAlertViewDelegate>
 
-// these properties have to be set every time a photo is to be taken, they are zeroed out after every capture. Why
+// These properties are held on throughout the lifetime of the shared instance
 @property(nonatomic, assign) QSCameraDevice cameraDevice;
 @property(nonatomic, assign) QSFlashMode flashMode;
 @property(nonatomic, assign) BOOL enableHDR;
 @property(nonatomic, assign) BOOL waitForFocusCompletion;
  
 + (instancetype)sharedInstance;
-// The completion handler is copied
+// The completion handlers are copied
 - (void)takePhotoWithCompletionHandler:(QSCompletionHandler)completionHandler;
 - (void)startVideoCaptureWithCompletionHandler:(QSCompletionHandler)videoStartCompletionHandler;
 - (void)stopVideoCaptureWithCompletionHandler:(QSCompletionHandler)videoStopCompletionHandler;

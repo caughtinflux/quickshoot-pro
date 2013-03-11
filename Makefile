@@ -8,9 +8,7 @@ TWEAK_NAME = QuickShootPro
 QuickShootPro_FILES = Tweak.xm QSCameraController.m QSIconOverlayView.m
 QuickShootPro_FRAMEWORKS = UIKit Foundation CoreGraphics
 QuickShootPro_PRIVATE_FRAMEWORKS = PhotoLibrary
-QuickShootPro_CFLAGS = -Wall 
-# GET ALL THE WARNINGS!
-
+QuickShootPro_LDFLAGS = -lactivator
 include $(THEOS_MAKE_PATH)/tweak.mk
 SUBPROJECTS += qsprefs
 include $(THEOS_MAKE_PATH)/aggregate.mk

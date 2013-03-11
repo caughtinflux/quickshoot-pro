@@ -19,7 +19,7 @@
 #define ALog(fmt, ...) NSLog((@"%s" fmt), __PRETTY_FUNCTION__, ##__VA_ARGS__);
 
 
-
+#pragma mark - Private Function Declarations
 @interface QSCameraController () {}
 
 - (void)_setupCameraController;
