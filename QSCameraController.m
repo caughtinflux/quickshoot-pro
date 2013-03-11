@@ -252,7 +252,6 @@
 - (void)_cleanupImageCaptureWithResult:(BOOL)result
 {
     DLog(@"");
-    // Cleanup!
     if (_completionHandler) {
         _completionHandler(result);
         [_completionHandler release];

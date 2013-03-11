@@ -146,6 +146,9 @@
 
 - (void)dealloc
 {
+	[_animationCompletionHandler release];
+	_animationCompletionHandler = nil;
+	
 	[_bundle release];
 	_bundle = nil;
 
