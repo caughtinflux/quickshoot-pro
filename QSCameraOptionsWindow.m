@@ -28,6 +28,7 @@
 {
 	PLCameraToggleButton *_toggleButton;
 }
+@synthesize delegate = _optionsDelegate;
 
 #pragma mark - Custom Initializer(s)
 - (instancetype)initWithFrame:(CGRect)frame showFlash:(BOOL)shouldShowFlash showHDR:(BOOL)shouldShowHDR showCameraToggle:(BOOL)shouldShowCameraToggle
@@ -63,7 +64,9 @@
 #pragma mark - Camera Button Target
 - (void)cameraToggleButtonTapped:(PLCameraToggleButton *)toggleButton
 {
-
+	if ([self.delegate conformsToProtocol:@protocol(QSCameraOptionsWindowDelegate)]) {
+		[self.delegate optionsWindowCameraButtonToggled:self];
+	}
 }
 
 
@@ -80,7 +83,9 @@
 
 - (void)HDRSettingDidChange:(BOOL)newSetting
 {
-
+	if ([self.delegate conformsToProtocol:@protocol(QSCameraOptionsWindowDelegate)]) {
+		[self.delegate optionsWindow:self hdrModeChanged:newSetting];
+	}
 }
 
 
@@ -102,7 +107,9 @@
 
 - (void)flashButtonModeDidChange:(PLCameraFlashButton *)button
 {
-
+	if ([self.delegate conformsToProtocol:@protocol(QSCameraOptionsWindowDelegate)]) {
+		[self.delegate optionsWindow:self flashModeChanged:(QSFlashMode)button.flashMode];
+	}
 }
 
 - (void)dealloc
