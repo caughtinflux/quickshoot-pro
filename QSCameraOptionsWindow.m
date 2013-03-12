@@ -4,9 +4,11 @@
 #import <PhotoLibrary/PLCameraFlashButton.h>
 
 #define kLeftSidePadding      5
-#define kSettingsViewHeight   100
-#define kCameraToggleWidth    60
-#define kSmallButtonYDistance kSettingsViewHeight + 3
+#define kSettingsViewHeight   50
+#define kSettingsViewWidth    190
+#define kFlashButtonWidth     70
+#define kCameraToggleWidth    kFlashButtonWidth
+#define kSmallButtonYDistance kSettingsViewHeight + 15
 
 
 /*
@@ -23,27 +25,30 @@
 */
 
 @implementation QSCameraOptionsWindow
+{
+	PLCameraToggleButton *_toggleButton;
+}
 
 #pragma mark - Custom Initializer(s)
 - (instancetype)initWithFrame:(CGRect)frame showFlash:(BOOL)shouldShowFlash showHDR:(BOOL)shouldShowHDR showCameraToggle:(BOOL)shouldShowCameraToggle
 {
 	if ((self = [super initWithFrame:frame])) {
 		if (shouldShowHDR) {
-			PLCameraSettingsView *settingsView = [[[PLCameraSettingsView alloc] initWithFrame:(CGRect){{kLeftSidePadding, 5}, {frame.size.width, kSettingsViewHeight}} showGrid:NO showHDR:YES showPano:NO] autorelease];
+			PLCameraSettingsView *settingsView = [[[PLCameraSettingsView alloc] initWithFrame:(CGRect){{kLeftSidePadding, 5}, {kSettingsViewWidth, kSettingsViewHeight}} showGrid:NO showHDR:YES showPano:NO] autorelease];
 			settingsView.delegate = self;
 			[self addSubview:settingsView];
 		}
-		if (shouldShowCameraToggle) {
-			PLCameraToggleButton *toggleButton = [[[PLCameraToggleButton alloc] initWithFrame:(CGRect){{kLeftSidePadding, kSmallButtonYDistance}, {kCameraToggleWidth, 20}} isInButtonBar:NO] autorelease];
-			toggleButton.autorotationEnabled = YES;
-			[toggleButton addTarget:self action:@selector(cameraToggleButtonTapped:) forControlEvents:UIControlEventTouchUpInside];
-			[self addSubview:toggleButton];
-		}
 		if (shouldShowFlash) {
-			PLCameraFlashButton *flashButton =  [[[PLCameraFlashButton alloc] initWithFrame:(CGRect){{kCameraToggleWidth + 5,  kSmallButtonYDistance}, {20, 20}} isInButtonBar:NO] autorelease];
+			PLCameraFlashButton *flashButton =  [[[PLCameraFlashButton alloc] initWithFrame:(CGRect){{kLeftSidePadding,  kSmallButtonYDistance}, {kFlashButtonWidth, 20}} isInButtonBar:NO] autorelease];
 			flashButton.autorotationEnabled = YES;
 			flashButton.delegate = self;
 			[self addSubview:flashButton];
+		}
+		if (shouldShowCameraToggle) {
+			_toggleButton = [[PLCameraToggleButton alloc] initWithFrame:(CGRect){{kFlashButtonWidth + 18, kSmallButtonYDistance}, {kCameraToggleWidth, 20}} isInButtonBar:NO];
+			_toggleButton.autorotationEnabled = YES;
+			[_toggleButton addTarget:self action:@selector(cameraToggleButtonTapped:) forControlEvents:UIControlEventTouchUpInside];
+			[self addSubview:_toggleButton];
 		}
 	}
 	return self;
@@ -82,12 +87,12 @@
 #pragma mark - Flash Button Delegate
 - (void)flashButtonDidCollapse:(PLCameraFlashButton *)button
 {
-
+	[_toggleButton setHidden:NO animationDuration:0.5];
 }
 
 - (void)flashButtonWillExpand:(PLCameraFlashButton *)button
 {
-
+	[_toggleButton setHidden:YES animationDuration:0.5];
 }
 
 - (void)flashButtonWasPressed:(PLCameraFlashButton *)button
@@ -100,4 +105,11 @@
 
 }
 
+- (void)dealloc
+{
+	[_toggleButton release];
+	_toggleButton = nil;
+
+	[super dealloc];
+}
 @end
