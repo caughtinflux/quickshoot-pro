@@ -4,28 +4,14 @@
 #import <PhotoLibraryServices/PLAssetsSaver.h>
 #import <SpringBoard/SpringBoard.h>
 
-#define kPLCameraModePhoto 0
-#define kPLCameraModeVideo 1
-
-#pragma mark - Logging Macros
-
-#ifdef DEBUG
-#   define DLog(fmt, ...) NSLog((@"%s [Line %d] " fmt), __PRETTY_FUNCTION__, __LINE__, ##__VA_ARGS__);
-#else
-#   define DLog(...)
-#endif
-
-#define ALog(fmt, ...) NSLog((@"%s" fmt), __PRETTY_FUNCTION__, ##__VA_ARGS__);
-
-
-#pragma mark - Private Function Declarations
+#pragma mark - Private Method Declarations
 @interface QSCameraController () {}
 
 - (void)_setupCameraController;
-
-// These declarations are here so warnings are emitted when something isn't typed correctly
 - (void)_saveCameraImageToLibrary:(NSDictionary *)dict;
 - (void)_cleanupImageCaptureWithResult:(BOOL)result;
+- (void)_showCaptureFailedAlert;
+
 @end
 
 static void QSDeviceOrientationChangedCallback(CFNotificationCenterRef center, void *observer, CFStringRef name, const void *object, CFDictionaryRef userInfo);
@@ -57,6 +43,7 @@ static void QSDeviceOrientationChangedCallback(CFNotificationCenterRef center, v
     });
     return sharedInstance;
 }
+
 
 #pragma mark - Public Methods
 - (void)takePhotoWithCompletionHandler:(QSCompletionHandler)complHandler
@@ -93,6 +80,7 @@ static void QSDeviceOrientationChangedCallback(CFNotificationCenterRef center, v
     [[PLCameraController sharedInstance] stopVideoCapture];
 }
 
+
 #pragma mark - PLCameraController Delegate
 - (void)cameraControllerModeDidChange:(PLCameraController *)camController
 {
@@ -112,6 +100,17 @@ static void QSDeviceOrientationChangedCallback(CFNotificationCenterRef center, v
 
     _cameraCheckFlags.hasStartedSession = 1;
     [[PLCameraController sharedInstance] _autofocus:YES autoExpose:YES];
+    if (!self.waitForFocusCompletion && [[PLCameraController sharedInstance] canCapturePhoto]) {
+        dispatch_time_t popTime = dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.4 * NSEC_PER_SEC));
+        dispatch_after(popTime, dispatch_get_main_queue(), ^(void){
+            if ([[PLCameraController sharedInstance] canCapturePhoto]) {
+                [[PLCameraController sharedInstance] capturePhoto];
+            }
+            else {
+                [self _showCaptureFailedAlert];
+            }
+        });
+    }
     _cameraCheckFlags.hasForcedAutofocus = YES;
 }
    
@@ -125,9 +124,7 @@ static void QSDeviceOrientationChangedCallback(CFNotificationCenterRef center, v
                 [[PLCameraController sharedInstance] capturePhoto]; 
             }
             else {
-                UIAlertView *alert = [[UIAlertView alloc] initWithTitle:@"QuickShoot" message:@"Cannot capture photo." delegate:self cancelButtonTitle:@"Dismiss" otherButtonTitles:@"Retry", nil];
-                [alert show];
-                [alert release];
+                [self _showCaptureFailedAlert];
             }
         }
     }
@@ -163,10 +160,10 @@ static void QSDeviceOrientationChangedCallback(CFNotificationCenterRef center, v
     DLog(@"");
 }
 
+
 #pragma mark - Helper Methods
 - (void)_setupCameraController
 {
-    // helper function
     DLog(@"");
 
     if (self.flashMode && [[PLCameraController sharedInstance] hasFlash]) {
@@ -182,6 +179,7 @@ static void QSDeviceOrientationChangedCallback(CFNotificationCenterRef center, v
         [[PLCameraController sharedInstance] setCameraDevice:(UIImagePickerControllerCameraDevice)self.cameraDevice];
     }
 }
+
 
 #pragma mark - Image Capture Methods
 - (void)_saveCameraImageToLibrary:(NSDictionary *)dict
@@ -202,12 +200,19 @@ static void QSDeviceOrientationChangedCallback(CFNotificationCenterRef center, v
 
     [[PLCameraController sharedInstance] setDelegate:nil];
 
-    _cameraCheckFlags.previewStarted = 1;
+    _cameraCheckFlags.previewStarted = 0;
     _cameraCheckFlags.hasForcedAutofocus = 0;
     _cameraCheckFlags.hasStartedSession  = 0;
     _cameraCheckFlags.modeChanged = 0;
 
     _isCapturingImage = NO;
+}
+
+- (void)_showCaptureFailedAlert
+{
+    UIAlertView *alert = [[UIAlertView alloc] initWithTitle:@"QuickShoot" message:@"Cannot capture photo." delegate:nil cancelButtonTitle:@"Dismiss" otherButtonTitles:nil];
+    [alert show];
+    [alert release];
 }
 @end
 

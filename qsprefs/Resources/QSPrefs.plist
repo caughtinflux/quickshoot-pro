@@ -10,7 +10,7 @@
 			<key>label</key>
 			<string>Settings</string>
 			<key>footerText</key>
-			<string>Preferences are only applicable to devices later than the iPhone 3GS. Enabling HDR will disable flash. Also note, HDR support is shaky at this time.</string>
+			<string>Enabling HDR will disable flash. Setting Anti-Blur to on will increase the image quality, but will not take a photo until the device is still.</string>
 		</dict>
 		<dict>
 			<key>cell</key>
@@ -99,7 +99,7 @@
 			<key>key</key>
 			<string>kQSWaitForFocus</string>
 			<key>label</key>
-			<string>Anti-Shake</string>
+			<string>Anti-Blur</string>
 			<key>PostNotification</key>
 			<string>com.caughtinflux.quickshootpro.prefschanged</string>
 		</dict>

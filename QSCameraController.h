@@ -1,22 +1,9 @@
 #import <Foundation/Foundation.h>
 #import <UIKit/UIKit.h>
 #import <PhotoLibrary/PLCameraControllerDelegate-Protocol.h>
+#import "QSDefines.h"
 
-// These values are accepted by PLCameraController as-is
-typedef enum {
-	QSCameraDeviceRear  = 0,
-	QSCameraDeviceFront = 1,
-} QSCameraDevice; // it's the same as UIImagePickerControllerCameraDevice
-
-typedef enum {
-	QSFlashModeAuto =  0,
-	QSFlashModeOn   =  1,
-	QSFlashModeOff  = -1,
-} QSFlashMode;
-
-typedef void (^QSCompletionHandler)(BOOL); // the BOOL argument is most probably pointless.
-
-@interface QSCameraController : NSObject <PLCameraControllerDelegate, UIAlertViewDelegate>
+@interface QSCameraController : NSObject <PLCameraControllerDelegate>
 
 @property(nonatomic, assign) QSCameraDevice cameraDevice;
 @property(nonatomic, assign) QSFlashMode flashMode;

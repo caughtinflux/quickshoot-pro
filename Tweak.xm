@@ -1,19 +1,20 @@
 #import <UIKit/UIKit.h>
+
 #import "QSCameraController.h"
 #import "QSIconOverlayView.h"
+#import "QSActivatorListener.h"
+#import "QSDefines.h"
+
 #import <SpringBoard/SpringBoard.h>
 #import <SpringBoard/SBIconView.h>
 #import <SpringBoard/SBIconImageView.h>
 #import <SpringBoard/SBIcon.h>
+
 #import <sys/utsname.h>
 
-#define kPrefPath [NSHomeDirectory() stringByAppendingString:@"/Library/Preferences/com.caughtinflux.qsproprefs.plist"]
 
 #pragma mark - Lockscreen Class Interfaces
-@interface SBAwayView : UIView
-- (id)lockBar;
-@end
-
+@class SBAwayView;
 @interface SBAwayController : NSObject
 + (SBAwayController *)sharedAwayController;
 - (SBAwayView *)awayView;
@@ -22,11 +23,9 @@
 
 #pragma mark - Function Declarations
 static void QSUpdatePrefs(CFNotificationCenterRef center, void *observer, CFStringRef name, const void *object, CFDictionaryRef userInfo);
-
 static QSFlashMode QSFlashModeFromString(NSString *string);
 static QSCameraDevice QSCameraDeviceFromString(NSString *string);
-
-// these are inlines, so no errors are thrown if I don't use them. also, they're tiny
+// these are inlines, so no errors are thrown if I don't use them. Also, they're tiny
 static inline NSString * QSGetMachineName(void);
 
 
@@ -35,7 +34,6 @@ static NSString * const QSFlashModeKey    = @"kQSFlashMode";
 static NSString * const QSCameraDeviceKey = @"kQSCameraDevice";
 static NSString * const QSHDRModeKey      = @"kQSHDREnabled";
 static NSString * const QSWaitForFocusKey = @"kQSWaitForFocus";
-
 
 #pragma mark - Static Variables
 static BOOL _isCapturingImage;
@@ -73,6 +71,7 @@ static BOOL _isCapturingImage;
     dispatch_time_t popTime = dispatch_time(DISPATCH_TIME_NOW, (int64_t)(10 * NSEC_PER_SEC));
     dispatch_after(popTime, dispatch_get_main_queue(), ^(void){
         // create a failsafe, which runs after 10 seconds
+        // just in case the s
         [self setUserInteractionEnabled:YES];
     });
 
@@ -127,6 +126,14 @@ static BOOL _isCapturingImage;
     [(SpringBoard *)[UIApplication sharedApplication] updateOrientationAndAccelerometerSettings];
     [[UIDevice currentDevice] beginGeneratingDeviceOrientationNotifications];
     [QSCameraController sharedInstance]; // make sure the object is created, hence setting it up to receive orientation notifs.
+
+    CFNotificationCenterAddObserver(CFNotificationCenterGetDarwinNotifyCenter(),
+                                    NULL,
+                                    (CFNotificationCallback)&QSUpdatePrefs,
+                                    CFSTR("com.caughtinflux.quickshootpro.prefschanged"),
+                                    NULL,
+                                    CFNotificationSuspensionBehaviorHold);
+    QSUpdatePrefs(NULL, NULL, NULL, NULL, NULL);
 }
 %end
 
@@ -174,14 +181,15 @@ static inline NSString * QSGetMachineName(void)
 
 %ctor
 {
-    @autoreleasepool {
-        %init;
-        CFNotificationCenterAddObserver(CFNotificationCenterGetDarwinNotifyCenter(),
-                                        NULL,
-                                        (CFNotificationCallback)&QSUpdatePrefs,
-                                        CFSTR("com.caughtinflux.quickshootpro.prefschanged"),
-                                        NULL,
-                                        CFNotificationSuspensionBehaviorHold);
-        QSUpdatePrefs(NULL, NULL, NULL, NULL, NULL);
-    }
+    NSAutoreleasePool *p = [NSAutoreleasePool new];
+    %init;
+    CFNotificationCenterAddObserver(CFNotificationCenterGetDarwinNotifyCenter(),
+                                    NULL,
+                                    (CFNotificationCallback)&QSUpdatePrefs,
+                                    CFSTR("com.caughtinflux.quickshootpro.prefschanged"),
+                                    NULL,
+                                    CFNotificationSuspensionBehaviorHold);
+    QSUpdatePrefs(NULL, NULL, NULL, NULL, NULL);
+    [[LAActivator sharedInstance] registerListener:[QSActivatorListener new] forName:@"com.caughtinflux.quickshootpro.listener"];
+    [p drain];
 }

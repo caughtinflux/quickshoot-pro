@@ -3,8 +3,6 @@
 
 /*
 *	This is a separate class, for I do not want to clutter QSCameraController with activator's shit
-*
-*
 */
 @implementation QSActivatorListener
 
@@ -14,13 +12,6 @@
 		;// do nothing
 	}];
 	[event setHandled:YES];
-}
-
-+ (void)load
-{
-	@autoreleasepool {
-    	[[LAActivator sharedInstance] registerListener:[self new] forName:@"com.caughtinflux.quickshootpro.listener"];
-    }
 }
 
 @end

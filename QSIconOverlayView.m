@@ -7,6 +7,7 @@
 - (void)_animateIrisViewOut;
 - (void)_showBlinkingFocus;
 - (void)_stopBlinkingFocus;
+- (void)_animateFocusRect;
 
 @end
 
@@ -129,19 +130,35 @@
 	}
 	_focusRectImageView.center = (CGPoint){(_irisImageView.bounds.size.width * 0.5), (_irisImageView.bounds.size.height * 0.5)};
 	[_irisImageView addSubview:_focusRectImageView];
-
-	QSIconOverlayView __block *wSelf = self;
-	[UIView animateWithDuration:0.4f delay:0.0f options:(UIViewAnimationOptionCurveEaseInOut | UIViewAnimationOptionRepeat |  UIViewAnimationOptionAutoreverse) animations:^{
-		[wSelf->_focusRectImageView setAlpha:0.0f];
-	} completion:^(BOOL finished) {
-		;
-	}];
+	[self _animateFocusRect];
 }
 
 - (void)_stopBlinkingFocus
 {
 	[_focusRectImageView setAlpha:0.0f];
 	[_focusRectImageView removeFromSuperview];
+}
+
+- (void)_animateFocusRect
+{
+	// this method is somewhat wonky
+	QSIconOverlayView __block *wSelf = self;
+	[UIView animateWithDuration:0.3f delay:0.0f options:(UIViewAnimationOptionCurveEaseInOut) animations:^{
+		[wSelf->_focusRectImageView setAlpha:1.0f]; 
+	} completion:^(BOOL finished) {
+		if (finished) {
+			dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (0.4 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+				// dispatch_after 0.4 seconds, so that the focus rect remains on screen until then.
+				// gives it a nice animation, like the focus rect in the camera app
+				[UIView animateWithDuration:0.3f animations:^{
+					[wSelf->_focusRectImageView setAlpha:0.0f];
+				} completion:^(BOOL finished){
+					if (finished)
+						[wSelf _animateFocusRect];
+				}];
+			});
+		}
+	}];
 }
 
 - (void)dealloc
