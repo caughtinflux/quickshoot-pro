@@ -157,15 +157,12 @@ static void QSDeviceOrientationChangedCallback(CFNotificationCenterRef center, v
     DLog(@"");
 
     if (self.flashMode && [[PLCameraController sharedInstance] hasFlash]) {
-        DLog(@"Enabling flash");
         [[PLCameraController sharedInstance] setFlashMode:self.flashMode];
     }
     if (self.enableHDR && [[PLCameraController sharedInstance] supportsHDR]) {
-        DLog(@"Enabling HDR");
         [[PLCameraController sharedInstance] setHDREnabled:self.enableHDR];
     }
     if (self.cameraDevice && [[PLCameraController sharedInstance] hasFrontCamera]) {
-        DLog(@"Setting Camera mode");
         [[PLCameraController sharedInstance] setCameraDevice:(UIImagePickerControllerCameraDevice)self.cameraDevice];
     }
 }
@@ -219,6 +216,5 @@ static void QSDeviceOrientationChangedCallback(CFNotificationCenterRef center, v
 #pragma mark  - Orientation Callback
 static void QSDeviceOrientationChangedCallback(CFNotificationCenterRef center, void *observer, CFStringRef name, const void *object, CFDictionaryRef userInfo)
 {
-    DLog(@"");
     [[QSCameraController sharedInstance] setCurrentOrientation:[UIDevice currentDevice].orientation];
 }

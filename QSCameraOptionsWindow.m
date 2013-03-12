@@ -34,11 +34,14 @@
 			[self addSubview:settingsView];
 		}
 		if (shouldShowCameraToggle) {
-			PLCameraToggleButton *toggleButton = [[[PLCameraToggleButton alloc] initWithFrame:(CGRect){{kLeftSidePadding, kSmallButtonYDistance}, {20, 20}} isInButtonBar:NO] autorelease];
+			PLCameraToggleButton *toggleButton = [[[PLCameraToggleButton alloc] initWithFrame:(CGRect){{kLeftSidePadding, kSmallButtonYDistance}, {kCameraToggleWidth, 20}} isInButtonBar:NO] autorelease];
+			toggleButton.autorotationEnabled = YES;
+			[toggleButton addTarget:self action:@selector(cameraToggleButtonTapped:) forControlEvents:UIControlEventTouchUpInside];
 			[self addSubview:toggleButton];
 		}
 		if (shouldShowFlash) {
 			PLCameraFlashButton *flashButton =  [[[PLCameraFlashButton alloc] initWithFrame:(CGRect){{kCameraToggleWidth + 5,  kSmallButtonYDistance}, {20, 20}} isInButtonBar:NO] autorelease];
+			flashButton.autorotationEnabled = YES;
 			flashButton.delegate = self;
 			[self addSubview:flashButton];
 		}
@@ -49,6 +52,52 @@
 - (instancetype)initWithFrame:(CGRect)frame
 {
 	return [self initWithFrame:frame showFlash:YES showHDR:YES showCameraToggle:YES];
+}
+
+
+#pragma mark - Camera Button Target
+- (void)cameraToggleButtonTapped:(PLCameraToggleButton *)toggleButton
+{
+
+}
+
+
+#pragma mark - SettingsView Delegate
+- (void)shouldEnterPanorama
+{
+
+}
+
+- (void)gridSettingDidChange:(BOOL)newSetting
+{
+
+}
+
+- (void)HDRSettingDidChange:(BOOL)newSetting
+{
+
+}
+
+
+#pragma mark - Flash Button Delegate
+- (void)flashButtonDidCollapse:(PLCameraFlashButton *)button
+{
+
+}
+
+- (void)flashButtonWillExpand:(PLCameraFlashButton *)button
+{
+
+}
+
+- (void)flashButtonWasPressed:(PLCameraFlashButton *)button
+{
+
+}
+
+- (void)flashButtonModeDidChange:(PLCameraFlashButton *)button
+{
+
 }
 
 @end

@@ -62,6 +62,7 @@ static BOOL _isCapturingImage;
         return;
     }
 
+    NSDate *startDate = [NSDate date];
     _isCapturingImage = YES;
 
     SBIconImageView *imageView = [self iconImageView];
@@ -84,6 +85,7 @@ static BOOL _isCapturingImage;
     [[QSCameraController sharedInstance] takePhotoWithCompletionHandler:^(BOOL success){
         _isCapturingImage = NO;
         [overlayView imageCaptureCompleted];
+        DLog(@"Capture time: %f", fabs([startDate timeIntervalSinceNow]));
     }];
 }
 %end
