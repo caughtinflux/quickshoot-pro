@@ -1,5 +1,0 @@
-{
-	title = "QuickShoot Pro";
-	description = "Assign custom gesture to capture an image.";
-	"compatible-modes" = ("springboard", "application", "lockscreen");
-}
