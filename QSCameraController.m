@@ -8,6 +8,7 @@
 @interface QSCameraController () {}
 
 - (void)_setupCameraController;
+- (void)_setOrientationAndCaptureImage;
 - (void)_saveCameraImageToLibrary:(NSDictionary *)dict;
 - (void)_cleanupImageCaptureWithResult:(BOOL)result;
 - (void)_showCaptureFailedAlert;
@@ -101,14 +102,9 @@ static void QSDeviceOrientationChangedCallback(CFNotificationCenterRef center, v
     _cameraCheckFlags.hasStartedSession = 1;
     [[PLCameraController sharedInstance] _autofocus:YES autoExpose:YES];
     if (!self.waitForFocusCompletion && [[PLCameraController sharedInstance] canCapturePhoto]) {
-        dispatch_time_t popTime = dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.4 * NSEC_PER_SEC));
-        dispatch_after(popTime, dispatch_get_main_queue(), ^(void){
-            if ([[PLCameraController sharedInstance] canCapturePhoto]) {
-                [[PLCameraController sharedInstance] capturePhoto];
-            }
-            else {
-                [self _showCaptureFailedAlert];
-            }
+        dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.4 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^(void){
+            // give 0.4 seconds of leeway to the camera, allow it to get a wee bit of exposure in.
+            [self _setOrientationAndCaptureImage];
         });
     }
     _cameraCheckFlags.hasForcedAutofocus = YES;
@@ -119,13 +115,7 @@ static void QSDeviceOrientationChangedCallback(CFNotificationCenterRef center, v
     DLog(@"");
     if (_isCapturingImage && self.waitForFocusCompletion) {
         if (_cameraCheckFlags.hasForcedAutofocus && _cameraCheckFlags.hasStartedSession) {
-            if ([[PLCameraController sharedInstance] canCapturePhoto]) {
-                [[PLCameraController sharedInstance] setCaptureOrientation:self.currentOrientation];
-                [[PLCameraController sharedInstance] capturePhoto]; 
-            }
-            else {
-                [self _showCaptureFailedAlert];
-            }
+            [self _setOrientationAndCaptureImage];
         }
     }
 }
@@ -180,6 +170,16 @@ static void QSDeviceOrientationChangedCallback(CFNotificationCenterRef center, v
     }
 }
 
+- (void)_setOrientationAndCaptureImage
+{
+    if ([[PLCameraController sharedInstance] canCapturePhoto]) {
+        [[PLCameraController sharedInstance] setCaptureOrientation:self.currentOrientation];
+        [[PLCameraController sharedInstance] capturePhoto]; 
+    }
+    else {
+        [self _showCaptureFailedAlert];
+    }
+}
 
 #pragma mark - Image Capture Methods
 - (void)_saveCameraImageToLibrary:(NSDictionary *)dict
@@ -219,5 +219,6 @@ static void QSDeviceOrientationChangedCallback(CFNotificationCenterRef center, v
 #pragma mark  - Orientation Callback
 static void QSDeviceOrientationChangedCallback(CFNotificationCenterRef center, void *observer, CFStringRef name, const void *object, CFDictionaryRef userInfo)
 {
+    DLog(@"");
     [[QSCameraController sharedInstance] setCurrentOrientation:[UIDevice currentDevice].orientation];
 }

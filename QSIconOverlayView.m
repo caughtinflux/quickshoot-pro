@@ -55,8 +55,7 @@
 	QSIconOverlayView __block *wSelf = self;
 	// keep the done image on the icon for 1.5 seconds
 	double delayInSeconds = 1.5;
-    dispatch_time_t popTime = dispatch_time(DISPATCH_TIME_NOW, (int64_t)(delayInSeconds * NSEC_PER_SEC));
-	dispatch_after(popTime, dispatch_get_main_queue(), ^{
+	dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(delayInSeconds * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
 		[doneImageView removeFromSuperview];
 		[wSelf _animateIrisViewOut];
 	});
@@ -143,18 +142,21 @@
 {
 	// this method is somewhat wonky
 	QSIconOverlayView __block *wSelf = self;
-	[UIView animateWithDuration:0.3f delay:0.0f options:(UIViewAnimationOptionCurveEaseInOut) animations:^{
+	[UIView animateWithDuration:0.07 delay:0.0 options:(UIViewAnimationOptionCurveEaseInOut) animations:^{
 		[wSelf->_focusRectImageView setAlpha:1.0f]; 
 	} completion:^(BOOL finished) {
 		if (finished) {
 			dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (0.4 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
 				// dispatch_after 0.4 seconds, so that the focus rect remains on screen until then.
 				// gives it a nice animation, like the focus rect in the camera app
-				[UIView animateWithDuration:0.3f animations:^{
+				[UIView animateWithDuration:0.1 animations:^{
 					[wSelf->_focusRectImageView setAlpha:0.0f];
 				} completion:^(BOOL finished){
-					if (finished)
-						[wSelf _animateFocusRect];
+					if (finished) {
+						dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.2 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+							[wSelf _animateFocusRect];
+						});
+					}
 				}];
 			});
 		}

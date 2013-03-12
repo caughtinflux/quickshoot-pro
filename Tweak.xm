@@ -68,8 +68,7 @@ static BOOL _isCapturingImage;
     QSIconOverlayView *overlayView = [[[QSIconOverlayView alloc] initWithFrame:imageView.frame] autorelease];
     [self setUserInteractionEnabled:NO];
 
-    dispatch_time_t popTime = dispatch_time(DISPATCH_TIME_NOW, (int64_t)(10 * NSEC_PER_SEC));
-    dispatch_after(popTime, dispatch_get_main_queue(), ^(void){
+    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(10 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^(void){
         // create a failsafe, which runs after 10 seconds
         // just in case the s
         [self setUserInteractionEnabled:YES];
