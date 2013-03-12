@@ -1,0 +1,5 @@
+{
+	title = "QuickShoot Pro Options";
+	description = "Show QuickShoot Pro options window.";
+	"compatible-modes" = ("springboard", "application", "lockscreen");
+}

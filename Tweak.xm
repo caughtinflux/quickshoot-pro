@@ -16,7 +16,7 @@
 #pragma mark - Lockscreen Class Interfaces
 @class SBAwayView;
 @interface SBAwayController : NSObject
-+ (SBAwayController *)sharedAwayController;
++ (instancetype)sharedAwayController;
 - (SBAwayView *)awayView;
 @end
 
@@ -191,6 +191,10 @@ static inline NSString * QSGetMachineName(void)
                                     NULL,
                                     CFNotificationSuspensionBehaviorHold);
     QSUpdatePrefs(NULL, NULL, NULL, NULL, NULL);
-    [[LAActivator sharedInstance] registerListener:[QSActivatorListener new] forName:@"com.caughtinflux.quickshootpro.listener"];
+    
+    DLog(@"QS: Registering listener");
+    [[LAActivator sharedInstance] registerListener:[QSActivatorListener new] forName:@"com.caughtinflux.quickshootpro.optionslistener"];
+    [[LAActivator sharedInstance] registerListener:[QSActivatorListener new] forName:@"com.caughtinflux.quickshootpro.capturelistener"];
+    
     [p drain];
 }

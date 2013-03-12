@@ -82,6 +82,25 @@ static void QSDeviceOrientationChangedCallback(CFNotificationCenterRef center, v
 }
 
 
+#pragma mark - Setter Overrides
+- (void)setCameraDevice:(QSCameraDevice)cameraDevice
+{
+    _cameraDevice = cameraDevice;
+    [[PLCameraController sharedInstance] setCameraDevice:(UIImagePickerControllerCameraDevice)cameraDevice];
+}
+
+- (void)setFlashMode:(QSFlashMode)flashMode
+{
+    _flashMode = flashMode;
+    [[PLCameraController sharedInstance] setFlashMode:flashMode];
+}
+
+- (void)setEnableHDR:(BOOL)enableHDR
+{
+    _enableHDR = enableHDR;
+    [[PLCameraController sharedInstance] setHDREnabled:enableHDR];
+}
+
 #pragma mark - PLCameraController Delegate
 - (void)cameraControllerModeDidChange:(PLCameraController *)camController
 {
