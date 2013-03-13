@@ -46,8 +46,8 @@ FOUNDATION_EXPORT NSString * const QSWaitForFocusKey;
 FOUNDATION_EXPORT QSFlashMode    QSFlashModeFromString(NSString *string);
 FOUNDATION_EXPORT QSCameraDevice QSCameraDeviceFromString(NSString *string);
 
-FOUNDATION_EXPORT NSString *     QSStringFromCameraDevice(QSCameraDevice device);
-FOUNDATION_EXPORT NSString *     QSStringFromFlashMode(QSFlashMode flashMode);
+FOUNDATION_EXPORT inline NSString * QSStringFromCameraDevice(QSCameraDevice device);
+FOUNDATION_EXPORT inline NSString * QSStringFromFlashMode(QSFlashMode flashMode);
 
 FOUNDATION_EXPORT inline NSString * QSGetMachineName(void);
 

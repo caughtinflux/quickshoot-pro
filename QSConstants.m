@@ -10,6 +10,13 @@ NSString * const QSCameraDeviceKey = @"kQSCameraDevice";
 NSString * const QSHDRModeKey      = @"kQSHDREnabled";
 NSString * const QSWaitForFocusKey = @"kQSWaitForFocus";
 
+#pragma mark - Preference Value Constants
+static NSString * const QSCameraDeviceFrontValue = @"kQSCameraDeviceFront";
+static NSString * const QSCameraDeviceRearValue  = @"kQSCameraDeviceRear";
+static NSString * const QSFlashModeAutoValue     = @"kQSFlashModeAuto";
+static NSString * const QSFlashModeOnValue       = @"kQSFlashModeOn";
+static NSString * const QSFlashModeOffValue      = @"kQSFlashModeOff";
+
 
 #pragma mark - Function Definitions
 QSFlashMode QSFlashModeFromString(NSString *string)
@@ -32,6 +39,17 @@ QSCameraDevice QSCameraDeviceFromString(NSString *string)
         return QSCameraDeviceFront;
     else
         return QSCameraDeviceRear;
+}
+
+
+inline NSString * QSStringFromCameraDevice(QSCameraDevice device)
+{
+    return ((device == QSCameraDeviceRear) ? @"kQSCameraDeviceRear" : @"kQSCameraDeviceFront");
+}
+
+inline NSString * QSStringFromFlashMode(QSFlashMode flashMode)
+{
+    return ((flashMode == QSFlashModeAuto) ? @"kQSFlashModeAuto" : ((flashMode == QSFlashModeOn) ? @"kQSFlashModeOn" : @"kQSFlashModeOff"));
 }
 
 inline NSString * QSGetMachineName(void)
