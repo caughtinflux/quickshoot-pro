@@ -1,7 +1,7 @@
 #import <UIKit/UIKit.h>
 #import <PhotoLibrary/PLCameraFlashButtonDelegate-Protocol.h>
 #import <PhotoLibrary/PLCameraSettingsViewDelegate-Protocol.h>
-#import "QSDefines.h"
+#import "QSConstants.h"
 
 @class QSCameraOptionsWindow;
 
