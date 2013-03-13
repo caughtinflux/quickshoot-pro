@@ -32,7 +32,7 @@
 {
     _irisImageView = [[UIImageView alloc] initWithImage:[self _bundleImageNamed:@"Iris"]];
     CGPoint center = self.center;
-    center.y += 3;
+    center.y += 2;
     _irisImageView.center = center;
 
     _irisImageView.alpha = 0;
