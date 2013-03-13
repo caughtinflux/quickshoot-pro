@@ -3,14 +3,12 @@
 #import "QSCameraController.h"
 #import "QSIconOverlayView.h"
 #import "QSActivatorListener.h"
-#import "QSDefines.h"
+#import "QSConstants.h"
 
 #import <SpringBoard/SpringBoard.h>
 #import <SpringBoard/SBIconView.h>
 #import <SpringBoard/SBIconImageView.h>
 #import <SpringBoard/SBIcon.h>
-
-#import <sys/utsname.h>
 
 
 #pragma mark - Lockscreen Class Interfaces
@@ -19,21 +17,6 @@
 + (instancetype)sharedAwayController;
 - (SBAwayView *)awayView;
 @end
-
-
-#pragma mark - Function Declarations
-static void QSUpdatePrefs(CFNotificationCenterRef center, void *observer, CFStringRef name, const void *object, CFDictionaryRef userInfo);
-static QSFlashMode QSFlashModeFromString(NSString *string);
-static QSCameraDevice QSCameraDeviceFromString(NSString *string);
-// these are inlines, so no errors are thrown if I don't use them. Also, they're tiny
-static inline NSString * QSGetMachineName(void);
-
-
-#pragma mark - Preference Key Constants
-static NSString * const QSFlashModeKey    = @"kQSFlashMode";
-static NSString * const QSCameraDeviceKey = @"kQSCameraDevice";
-static NSString * const QSHDRModeKey      = @"kQSHDREnabled";
-static NSString * const QSWaitForFocusKey = @"kQSWaitForFocus";
 
 #pragma mark - Static Variables
 static BOOL _isCapturingImage;
@@ -58,11 +41,11 @@ static BOOL _isCapturingImage;
 %new
 - (void)qs_doubleTapRecognizerFired:(UITapGestureRecognizer *)dtr
 {
-    if (_isCapturingImage) {
+    if (_isCapturingImage || (![[(SBIcon *)[self icon] leafIdentifier] isEqualToString:@"com.apple.camera"])) {
+        DLog(@"QuickShoot: Cowardly returning because icon identifier was not recognized");
         return;
     }
 
-    NSDate *startDate = [NSDate date];
     _isCapturingImage = YES;
 
     SBIconImageView *imageView = [self iconImageView];
@@ -71,7 +54,6 @@ static BOOL _isCapturingImage;
 
     dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(10 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^(void){
         // create a failsafe, which runs after 10 seconds
-        // just in case the s
         [self setUserInteractionEnabled:YES];
     });
 
@@ -82,10 +64,13 @@ static BOOL _isCapturingImage;
     [imageView addSubview:overlayView];
     [overlayView imageCaptureBegan];
 
+#ifdef DEBUG
+    NSDate startDate = [NSDate date];
+#endif
     [[QSCameraController sharedInstance] takePhotoWithCompletionHandler:^(BOOL success){
         _isCapturingImage = NO;
         [overlayView imageCaptureCompleted];
-        DLog(@"Capture time: %f", fabs([startDate timeIntervalSinceNow]));
+        DLog(@"Capture time: %f", fabs([someDate timeIntervalSinceNow]));
     }];
 }
 %end
@@ -127,18 +112,9 @@ static BOOL _isCapturingImage;
     [(SpringBoard *)[UIApplication sharedApplication] updateOrientationAndAccelerometerSettings];
     [[UIDevice currentDevice] beginGeneratingDeviceOrientationNotifications];
     [QSCameraController sharedInstance]; // make sure the object is created, hence setting it up to receive orientation notifs.
-
-    CFNotificationCenterAddObserver(CFNotificationCenterGetDarwinNotifyCenter(),
-                                    NULL,
-                                    (CFNotificationCallback)&QSUpdatePrefs,
-                                    CFSTR("com.caughtinflux.quickshootpro.prefschanged"),
-                                    NULL,
-                                    CFNotificationSuspensionBehaviorHold);
-    QSUpdatePrefs(NULL, NULL, NULL, NULL, NULL);
 }
 %end
 
-#pragma mark - Function Definitions
 static void QSUpdatePrefs(CFNotificationCenterRef center, void *observer, CFStringRef name, const void *object, CFDictionaryRef userInfo)
 {
     NSDictionary *prefs = [[NSDictionary alloc] initWithContentsOfFile:kPrefPath];
@@ -149,35 +125,6 @@ static void QSUpdatePrefs(CFNotificationCenterRef center, void *observer, CFStri
     [QSCameraController sharedInstance].waitForFocusCompletion = [prefs[QSWaitForFocusKey] boolValue];
 
     [prefs release];
-}
-
-static QSFlashMode QSFlashModeFromString(NSString *string)
-{
-    if ([string isEqualToString:@"kQSFlashModeOn"])
-        return QSFlashModeOn;
-    else if ([string isEqualToString:@"kQSFlashModeAuto"])
-        return QSFlashModeOn;
-    else if ([string isEqualToString:@"kQSFlashModeOff"])
-        return QSFlashModeOff;
-    else
-        return QSFlashModeAuto; // default value, in case string is nil.
-}
-
-static QSCameraDevice QSCameraDeviceFromString(NSString *string)
-{
-    if ([string isEqualToString:@"kQSCameraDeviceRear"])
-        return QSCameraDeviceRear;
-    else if ([string isEqualToString:@"kQSCameraDeviceFront"])
-        return QSCameraDeviceFront;
-    else
-        return QSCameraDeviceRear;
-}
-
-static inline NSString * QSGetMachineName(void)
-{
-    struct utsname systemInfo;
-    uname(&systemInfo);
-    return [NSString stringWithCString:systemInfo.machine encoding:NSUTF8StringEncoding];
 }
 
 %ctor
