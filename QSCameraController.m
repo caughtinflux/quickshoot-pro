@@ -76,7 +76,7 @@ static void QSDeviceOrientationChangedCallback(CFNotificationCenterRef center, v
     return;
 }
 
-- (void)stopVideoCaptureWithHandler
+- (void)stopVideoCaptureWithHandler:(QSCompletionHandler)handler
 {
     [[PLCameraController sharedInstance] stopVideoCapture];
 }

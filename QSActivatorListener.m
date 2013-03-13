@@ -1,7 +1,7 @@
 #import "QSActivatorListener.h"
 #import "QSCameraController.h"
 #import "QSCameraOptionsWindow.h"
-#import "QSDefines.h"
+#import "QSConstants.h"
 
 #import <UIKit/UIKit.h>
 

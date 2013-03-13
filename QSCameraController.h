@@ -1,7 +1,7 @@
 #import <Foundation/Foundation.h>
 #import <UIKit/UIKit.h>
 #import <PhotoLibrary/PLCameraControllerDelegate-Protocol.h>
-#import "QSDefines.h"
+#import "QSConstants.h"
 
 @interface QSCameraController : NSObject <PLCameraControllerDelegate>
 
@@ -15,6 +15,6 @@
 // The completion handlers are copied
 - (void)takePhotoWithCompletionHandler:(QSCompletionHandler)completionHandler;
 - (void)startVideoCaptureWithHandler:(QSCompletionHandler)handler;
-- (void)stopVideoCaptureWithHandler;
+- (void)stopVideoCaptureWithHandler:(QSCompletionHandler)handler;
 
 @end
