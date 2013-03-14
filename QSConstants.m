@@ -4,13 +4,14 @@
 #import <sys/utsname.h>
 
 
-#pragma mark - Preference Key Constants
-NSString * const QSFlashModeKey    = @"kQSFlashMode";
-NSString * const QSCameraDeviceKey = @"kQSCameraDevice";
-NSString * const QSHDRModeKey      = @"kQSHDREnabled";
-NSString * const QSWaitForFocusKey = @"kQSWaitForFocus";
+NSString * const QSEnabledKey                   = @"kQSEnabled";
+NSString * const QSFlashModeKey                 = @"kQSFlashMode";
+NSString * const QSCameraDeviceKey              = @"kQSCameraDevice";
+NSString * const QSHDRModeKey                   = @"kQSHDREnabled";
+NSString * const QSWaitForFocusKey              = @"kQSWaitForFocus";
+NSString * const QSOptionsWindowHideDelayKey    = @"kQSOptionsWindowHideAfter";
+NSString * const QSPrefsChangedNotificationName = @"kQSPrefsChangedNotif";
 
-#pragma mark - Preference Value Constants
 static NSString * const QSCameraDeviceFrontValue = @"kQSCameraDeviceFront";
 static NSString * const QSCameraDeviceRearValue  = @"kQSCameraDeviceRear";
 static NSString * const QSFlashModeAutoValue     = @"kQSFlashModeAuto";
@@ -18,7 +19,6 @@ static NSString * const QSFlashModeOnValue       = @"kQSFlashModeOn";
 static NSString * const QSFlashModeOffValue      = @"kQSFlashModeOff";
 
 
-#pragma mark - Function Definitions
 QSFlashMode QSFlashModeFromString(NSString *string)
 {
     if ([string isEqualToString:@"kQSFlashModeOn"])
@@ -41,6 +41,10 @@ QSCameraDevice QSCameraDeviceFromString(NSString *string)
         return QSCameraDeviceRear;
 }
 
+inline id QSObjectFromPrefsForKey(NSString *key)
+{
+    return [[NSDictionary dictionaryWithContentsOfFile:kPrefPath] objectForKey:key];
+}
 
 inline NSString * QSStringFromCameraDevice(QSCameraDevice device)
 {

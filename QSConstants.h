@@ -7,7 +7,7 @@
 #ifdef DEBUG
 #   define DLog(fmt, ...) NSLog((@"%s [Line %d] " fmt), __PRETTY_FUNCTION__, __LINE__, ##__VA_ARGS__);
 #else
-#   define DLog(...)
+#   define DLog(...) 
 #endif
 
 #define ALog(fmt, ...) NSLog((@"%s" fmt), __PRETTY_FUNCTION__, ##__VA_ARGS__);
@@ -35,17 +35,21 @@ typedef void (^QSCompletionHandler)(BOOL); // the BOOL argument is most probably
 #define EXECUTE_BLOCK_AFTER_DELAY(delayInSeconds, block) dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(delayInSeconds * NSEC_PER_SEC)), dispatch_get_main_queue(), block)
 
 
-#pragma mark - Preference Key Constants
-@class NSString;
+#pragma mark - String Constants
+FOUNDATION_EXPORT NSString * const QSEnabledKey;
 FOUNDATION_EXPORT NSString * const QSFlashModeKey;
 FOUNDATION_EXPORT NSString * const QSCameraDeviceKey;
 FOUNDATION_EXPORT NSString * const QSHDRModeKey;
 FOUNDATION_EXPORT NSString * const QSWaitForFocusKey;
+FOUNDATION_EXPORT NSString * const QSOptionsWindowHideDelayKey;
+
+FOUNDATION_EXPORT NSString * const QSPrefsChangedNotificationName;
 
 #pragma mark - Function Declarations
 FOUNDATION_EXPORT QSFlashMode    QSFlashModeFromString(NSString *string);
 FOUNDATION_EXPORT QSCameraDevice QSCameraDeviceFromString(NSString *string);
 
+FOUNDATION_EXPORT inline id 	    QSObjectFromPrefsForKey(NSString *key);
 FOUNDATION_EXPORT inline NSString * QSStringFromCameraDevice(QSCameraDevice device);
 FOUNDATION_EXPORT inline NSString * QSStringFromFlashMode(QSFlashMode flashMode);
 
