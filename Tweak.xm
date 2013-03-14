@@ -15,12 +15,14 @@
 @class SBAwayView;
 @interface SBAwayController : NSObject
 + (instancetype)sharedAwayController;
+- (BOOL)isLocked;
 - (SBAwayView *)awayView;
 @end
 
-#pragma mark - Static Variables
-static BOOL _isCapturingImage;
 
+#pragma mark - Static Stuff
+static BOOL _enabled;
+static BOOL _isCapturingImage;
 
 #pragma mark - Application Icon Hook
 %hook SBIconView
@@ -41,8 +43,8 @@ static BOOL _isCapturingImage;
 %new
 - (void)qs_doubleTapRecognizerFired:(UITapGestureRecognizer *)dtr
 {
-    if (_isCapturingImage || (![[(SBIcon *)[self icon] leafIdentifier] isEqualToString:@"com.apple.camera"])) {
-        DLog(@"QuickShoot: Cowardly returning because icon identifier was not recognized");
+    if (!_enabled || _isCapturingImage || (![[(SBIcon *)[self icon] leafIdentifier] isEqualToString:@"com.apple.camera"])) {
+        ALog(@"QuickShoot: Cowardly returning because icon identifier was not recognized");
         return;
     }
 
@@ -64,13 +66,9 @@ static BOOL _isCapturingImage;
     [imageView addSubview:overlayView];
     [overlayView imageCaptureBegan];
 
-#ifdef DEBUG
-    NSDate startDate = [NSDate date];
-#endif
     [[QSCameraController sharedInstance] takePhotoWithCompletionHandler:^(BOOL success){
         _isCapturingImage = NO;
         [overlayView imageCaptureCompleted];
-        DLog(@"Capture time: %f", fabs([someDate timeIntervalSinceNow]));
     }];
 }
 %end
@@ -91,6 +89,9 @@ static BOOL _isCapturingImage;
 %hook SBAwayController
 - (void)handleCameraTapGesture:(UITapGestureRecognizer *)recognizer
 {
+    if (!_enabled) {
+        return;
+    }
     if (recognizer.numberOfTapsRequired == 2) {
         [[QSCameraController sharedInstance] takePhotoWithCompletionHandler:^(BOOL success){
             ;
@@ -119,10 +120,13 @@ static void QSUpdatePrefs(CFNotificationCenterRef center, void *observer, CFStri
 {
     NSDictionary *prefs = [[NSDictionary alloc] initWithContentsOfFile:kPrefPath];
 
+    _enabled = [prefs[QSEnabledKey] boolValue];
     [QSCameraController sharedInstance].cameraDevice = QSCameraDeviceFromString(prefs[QSCameraDeviceKey]);
     [QSCameraController sharedInstance].flashMode = QSFlashModeFromString(prefs[QSFlashModeKey]);
     [QSCameraController sharedInstance].enableHDR = [prefs[QSHDRModeKey] boolValue];
     [QSCameraController sharedInstance].waitForFocusCompletion = [prefs[QSWaitForFocusKey] boolValue];
+
+    [[NSNotificationCenter defaultCenter] postNotificationName:QSPrefsChangedNotificationName object:nil];
 
     [prefs release];
 }
@@ -139,7 +143,7 @@ static void QSUpdatePrefs(CFNotificationCenterRef center, void *observer, CFStri
                                     CFNotificationSuspensionBehaviorHold);
     QSUpdatePrefs(NULL, NULL, NULL, NULL, NULL);
     
-    DLog(@"QS: Registering listener");
+    ALog(@"QS: Registering listener");
     [[LAActivator sharedInstance] registerListener:[QSActivatorListener new] forName:@"com.caughtinflux.quickshootpro.optionslistener"];
     [[LAActivator sharedInstance] registerListener:[QSActivatorListener new] forName:@"com.caughtinflux.quickshootpro.capturelistener"];
     
