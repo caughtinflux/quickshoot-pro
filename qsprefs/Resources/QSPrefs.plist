@@ -5,12 +5,65 @@
 	<key>items</key>
 	<array>
 		<dict>
+
+			<key>cell</key>
+			<string>PSGroupCell</string>
+			<key>footerText</key>
+			<string>The activator action will work irrespective of this setting</string>
+		</dict>
+		<dict>
+			<key>cell</key>
+			<string>PSSwitchCell</string>
+			<key>default</key>
+			<true/>
+			<key>defaults</key>
+			<string>com.caughtinflux.qsproprefs</string>
+			<key>key</key>
+			<string>kQSEnabled</string>
+			<key>label</key>
+			<string>Enabled</string>
+			<key>PostNotification</key>
+			<string>com.caughtinflux.quickshootpro.prefschanged</string>
+		</dict>
+
+		<dict>
 			<key>cell</key>
 			<string>PSGroupCell</string>
 			<key>label</key>
-			<string>Settings</string>
+			<string>Camera Settings</string>
 			<key>footerText</key>
 			<string>Enabling HDR will disable flash. Setting Anti-Blur to on will increase the image quality, but will not take a photo until the device is still.</string>
+		</dict>
+		<dict>
+			<key>cell</key>
+			<string>PSLinkListCell</string>
+			<key>default</key>
+			<string>kQSCameraDeviceRear</string>
+			<key>defaults</key>
+			<string>com.caughtinflux.qsproprefs</string>
+			<key>detail</key>
+			<string>PSListItemsController</string>
+			<key>key</key>
+			<string>kQSCameraDevice</string>
+			<key>label</key>
+			<string>Camera Device</string>
+			<key>validTitles</key>
+			<array>
+					<string>Rear Camera</string>
+					<string>Front Camera</string>
+			</array>
+			<key>validValues</key>
+			<array>
+					<string>kQSCameraDeviceRear</string>
+					<string>kQSCameraDeviceFront</string>
+			</array>
+			<key>requiredCapabilities</key>
+			<array>
+				<string>front-facing-camera</string>
+			</array>
+			<key>PostNotification</key>
+			<string>com.caughtinflux.quickshootpro.prefschanged</string>
+
 		</dict>
 		<dict>
 			<key>cell</key>
@@ -46,37 +99,6 @@
 		</dict>
 		<dict>
 			<key>cell</key>
-			<string>PSLinkListCell</string>
-			<key>default</key>
-			<string>kQSCameraDeviceRear</string>
-			<key>defaults</key>
-			<string>com.caughtinflux.qsproprefs</string>
-			<key>detail</key>
-			<string>PSListItemsController</string>
-			<key>key</key>
-			<string>kQSCameraDevice</string>
-			<key>label</key>
-			<string>Camera Device</string>
-			<key>validTitles</key>
-			<array>
-					<string>Rear Camera</string>
-					<string>Front Camera</string>
-			</array>
-			<key>validValues</key>
-			<array>
-					<string>kQSCameraDeviceRear</string>
-					<string>kQSCameraDeviceFront</string>
-			</array>
-			<key>requiredCapabilities</key>
-			<array>
-				<string>front-facing-camera</string>
-			</array>
-			<key>PostNotification</key>
-			<string>com.caughtinflux.quickshootpro.prefschanged</string>
-
-		</dict>
-		<dict>
-			<key>cell</key>
 			<string>PSSwitchCell</string>
 			<key>default</key>
 			<false/>
@@ -103,6 +125,85 @@
 			<key>PostNotification</key>
 			<string>com.caughtinflux.quickshootpro.prefschanged</string>
 		</dict>
+		<dict>
+			<key>cell</key>
+			<string>PSLinkCell</string>
+			<key>label</key>
+			<string>Capture Activation Methods</string>
+			<key>isController</key>
+			<true/>
+			<key>bundle</key>
+			<string>LibActivator</string>
+			<key>activatorListener</key>
+			<string>com.caughtinflux.quickshootpro.capturelistener</string>
+		</dict>
+
+
+		<dict>
+			<key>cell</key>
+			<string>PSGroupCell</string>
+			<key>label</key>
+			<string>Options Window</string>
+			<key>footerText</key>
+			<string>The window will hide automatically after the preferred delay.</string>
+		</dict>
+		<dict>
+			<key>cell</key>
+			<string>PSLinkCell</string>
+			<key>label</key>
+			<string>Activation Methods</string>
+			<key>isController</key>
+			<true/>
+			<key>bundle</key>
+			<string>LibActivator</string>
+			<key>activatorListener</key>
+			<string>com.caughtinflux.quickshootpro.optionslistener</string>
+		</dict>
+		<dict>
+			<key>cell</key>
+			<string>PSLinkListCell</string>
+			<key>default</key>
+			<integer>5</integer>
+			<key>defaults</key>
+			<string>com.caughtinflux.qsproprefs</string>
+			<key>detail</key>
+			<string>PSListItemsController</string>
+			<key>key</key>
+			<string>kQSOptionsWindowHideDelay</string>
+			<key>label</key>
+			<string>Hide After</string>
+			<key>validTitles</key>
+			<array>
+					<string>1</string>
+					<string>2</string>
+					<string>3</string>
+					<string>4</string>
+					<string>5</string>
+					<string>6</string>
+					<string>7</string>
+					<string>8</string>
+					<string>9</string>
+					<string>10</string>
+			</array>
+			<key>validValues</key>
+			<array>
+					<integer>1</integer>
+					<integer>2</integer>
+					<integer>3</integer>
+					<integer>4</integer>
+					<integer>5</integer>
+					<integer>6</integer>
+					<integer>7</integer>
+					<integer>8</integer>
+					<integer>9</integer>
+					<integer>10</integer>
+			</array>
+			<key>staticTextMessage</key>
+			<string>The values are all in seconds.</string>
+			<key>PostNotification</key>
+			<string>com.caughtinflux.quickshootpro.prefschanged</string>
+		</dict>
+
 
 		<dict>
 			<key>cell</key>
@@ -110,7 +211,7 @@
 			<key>label</key>
 			<string>Support</string>
 			<key>footerText</key>
-			<string>QuickShoot Pro is © 2013 Aditya KD (caughtinflux)</string>
+			<string> QuickShoot Pro © 2013 Aditya KD (caughtinflux)</string>
 			<key>isStaticText</key>
 			<true/>
 		</dict>
@@ -130,6 +231,7 @@
 			<key>action</key>
 			<string>showEmailComposer:</string>
 		</dict>
+
 	</array>
 	<key>title</key>
 	<string>QuickShoot Pro</string>
