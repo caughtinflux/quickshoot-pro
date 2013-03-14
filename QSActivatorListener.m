@@ -17,6 +17,10 @@ static NSString * const QSOptionsListenerName = @"com.caughtinflux.quickshootpro
 - (void)attemptUnlock;
 @end
 
+@interface QSActivatorListener () {}
+- (void)_preferencesChanged:(NSNotification *)notification;
+@end
+
 @implementation QSActivatorListener
 {
     QSCameraOptionsWindow *_optionsWindow;
@@ -26,7 +30,7 @@ static NSString * const QSOptionsListenerName = @"com.caughtinflux.quickshootpro
 {
     if ((self = [super init])) {
         [[QSCameraController sharedInstance] addObserver:self forKeyPath:@"flashMode" options:NSKeyValueObservingOptionNew context:nil];
-        [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(preferencesChanged:) name:QSPrefsChangedNotificationName object:nil];
+        [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(_preferencesChanged:) name:QSPrefsChangedNotificationName object:nil];
     }
     return self;
 }
@@ -45,6 +49,7 @@ static NSString * const QSOptionsListenerName = @"com.caughtinflux.quickshootpro
             _optionsWindow = [[QSCameraOptionsWindow alloc] initWithFrame:(CGRect){{0, 20}, {200, 190}} showFlash:YES showHDR:YES showCameraToggle:YES]; 
             _optionsWindow.windowLevel = 1200;
             _optionsWindow.delegate = self;
+            [self _preferencesChanged:nil]; // make sure the delay times 'n' shit are set.
         }
         if (_optionsWindow.hidden) {
             Class SBAwayController = objc_getClass("SBAwayController");
@@ -106,7 +111,7 @@ static NSString * const QSOptionsListenerName = @"com.caughtinflux.quickshootpro
     }
 }
 
-- (void)preferencesChanged:(NSNotification *)notification
+- (void)_preferencesChanged:(NSNotification *)notification
 {
     @autoreleasepool {
         NSDictionary *prefs = [NSDictionary dictionaryWithContentsOfFile:kPrefPath];

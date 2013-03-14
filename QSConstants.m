@@ -9,7 +9,7 @@ NSString * const QSFlashModeKey                 = @"kQSFlashMode";
 NSString * const QSCameraDeviceKey              = @"kQSCameraDevice";
 NSString * const QSHDRModeKey                   = @"kQSHDREnabled";
 NSString * const QSWaitForFocusKey              = @"kQSWaitForFocus";
-NSString * const QSOptionsWindowHideDelayKey    = @"kQSOptionsWindowHideAfter";
+NSString * const QSOptionsWindowHideDelayKey    = @"kQSOptionsWindowHideDelay";
 NSString * const QSPrefsChangedNotificationName = @"kQSPrefsChangedNotif";
 
 static NSString * const QSCameraDeviceFrontValue = @"kQSCameraDeviceFront";
@@ -23,22 +23,22 @@ QSFlashMode QSFlashModeFromString(NSString *string)
 {
     if ([string isEqualToString:@"kQSFlashModeOn"])
         return QSFlashModeOn;
-    else if ([string isEqualToString:@"kQSFlashModeAuto"])
-        return QSFlashModeOn;
-    else if ([string isEqualToString:@"kQSFlashModeOff"])
+    if ([string isEqualToString:@"kQSFlashModeAuto"])
+        return QSFlashModeAuto;
+    if ([string isEqualToString:@"kQSFlashModeOff"])
         return QSFlashModeOff;
-    else
-        return QSFlashModeAuto; // default value, in case string is nil.
+    
+    return QSFlashModeAuto; // default value, in case string is nil.
 }
 
 QSCameraDevice QSCameraDeviceFromString(NSString *string)
 {
     if ([string isEqualToString:@"kQSCameraDeviceRear"])
         return QSCameraDeviceRear;
-    else if ([string isEqualToString:@"kQSCameraDeviceFront"])
+    if ([string isEqualToString:@"kQSCameraDeviceFront"])
         return QSCameraDeviceFront;
-    else
-        return QSCameraDeviceRear;
+    
+    return QSCameraDeviceRear;
 }
 
 inline id QSObjectFromPrefsForKey(NSString *key)
