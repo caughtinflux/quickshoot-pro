@@ -4,19 +4,36 @@
 #import "QSConstants.h"
 
 #import <UIKit/UIKit.h>
+#import <objc/runtime.h>
 
 static NSString * const QSCaptureListenerName = @"com.caughtinflux.quickshootpro.capturelistener";
 static NSString * const QSOptionsListenerName = @"com.caughtinflux.quickshootpro.optionslistener";
+
+#pragma mark - Lockscreen Class Interfaces
+@class SBAwayView;
+@interface SBAwayController : NSObject
++ (instancetype)sharedAwayController;
+- (BOOL)isLocked;
+- (void)attemptUnlock;
+@end
 
 @implementation QSActivatorListener
 {
     QSCameraOptionsWindow *_optionsWindow;
 }
 
+- (instancetype)init
+{
+    if ((self = [super init])) {
+        [[QSCameraController sharedInstance] addObserver:self forKeyPath:@"flashMode" options:NSKeyValueObservingOptionNew context:nil];
+        [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(preferencesChanged:) name:QSPrefsChangedNotificationName object:nil];
+    }
+    return self;
+}
+
+#pragma mark - Activator Listener Protocol Implementation
 - (void)activator:(LAActivator *)activator receiveEvent:(LAEvent *)event
 {
-    DLog(@"%@", event);
-    DLog(@"%@", [[LAActivator sharedInstance] assignedListenerNameForEvent:event]);
     if ([[[LAActivator sharedInstance] assignedListenerNameForEvent:event] isEqualToString:QSCaptureListenerName]) {
         [[QSCameraController sharedInstance] takePhotoWithCompletionHandler:^(BOOL success) {
             ;// do nothing
@@ -26,31 +43,86 @@ static NSString * const QSOptionsListenerName = @"com.caughtinflux.quickshootpro
     else if ([[[LAActivator sharedInstance] assignedListenerNameForEvent:event] isEqualToString:QSOptionsListenerName]) {
         if (!_optionsWindow) {
             _optionsWindow = [[QSCameraOptionsWindow alloc] initWithFrame:(CGRect){{0, 20}, {200, 190}} showFlash:YES showHDR:YES showCameraToggle:YES]; 
-            _optionsWindow.windowLevel = UIWindowLevelStatusBar + 10;
+            _optionsWindow.windowLevel = 1200;
             _optionsWindow.delegate = self;
         }
-
-        _optionsWindow.hidden = (_optionsWindow.hidden) ? NO : YES;
+        if (_optionsWindow.hidden) {
+            Class SBAwayController = objc_getClass("SBAwayController");
+            if ([[SBAwayController sharedAwayController] isLocked]) {
+                [[SBAwayController sharedAwayController] attemptUnlock]; // turn screen on.
+            }
+            _optionsWindow.hidden = NO; 
+        }
+        else {
+            [_optionsWindow hideWindowAnimated];
+        }
         [event setHandled:YES];
     }
 }
 
+#pragma mark - Options Window Delegate
 - (void)optionsWindowCameraButtonToggled:(QSCameraOptionsWindow *)optionsWindow
 {
-    DLog(@"Toggling camera device. Current device: %i", [QSCameraController sharedInstance].cameraDevice);
     QSCameraDevice currentDevice = [[QSCameraController sharedInstance] cameraDevice];
     [[QSCameraController sharedInstance] setCameraDevice:((currentDevice == QSCameraDeviceRear) ? QSCameraDeviceFront : QSCameraDeviceRear)];
-    DLog(@"New camera device: %i", [QSCameraController sharedInstance].cameraDevice)
+
+    NSMutableDictionary *prefsDict = [NSMutableDictionary dictionaryWithContentsOfFile:kPrefPath];
+    prefsDict[QSCameraDeviceKey] = QSStringFromCameraDevice([QSCameraController sharedInstance].cameraDevice);
+    [prefsDict writeToFile:kPrefPath atomically:YES];
 }
 
 - (void)optionsWindow:(QSCameraOptionsWindow *)optionsWindow hdrModeChanged:(BOOL)newMode
 {
     [[QSCameraController sharedInstance] setEnableHDR:newMode];
+    
+    NSMutableDictionary *prefsDict = [NSMutableDictionary dictionaryWithContentsOfFile:kPrefPath];
+    prefsDict[QSHDRModeKey] = [NSNumber numberWithBool:newMode];
+    [prefsDict writeToFile:kPrefPath atomically:YES];
 }
 
 - (void)optionsWindow:(QSCameraOptionsWindow *)optionsWindow flashModeChanged:(QSFlashMode)newMode
 {
     [[QSCameraController sharedInstance] setFlashMode:newMode];
+
+    NSMutableDictionary *prefsDict = [NSMutableDictionary dictionaryWithContentsOfFile:kPrefPath];
+    prefsDict[QSFlashModeKey] = QSStringFromFlashMode(newMode);
+    [prefsDict writeToFile:kPrefPath atomically:YES];
 }
 
+- (QSCameraDevice)currentCameraDeviceForOptionsWindow:(QSCameraOptionsWindow *)optionsWindow
+{
+    return [QSCameraController sharedInstance].cameraDevice;
+}
+
+- (QSFlashMode)currentFlashModeForOptionsWindow:(QSCameraOptionsWindow *)optionsWindow
+{
+    return [QSCameraController sharedInstance].flashMode;
+}
+
+- (void)observeValueForKeyPath:(NSString *)keyPath ofObject:(id)object change:(NSDictionary *)change context:(void *)context
+{
+    if ([keyPath isEqualToString:@"flashMode"]) {
+        [_optionsWindow setFlashMode:[QSCameraController sharedInstance].flashMode];
+    }
+}
+
+- (void)preferencesChanged:(NSNotification *)notification
+{
+    @autoreleasepool {
+        NSDictionary *prefs = [NSDictionary dictionaryWithContentsOfFile:kPrefPath];
+        _optionsWindow.automaticHideDelay = [prefs[QSOptionsWindowHideDelayKey] doubleValue];
+        [_optionsWindow setFlashMode:QSFlashModeFromString(prefs[QSFlashModeKey])];
+    }
+}
+
+- (void)dealloc
+{
+    [_optionsWindow setHidden:YES];
+    [_optionsWindow release];
+    _optionsWindow = nil;
+
+    [[NSNotificationCenter defaultCenter] removeObserver:self];
+
+    [super dealloc];
+}
 @end

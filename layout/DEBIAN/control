@@ -1,6 +1,6 @@
 Package: com.caughtinflux.quickshootpro
 Name: QuickShoot Pro
-Depends: mobilesubstrate, firmware (>= 6.0)
+Depends: mobilesubstrate, firmware (>= 6.0), libactivator
 Conflicts: com.caughtinflux.quickshoot
 Version: 0.1
 Architecture: iphoneos-arm

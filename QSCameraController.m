@@ -235,5 +235,6 @@ static void QSDeviceOrientationChangedCallback(CFNotificationCenterRef center, v
 #pragma mark  - Orientation Callback
 static void QSDeviceOrientationChangedCallback(CFNotificationCenterRef center, void *observer, CFStringRef name, const void *object, CFDictionaryRef userInfo)
 {
+    DLog(@"");
     [[QSCameraController sharedInstance] setCurrentOrientation:[UIDevice currentDevice].orientation];
 }
