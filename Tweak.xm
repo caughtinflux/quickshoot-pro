@@ -44,7 +44,7 @@ static BOOL _isCapturingImage;
 - (void)qs_doubleTapRecognizerFired:(UITapGestureRecognizer *)dtr
 {
     if (!_enabled || _isCapturingImage || (![[(SBIcon *)[self icon] leafIdentifier] isEqualToString:@"com.apple.camera"])) {
-        ALog(@"QuickShoot: Cowardly returning because icon identifier was not recognized");
+        NSLog(@"QuickShoot: Cowardly returning because icon identifier was not recognized");
         return;
     }
 
@@ -125,6 +125,8 @@ static void QSUpdatePrefs(CFNotificationCenterRef center, void *observer, CFStri
     [QSCameraController sharedInstance].flashMode = QSFlashModeFromString(prefs[QSFlashModeKey]);
     [QSCameraController sharedInstance].enableHDR = [prefs[QSHDRModeKey] boolValue];
     [QSCameraController sharedInstance].waitForFocusCompletion = [prefs[QSWaitForFocusKey] boolValue];
+    [QSCameraController sharedInstance].videoCaptureQuality = prefs[QSVideoQualityKey];
+    [QSCameraController sharedInstance].videoFlashMode = QSFlashModeFromString(prefs[QSTorchModeKey]);
 
     [[NSNotificationCenter defaultCenter] postNotificationName:QSPrefsChangedNotificationName object:nil];
 
@@ -143,7 +145,7 @@ static void QSUpdatePrefs(CFNotificationCenterRef center, void *observer, CFStri
                                     CFNotificationSuspensionBehaviorHold);
     QSUpdatePrefs(NULL, NULL, NULL, NULL, NULL);
     
-    ALog(@"QS: Registering listener");
+    NSLog(@"QS: Registering listener");
     [[LAActivator sharedInstance] registerListener:[QSActivatorListener new] forName:@"com.caughtinflux.quickshootpro.optionslistener"];
     [[LAActivator sharedInstance] registerListener:[QSActivatorListener new] forName:@"com.caughtinflux.quickshootpro.capturelistener"];
     
