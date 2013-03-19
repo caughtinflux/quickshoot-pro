@@ -29,7 +29,6 @@ static NSString * const QSOptionsListenerName = @"com.caughtinflux.quickshootpro
 - (instancetype)init
 {
     if ((self = [super init])) {
-        [[QSCameraController sharedInstance] addObserver:self forKeyPath:@"flashMode" options:NSKeyValueObservingOptionNew context:nil];
         [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(_preferencesChanged:) name:QSPrefsChangedNotificationName object:nil];
     }
     return self;
@@ -104,11 +103,9 @@ static NSString * const QSOptionsListenerName = @"com.caughtinflux.quickshootpro
     return [QSCameraController sharedInstance].flashMode;
 }
 
-- (void)observeValueForKeyPath:(NSString *)keyPath ofObject:(id)object change:(NSDictionary *)change context:(void *)context
+- (BOOL)currentHDRModeForOptionsWindow:(QSCameraOptionsWindow *)optionsWindow
 {
-    if ([keyPath isEqualToString:@"flashMode"]) {
-        [_optionsWindow setFlashMode:[QSCameraController sharedInstance].flashMode];
-    }
+    return [QSCameraController sharedInstance].enableHDR;
 }
 
 - (void)_preferencesChanged:(NSNotification *)notification
@@ -116,6 +113,8 @@ static NSString * const QSOptionsListenerName = @"com.caughtinflux.quickshootpro
     @autoreleasepool {
         NSDictionary *prefs = [NSDictionary dictionaryWithContentsOfFile:kPrefPath];
         _optionsWindow.automaticHideDelay = [prefs[QSOptionsWindowHideDelayKey] doubleValue];
+
+        [_optionsWindow setHDRMode:[prefs[QSHDRModeKey] boolValue]];
         [_optionsWindow setFlashMode:QSFlashModeFromString(prefs[QSFlashModeKey])];
     }
 }
