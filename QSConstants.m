@@ -1,6 +1,7 @@
 #import "QSConstants.h"
 #import "QSCameraController.h"
 #import <Foundation/Foundation.h>
+#import <AVFoundation/AVFoundation.h>
 #import <sys/utsname.h>
 
 
@@ -9,8 +10,10 @@ NSString * const QSFlashModeKey                 = @"kQSFlashMode";
 NSString * const QSCameraDeviceKey              = @"kQSCameraDevice";
 NSString * const QSHDRModeKey                   = @"kQSHDREnabled";
 NSString * const QSWaitForFocusKey              = @"kQSWaitForFocus";
-NSString * const QSOptionsWindowHideDelayKey    = @"kQSOptionsWindowHideAfter";
+NSString * const QSOptionsWindowHideDelayKey    = @"kQSOptionsWindowHideDelay";
 NSString * const QSPrefsChangedNotificationName = @"kQSPrefsChangedNotif";
+NSString * const QSVideoQualityKey              = @"kQSVideoQuality";
+NSString * const QSTorchModeKey                 = @"kQSTorchMode";
 
 static NSString * const QSCameraDeviceFrontValue = @"kQSCameraDeviceFront";
 static NSString * const QSCameraDeviceRearValue  = @"kQSCameraDeviceRear";
@@ -23,22 +26,46 @@ QSFlashMode QSFlashModeFromString(NSString *string)
 {
     if ([string isEqualToString:@"kQSFlashModeOn"])
         return QSFlashModeOn;
-    else if ([string isEqualToString:@"kQSFlashModeAuto"])
-        return QSFlashModeOn;
-    else if ([string isEqualToString:@"kQSFlashModeOff"])
+    if ([string isEqualToString:@"kQSFlashModeAuto"])
+        return QSFlashModeAuto;
+    if ([string isEqualToString:@"kQSFlashModeOff"])
         return QSFlashModeOff;
-    else
-        return QSFlashModeAuto; // default value, in case string is nil.
+    
+    return QSFlashModeAuto; // default value, in case string is nil.
 }
 
 QSCameraDevice QSCameraDeviceFromString(NSString *string)
 {
     if ([string isEqualToString:@"kQSCameraDeviceRear"])
         return QSCameraDeviceRear;
-    else if ([string isEqualToString:@"kQSCameraDeviceFront"])
+    if ([string isEqualToString:@"kQSCameraDeviceFront"])
         return QSCameraDeviceFront;
-    else
-        return QSCameraDeviceRear;
+    
+    return QSCameraDeviceRear;
+}
+
+NSString * QSVideoQualityFromString(NSString *string)
+{
+    if ([string isEqualToString:AVCaptureSessionPresetHigh])
+        return AVCaptureSessionPresetHigh;
+    if ([string isEqualToString:AVCaptureSessionPresetMedium])
+        return AVCaptureSessionPresetMedium;
+    if ([string isEqualToString:AVCaptureSessionPresetLow])
+        return AVCaptureSessionPresetLow;
+    if ([string isEqualToString:AVCaptureSessionPreset352x288])
+        return AVCaptureSessionPreset352x288;
+    if ([string isEqualToString:AVCaptureSessionPreset640x480])
+        return AVCaptureSessionPreset640x480;
+    if ([string isEqualToString:AVCaptureSessionPreset1280x720])
+        return AVCaptureSessionPreset1280x720;
+    if ([string isEqualToString:AVCaptureSessionPreset1920x1080])
+        return AVCaptureSessionPreset1920x1080;
+    if ([string isEqualToString:AVCaptureSessionPresetiFrame960x540])
+        return AVCaptureSessionPresetiFrame960x540;
+    if ([string isEqualToString:AVCaptureSessionPreset1280x720])
+        return AVCaptureSessionPreset1280x720;
+
+    return AVCaptureSessionPresetMedium;
 }
 
 inline id QSObjectFromPrefsForKey(NSString *key)

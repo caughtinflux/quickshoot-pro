@@ -12,6 +12,7 @@
 - (void)optionsWindowCameraButtonToggled:(QSCameraOptionsWindow *)optionsWindow;
 - (QSCameraDevice)currentCameraDeviceForOptionsWindow:(QSCameraOptionsWindow *)optionsWindow;
 - (QSFlashMode)currentFlashModeForOptionsWindow:(QSCameraOptionsWindow *)optionsWindow;
+- (BOOL)currentHDRModeForOptionsWindow:(QSCameraOptionsWindow *)optionsWindow;
 @end
 
 @interface QSCameraOptionsWindow : UIWindow <PLCameraFlashButtonDelegate, PLCameraSettingsViewDelegate>
@@ -20,6 +21,7 @@
 @property(nonatomic, assign) NSTimeInterval automaticHideDelay; // in seconds
 
 - (instancetype)initWithFrame:(CGRect)frame showFlash:(BOOL)shouldShowFlash showHDR:(BOOL)shouldShowHDR showCameraToggle:(BOOL)shouldShowCameraToggle;
+- (void)setHDRMode:(BOOL)hdrMode;
 - (void)setFlashMode:(QSFlashMode)flashMode;
 - (void)hideWindowAnimated;
 

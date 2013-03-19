@@ -3,7 +3,7 @@ include theos/makefiles/common.mk
 BUNDLE_NAME = QSPrefs
 QSPrefs_FILES = QSPrefs.mm
 QSPrefs_INSTALL_PATH = /Library/PreferenceBundles
-QSPrefs_FRAMEWORKS = UIKit MessageUI
+QSPrefs_FRAMEWORKS = UIKit MessageUI AVFoundation
 QSPrefs_PRIVATE_FRAMEWORKS = Preferences
 
 include $(THEOS_MAKE_PATH)/bundle.mk

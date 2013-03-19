@@ -21,32 +21,33 @@
 
 @implementation QSCameraOptionsWindow
 {
+    PLCameraSettingsView *_settingsView;
     PLCameraToggleButton *_toggleButton;
     PLCameraFlashButton  *_flashButton;
     NSTimer              *_hideTimer;
+
+    UIDeviceOrientation   _currentOrientation;
 }
 @synthesize delegate = _optionsDelegate; // since UIWindow has _delegate already. Bah.
 
 #pragma mark - Custom Initializer(s)
 - (instancetype)initWithFrame:(CGRect)frame showFlash:(BOOL)shouldShowFlash showHDR:(BOOL)shouldShowHDR showCameraToggle:(BOOL)shouldShowCameraToggle
 {
-    DLog(@"");
     if ((self = [super initWithFrame:frame])) {
         if (shouldShowHDR) {
-            PLCameraSettingsView *settingsView = [[[PLCameraSettingsView alloc] initWithFrame:(CGRect){{kLeftSidePadding, 5}, {kSettingsViewWidth, kSettingsViewHeight}} showGrid:NO showHDR:YES showPano:NO] autorelease];
-            settingsView.delegate = self;
-            [self addSubview:settingsView];
+            _settingsView = [[PLCameraSettingsView alloc] initWithFrame:(CGRect){{kLeftSidePadding, 5}, {kSettingsViewWidth, kSettingsViewHeight}} showGrid:NO showHDR:YES showPano:NO];
+            [_settingsView setHdrIsOn:[self.delegate currentHDRModeForOptionsWindow:self]];
+            _settingsView.delegate = self;
+            [self addSubview:_settingsView];
         }
         if (shouldShowFlash) {
             _flashButton = [[PLCameraFlashButton alloc] initWithFrame:(CGRect){{kLeftSidePadding,  kSmallButtonYDistance}, {kFlashButtonWidth, 20}} isInButtonBar:NO];
-            
             if ([[PLCameraController sharedInstance] hasFlash]) {
-                _flashButton.flashMode = QSFlashModeFromString(([NSDictionary dictionaryWithContentsOfFile:kPrefPath][QSFlashModeKey]));
+                _flashButton.flashMode = [self.delegate currentFlashModeForOptionsWindow:self];
             }
             else {
                 _flashButton.showWarningIndicator = YES;
             }
-
             _flashButton.autorotationEnabled = YES;
             [_flashButton startWatchingDeviceOrientationChanges];
             
@@ -60,20 +61,30 @@
             [_toggleButton addTarget:self action:@selector(cameraToggleButtonTapped:) forControlEvents:UIControlEventTouchUpInside];
             [self addSubview:_toggleButton];
         }
+
+        // Add shadows, make sure they're rasterized, so as to prevent it impacting performance
+        self.layer.shadowColor = [UIColor blackColor].CGColor;
+        self.layer.shadowOpacity = 0.6f;
+        self.layer.shadowRadius = 2.f;
+        self.layer.shouldRasterize = YES;
+        self.layer.rasterizationScale = [UIScreen mainScreen].scale;
     }
     return self;
 }
 
 - (instancetype)initWithFrame:(CGRect)frame
 {
-    DLog(@"");
     return [self initWithFrame:frame showFlash:YES showHDR:YES showCameraToggle:YES];
 }
 
 - (void)setFlashMode:(QSFlashMode)flashMode
 {
-    DLog(@"flashMode: %i", flashMode);
     _flashButton.flashMode = flashMode;
+}
+
+- (void)setHDRMode:(BOOL)hdrMode
+{
+    [_settingsView setHdrIsOn:hdrMode];
 }
 
 - (void)setHidden:(BOOL)shouldHide
@@ -82,7 +93,7 @@
     if (!shouldHide) {
         self.alpha = 1.0f;
         [self _restartHideTimer];
-        if ([self.delegate conformsToProtocol:@protocol(QSCameraOptionsWindowDelegate)]) {
+        if (self.delegate) {
             [self _flashCameraTypeLabelWithFadeIn:NO];
         }
     }
@@ -199,7 +210,6 @@
     }];
 }
 
-
 - (void)_restartHideTimer
 {
     DLog(@"");
@@ -220,6 +230,9 @@
 
 - (void)dealloc
 {
+    [_settingsView release];
+    _settingsView = nil;
+
     [_toggleButton release];
     _toggleButton = nil;
 

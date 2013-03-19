@@ -42,12 +42,15 @@ FOUNDATION_EXPORT NSString * const QSCameraDeviceKey;
 FOUNDATION_EXPORT NSString * const QSHDRModeKey;
 FOUNDATION_EXPORT NSString * const QSWaitForFocusKey;
 FOUNDATION_EXPORT NSString * const QSOptionsWindowHideDelayKey;
+FOUNDATION_EXPORT NSString * const QSVideoQualityKey;
+FOUNDATION_EXPORT NSString * const QSTorchModeKey;
 
 FOUNDATION_EXPORT NSString * const QSPrefsChangedNotificationName;
 
 #pragma mark - Function Declarations
 FOUNDATION_EXPORT QSFlashMode    QSFlashModeFromString(NSString *string);
 FOUNDATION_EXPORT QSCameraDevice QSCameraDeviceFromString(NSString *string);
+FOUNDATION_EXPORT NSString *     QSVideoQualityFromString(NSString *string);
 
 FOUNDATION_EXPORT inline id 	    QSObjectFromPrefsForKey(NSString *key);
 FOUNDATION_EXPORT inline NSString * QSStringFromCameraDevice(QSCameraDevice device);
