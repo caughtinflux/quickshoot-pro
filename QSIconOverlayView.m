@@ -1,4 +1,5 @@
 #import "QSIconOverlayView.h"
+#import "QSConstants.h"
 
 @interface QSIconOverlayView (Private)
 
@@ -28,8 +29,9 @@
     return self;
 }
 
-- (void)imageCaptureBegan
+- (void)captureBegan
 {
+    DLog(@"");
     _irisImageView = [[UIImageView alloc] initWithImage:[self _bundleImageNamed:@"Iris"]];
     CGPoint center = self.center;
     center.y += 2;
@@ -41,8 +43,9 @@
     [self _animateIrisViewIn];
 }
 
-- (void)imageCaptureCompleted
+- (void)captureCompleted
 {
+    DLog(@"");
     UIImageView *doneImageView = [[[UIImageView alloc] initWithImage:[self _bundleImageNamed:@"Done"]] autorelease];
     CGRect frame = doneImageView.frame;
     frame.origin.x = _irisImageView.bounds.size.width * 0.20;
