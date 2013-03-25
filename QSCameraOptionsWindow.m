@@ -4,6 +4,8 @@
 #import <PhotoLibrary/PLCameraFlashButton.h>
 #import <PhotoLibrary/PLCameraController.h>
 #import <QuartzCore/QuartzCore.h>
+#import <SpringBoard/SpringBoard.h>
+#import <objc/runtime.h>
 
 #pragma mark - View Placement Constants
 #define kLeftSidePadding      5
@@ -13,21 +15,20 @@
 #define kCameraToggleWidth    kFlashButtonWidth
 #define kSmallButtonYDistance kSettingsViewHeight + 15
 
-@interface QSCameraOptionsWindow () {}
+@interface QSCameraOptionsWindow ()
+{
+    PLCameraSettingsView *_settingsView;
+    PLCameraToggleButton *_toggleButton;
+    PLCameraFlashButton  *_flashButton;
+    NSTimer              *_hideTimer;
+    UIDeviceOrientation   _currentOrientation;
+}
 - (void)_flashCameraTypeLabelWithFadeIn:(BOOL)shouldFadeIn;
 - (void)_restartHideTimer;
 - (void)_hideTimerFired:(NSTimer *)timer;
 @end
 
 @implementation QSCameraOptionsWindow
-{
-    PLCameraSettingsView *_settingsView;
-    PLCameraToggleButton *_toggleButton;
-    PLCameraFlashButton  *_flashButton;
-    NSTimer              *_hideTimer;
-
-    UIDeviceOrientation   _currentOrientation;
-}
 @synthesize delegate = _optionsDelegate; // since UIWindow has _delegate already. Bah.
 
 #pragma mark - Custom Initializer(s)
@@ -36,6 +37,13 @@
     if ((self = [super initWithFrame:frame])) {
         if (shouldShowHDR) {
             _settingsView = [[PLCameraSettingsView alloc] initWithFrame:(CGRect){{kLeftSidePadding, 5}, {kSettingsViewWidth, kSettingsViewHeight}} showGrid:NO showHDR:YES showPano:NO];
+            if (!([[PLCameraController sharedInstance] supportsHDR])) {
+                for (UIControl *control in ((UIView *)_settingsView.subviews[0]).subviews) {
+                    control.enabled = NO;
+                }
+            }
+
+
             [_settingsView setHdrIsOn:[self.delegate currentHDRModeForOptionsWindow:self]];
             _settingsView.delegate = self;
             [self addSubview:_settingsView];
@@ -48,26 +56,19 @@
             else {
                 _flashButton.showWarningIndicator = YES;
             }
-            _flashButton.autorotationEnabled = YES;
-            [_flashButton startWatchingDeviceOrientationChanges];
             
             _flashButton.delegate = self;
             [self addSubview:_flashButton];
         }
         if (shouldShowCameraToggle) {
             _toggleButton = [[PLCameraToggleButton alloc] initWithFrame:(CGRect){{kFlashButtonWidth + 25, kSmallButtonYDistance}, {kCameraToggleWidth, 20}} isInButtonBar:NO];
-            _toggleButton.autorotationEnabled = YES;
-            [_toggleButton startWatchingDeviceOrientationChanges];
             [_toggleButton addTarget:self action:@selector(cameraToggleButtonTapped:) forControlEvents:UIControlEventTouchUpInside];
             [self addSubview:_toggleButton];
         }
 
-        // Add shadows, make sure they're rasterized, so as to prevent it impacting performance
-        self.layer.shadowColor = [UIColor blackColor].CGColor;
-        self.layer.shadowOpacity = 0.6f;
-        self.layer.shadowRadius = 2.f;
-        self.layer.shouldRasterize = YES;
-        self.layer.rasterizationScale = [UIScreen mainScreen].scale;
+        self.backgroundColor = [UIColor colorWithWhite:0.0f alpha:0.3f];
+        self.layer.cornerRadius = 10.f;
+        self.layer.masksToBounds = YES;
     }
     return self;
 }
@@ -114,7 +115,7 @@
 
 - (void)hideWindowAnimated
 {
-    [UIView animateWithDuration:0.5 animations:^{
+    [UIView animateWithDuration:0.25 animations:^{
         self.alpha = 0.0f;
     } completion:^(BOOL finished) {
         if (finished)
@@ -148,25 +149,21 @@
 #pragma mark - Flash Button Delegate
 - (void)flashButtonDidCollapse:(PLCameraFlashButton *)button
 {
-    DLog(@"");
     [_toggleButton setHidden:NO animationDuration:0.8];
 }
 
 - (void)flashButtonWillExpand:(PLCameraFlashButton *)button
 {
-    DLog(@"");
     [_toggleButton setHidden:YES animationDuration:0.5];
 }
 
 - (void)flashButtonWasPressed:(PLCameraFlashButton *)button
 {
-    DLog(@"");
     [self _restartHideTimer];
 }
 
 - (void)flashButtonModeDidChange:(PLCameraFlashButton *)button
 {
-    DLog(@"");
     if ([self.delegate conformsToProtocol:@protocol(QSCameraOptionsWindowDelegate)]) {
         [self.delegate optionsWindow:self flashModeChanged:(QSFlashMode)button.flashMode];
     }
@@ -176,7 +173,7 @@
 - (void)_flashCameraTypeLabelWithFadeIn:(BOOL)shouldFadeIn
 {
     UILabel *cameraModeChangedLabel = [[[UILabel alloc] initWithFrame:(CGRect){{kLeftSidePadding, kSmallButtonYDistance + 40}, {kFlashButtonWidth * 2.2, kSettingsViewHeight - 10}}] autorelease];
-    cameraModeChangedLabel.backgroundColor = [UIColor colorWithRed:1.0f green:1.0f blue:1.0f alpha:0.70f];
+    cameraModeChangedLabel.backgroundColor = [UIColor colorWithRed:1.0f green:1.0f blue:1.0f alpha:0.60f];
     cameraModeChangedLabel.layer.cornerRadius = 7.f;
     cameraModeChangedLabel.layer.masksToBounds = YES;
     cameraModeChangedLabel.layer.borderColor = [UIColor blackColor].CGColor;
@@ -194,16 +191,22 @@
     [self addSubview:cameraModeChangedLabel];
 
     NSTimeInterval fadeInDuration = shouldFadeIn ? 0.4 : 0.0;
-    [UIView animateWithDuration:fadeInDuration animations:^{
+    NSTimeInterval fadeOutDuration = 0.4f;
+    
+    QSCameraOptionsWindow __block *wSelf = self;
+    [UIView animateWithDuration:fadeInDuration animations:^{ 
+        wSelf.frame = CGRectMake(wSelf.frame.origin.x, wSelf.frame.origin.y, wSelf.frame.size.width, wSelf.frame.size.height + cameraModeChangedLabel.frame.size.height);
         cameraModeChangedLabel.alpha = 1.0f;
     } completion:^(BOOL finished) {
         if (finished) {
             EXECUTE_BLOCK_AFTER_DELAY(0.75, ^{
-                [UIView animateWithDuration:0.4 animations:^{
+                [UIView animateWithDuration:fadeOutDuration animations:^{
+                    wSelf.frame = CGRectMake(wSelf.frame.origin.x, wSelf.frame.origin.y, wSelf.frame.size.width, wSelf.frame.size.height - cameraModeChangedLabel.frame.size.height);
                     cameraModeChangedLabel.alpha = 0.0f;
                 } completion:^(BOOL finished) {
-                    if (finished)
+                    if (finished) {
                         [cameraModeChangedLabel removeFromSuperview];
+                    }
                 }];
             });
         }
