@@ -237,6 +237,34 @@
             <string>com.caughtinflux.quickshootpro.prefschanged</string>
         </dict>
 
+         <dict>
+            <key>cell</key>
+            <string>PSGroupCell</string>
+            <key>label</key>
+            <string>App Icons</string>
+            <key>footerText</key>
+            <string>The camera icon is always enabled, irrespective of the setting here</string> 
+        </dict>
+        <dict>
+            <key>cell</key>
+            <string>PSLinkCell</string>
+            <key>bundle</key>
+            <string>AppList</string>
+            <key>isController</key>
+            <string>1</string>
+            <key>label</key>
+            <string>Choose Icons</string>
+            <key>ALAllowsSelection</key>
+            <string>1</string>
+            <key>ALChangeNotification</key>
+            <string>com.caughtinflux.quickshootpro.prefschanged.appicons</string>
+            <key>ALSettingsKeyPrefix</key>
+            <string>QSApp-</string>
+            <key>ALSettingsPath</key>
+            <string>/User/Library/Preferences/com.caughtinflux.qsproprefs.plist</string>
+            <key>ALSingleEnabledMode</key>
+            <false/>
+        </dict>
 
         <dict>
             <key>cell</key>
