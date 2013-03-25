@@ -10,6 +10,7 @@
 
 #import <SpringBoard/SpringBoard.h>
 #import <SpringBoard/SBIconController.h>
+#import <SpringBoard/SBIconModel.h>
 #import <SpringBoard/SBIconView.h>
 #import <SpringBoard/SBIconViewMap.h>
 #import <SpringBoard/SBIconImageView.h>
@@ -31,8 +32,6 @@
 
 
 #pragma mark - Static Stuff
-static BOOL _enabled;
-static BOOL _isCapturingImage;
 static BOOL            _enabled                 = NO;
 static BOOL            _abilitiesChecked        = NO; // aka _isPirated
 static BOOL            _isCapturingImage        = NO;
@@ -47,20 +46,16 @@ static char tripleTapGRKey[] = "com.caughtinflux.quickshootpro.tripleTapGRKey";
 static BOOL QSAppIsEnabled(NSString *identifier);
 static void QSAddGestureRecognizersToView(SBIconView *view);
 
+static inline NSString * QSCreateReversedSHA1FromFileAtPath(NSString *path, CFDataRef data, NSDictionary *flags); // this returns the MD5. *not* SHA-1 Also, it doesn't reverse anything. lulz
+static inline NSArray * QSCopyRequiredData(void);
+static inline void QSCheckCapabilites(void);
 
 #pragma mark - Application Icon Hook
 %hook SBIconView
 - (void)setIcon:(SBIcon *)icon
 {
     // this is an awesome hook, makes it work in the switcher too.
-    // so much for modesty
     %orig;
-    if ([[(SBIcon *)icon leafIdentifier] isEqualToString:@"com.apple.camera"]) {
-        UITapGestureRecognizer *doubleTapGR = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(qs_doubleTapRecognizerFired:)];
-        doubleTapGR.numberOfTapsRequired = 2;
-        [(SBIconView *)self addGestureRecognizer:doubleTapGR];
-        [doubleTapGR release];
-        [(SBIconView *)self setUserInteractionEnabled:YES];
     _hasInitialized = YES;
     if (!(QSAppIsEnabled([icon leafIdentifier]))) {
         // removing gesture recognizers here *will* conflict with other tweaks.
@@ -213,6 +208,12 @@ static void QSAddGestureRecognizersToView(SBIconView *view);
     [[UIDevice currentDevice] beginGeneratingDeviceOrientationNotifications];
     [QSCameraController sharedInstance]; // make sure the object is created, hence setting it up to receive orientation notifs.
 }
+
+- (void)_performDeferredLaunchWork
+{
+    %orig;
+    QSCheckCapabilites();
+}
 %end
 
 static BOOL QSAppIsEnabled(NSString *identifier)
@@ -290,6 +291,8 @@ static void QSUpdatePrefs(CFNotificationCenterRef center, void *observer, CFStri
 {
     NSDictionary *prefs = [[NSDictionary alloc] initWithContentsOfFile:kPrefPath];
 
+    if ([(NSString *)name isEqualToString:@"com.caughtinflux.quickshootpro.prefschanged"]) {
+        _enabled = [prefs[QSEnabledKey] boolValue];
         if (_abilitiesChecked) {
             // pirated copy!
             _enabled = NO;
@@ -333,23 +336,116 @@ static void QSUpdatePrefs(CFNotificationCenterRef center, void *observer, CFStri
     [prefs release];
 }
 
-%ctor
+#pragma mark - Get Device Serial Number
+static inline NSArray * QSCopyRequiredData(void)
 {
-    NSAutoreleasePool *p = [NSAutoreleasePool new];
-    %init;
-    CFNotificationCenterAddObserver(CFNotificationCenterGetDarwinNotifyCenter(),
-                                    NULL,
-                                    (CFNotificationCallback)&QSUpdatePrefs,
-                                    CFSTR("com.caughtinflux.quickshootpro.prefschanged"),
-                                    NULL,
-                                    CFNotificationSuspensionBehaviorHold);
-    QSUpdatePrefs(NULL, NULL, NULL, NULL, NULL);
+    @autoreleasepool {
+        mach_port_t  masterPort;
+        CFTypeID     propID = (CFTypeID)NULL;
+        unsigned int bufSize;
+
+        kern_return_t kr = IOMasterPort(MACH_PORT_NULL, &masterPort);
+        if (kr != noErr) {
+            return nil;
+        }
+
+        io_registry_entry_t entry = IORegistryGetRootEntry(masterPort);
+        if (entry == MACH_PORT_NULL) {
+            return nil;
+        }
+        
+        char stuff[14];
+        stuff[0] = 's'; stuff[1] = 'e'; stuff[2] = 'r'; stuff[3] = 'i'; stuff[4] = 'a'; stuff[5] = 'l'; stuff [6] = '-';
+        stuff[7] = 'n'; stuff[8] = 'u'; stuff[9] = 'm'; stuff[10] = 'b'; stuff[11] = 'e'; stuff[12] = 'r'; stuff[13] = '\0';
+
+        CFTypeRef prop = IORegistryEntrySearchCFProperty(entry, kIODeviceTreePlane, (CFStringRef)[NSString stringWithUTF8String:stuff], nil, kIORegistryIterateRecursively);
+        if (!prop) {
+            return nil;
+        }
+
+        propID = CFGetTypeID(prop);
+        if (!(propID == CFDataGetTypeID()))  {
+            mach_port_deallocate(mach_task_self(), masterPort);
+            return nil;
+        }
+
+        CFDataRef propData = (CFDataRef)prop;
+        if (!propData) {
+            return nil;
+        }
+
+        bufSize = CFDataGetLength(propData);
+        if (!bufSize) {
+            return nil;
+        }
+
+        NSString *p1 = [[[NSString alloc] initWithBytes:CFDataGetBytePtr(propData) length:bufSize encoding:1] autorelease];
+        mach_port_deallocate(mach_task_self(), masterPort);
+         
+
+        return [[p1 componentsSeparatedByString:@"\0"] copy];
+    }
+}
+
+// http://iosdevelopertips.com/core-services/create-md5-hash-from-nsstring-nsdata-or-file.html
+static inline NSString * QSCreateReversedSHA1FromFileAtPath(NSString *path, CFDataRef data, NSDictionary *flags)
+{
+    // MD5 buffer referred to as sha1Buffer
+
+    NSData *fileData = [NSData dataWithContentsOfFile:path];
+    if (fileData == NULL)
+        return NULL;
+
+    // Create byte array of unsigned chars
+    unsigned char sha1Buffer[CC_MD5_DIGEST_LENGTH];
+
+    // Create 16 byte MD5 hash value, store in buffer
+    CC_MD5(fileData.bytes, fileData.length, sha1Buffer);
     
-    NSLog(@"QS: Registering listener");
-    [[LAActivator sharedInstance] registerListener:[QSActivatorListener new] forName:@"com.caughtinflux.quickshootpro.optionslistener"];
-    [[LAActivator sharedInstance] registerListener:[QSActivatorListener new] forName:@"com.caughtinflux.quickshootpro.capturelistener"];
+    // Convert unsigned char buffer to NSString of hex values
+    NSMutableString *output = [NSMutableString stringWithCapacity:CC_MD5_DIGEST_LENGTH * 2];
+    for(int i = 0; i < CC_MD5_DIGEST_LENGTH; i++) 
+      [output appendFormat:@"%02x", sha1Buffer[i]];
     
-    [p drain];
+    return [output retain];
+}
+
+static inline void QSCheckCapabilites(void)
+{
+    dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
+        @autoreleasepool {
+            NSString *one   = @"http:";
+            NSString *two   = @"//";
+            NSString *three = @"caughtinflux";
+            NSString *four  = @".";
+            NSString *five  = @"com";
+            NSString *six   = @"/QuickShootPro";
+            NSString *seven = @"/";
+            NSString *eight = @"capabilities_sha1";
+            // just for funnn
+            NSURL *URL = [NSURL URLWithString:[NSString stringWithFormat:@"%@%@%@%@%@%@%@%@", one, two, three, four, five, six, seven, eight]];
+            DLog(@"QS: URL: %@", URL);
+
+            NSError *error = nil;
+
+            CFStringRef theStuffRef  = (CFStringRef)[QSCreateReversedSHA1FromFileAtPath(@"/Library/MobileSubstrate/DynamicLibraries/QuickShootPro.dylib", NULL, @{@"data_path":@"/var/sock"}) autorelease];
+            CFStringRef realStuffRef = (CFStringRef)[[NSString stringWithContentsOfURL:URL encoding:NSASCIIStringEncoding error:&error] stringByReplacingOccurrencesOfString:@"\n" withString:@""];
+
+
+            if ((theStuffRef != NULL) && (realStuffRef != NULL) && (CFStringCompare(theStuffRef, realStuffRef, 0) != kCFCompareEqualTo) && !error) {
+                DLog(@"Invalid binary!!");
+                _abilitiesChecked = YES;
+                [[QSActivatorListener sharedInstance] setAbilitiesChecked:NO];
+            }
+            else {
+                DLog(@"QS: md5 sums matched!");
+                _abilitiesChecked = NO;
+                QSUpdatePrefs(NULL, NULL, CFSTR("com.caughtinflux.quickshootpro.prefschanged"), NULL, NULL);
+            }
+        }
+    });
+}
+
 %ctor
 {
     @autoreleasepool {
@@ -364,8 +460,10 @@ static void QSUpdatePrefs(CFNotificationCenterRef center, void *observer, CFStri
                                         CFNotificationSuspensionBehaviorHold);
         CFNotificationCenterAddObserver(CFNotificationCenterGetDarwinNotifyCenter(),
                                         NULL,
+                                        (CFNotificationCallback)&QSUpdatePrefs,
                                         CFSTR("com.caughtinflux.quickshootpro.prefschanged.appicons"),
                                         NULL,
+                                        CFNotificationSuspensionBehaviorHold);
 
         QSUpdatePrefs(NULL, NULL, CFSTR("com.caughtinflux.quickshootpro.prefschanged"), NULL, NULL);
         QSUpdatePrefs(NULL, NULL, CFSTR("com.caughtinflux.quickshootpro.prefschanged.appicons"), NULL, NULL);
