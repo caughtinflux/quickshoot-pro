@@ -1,7 +1,7 @@
 include theos/makefiles/common.mk
 
 BUNDLE_NAME = QSPrefs
-QSPrefs_FILES = QSPrefs.mm
+QSPrefs_FILES = QSPrefs.mm QSAboutListController.mm
 QSPrefs_INSTALL_PATH = /Library/PreferenceBundles
 QSPrefs_FRAMEWORKS = UIKit MessageUI AVFoundation
 QSPrefs_PRIVATE_FRAMEWORKS = Preferences
