@@ -4,10 +4,13 @@
 #import "QSConstants.h"
 
 #import <UIKit/UIKit.h>
+#import <Foundation/Foundation.h>
+
+#import <SpringBoard/SBScreenFlash.h>
 #import <objc/runtime.h>
 
-static NSString * const QSCaptureListenerName = @"com.caughtinflux.quickshootpro.capturelistener";
-static NSString * const QSOptionsListenerName = @"com.caughtinflux.quickshootpro.optionslistener";
+#import "LibstatusBar.h"
+
 
 #pragma mark - Lockscreen Class Interfaces
 @class SBAwayView;
@@ -17,35 +20,62 @@ static NSString * const QSOptionsListenerName = @"com.caughtinflux.quickshootpro
 - (void)attemptUnlock;
 @end
 
-@interface QSActivatorListener () {}
+@interface QSActivatorListener ()
+{
+    QSCameraOptionsWindow *_optionsWindow;
+    BOOL                   _isCapturingVideo;
+}
 - (void)_preferencesChanged:(NSNotification *)notification;
 @end
 
 @implementation QSActivatorListener
-{
-    QSCameraOptionsWindow *_optionsWindow;
-}
 
-- (instancetype)init
++ (instancetype)sharedInstance
 {
-    if ((self = [super init])) {
-        [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(_preferencesChanged:) name:QSPrefsChangedNotificationName object:nil];
-    }
-    return self;
+    static dispatch_once_t predicate;
+    static QSActivatorListener *sharedInstance;
+    dispatch_once(&predicate, ^{
+        sharedInstance = [[self alloc] init];
+        [sharedInstance setAbilitiesChecked:YES];
+        [[NSNotificationCenter defaultCenter] addObserver:sharedInstance selector:@selector(_preferencesChanged:) name:QSPrefsChangedNotificationName object:nil];
+    });
+    return sharedInstance;
 }
 
 #pragma mark - Activator Listener Protocol Implementation
 - (void)activator:(LAActivator *)activator receiveEvent:(LAEvent *)event
 {
-    if ([[[LAActivator sharedInstance] assignedListenerNameForEvent:event] isEqualToString:QSCaptureListenerName]) {
-        [[QSCameraController sharedInstance] takePhotoWithCompletionHandler:^(BOOL success) {
-            ;// do nothing
-        }];
-        [event setHandled:YES];
+    if (!self.abilitiesChecked) {
+        return;
     }
-    else if ([[[LAActivator sharedInstance] assignedListenerNameForEvent:event] isEqualToString:QSOptionsListenerName]) {
+
+    // image capture
+    if ([[[LAActivator sharedInstance] assignedListenerNameForEvent:event] isEqualToString:QSImageCaptureListenerName]) {
+        [[QSCameraController sharedInstance] takePhotoWithCompletionHandler:^(BOOL success) {
+            [(SBScreenFlash *)[objc_getClass("SBScreenFlash") sharedInstance] flash];
+        }];
+    }
+
+    // video capture
+    else if ([[[LAActivator sharedInstance] assignedListenerNameForEvent:event] isEqualToString:QSVideoCaptureListenerName]) {
+        if (_isCapturingVideo == NO) {
+            _isCapturingVideo = YES;
+            [[QSCameraController sharedInstance] startVideoCaptureWithHandler:^(BOOL success) {
+                [(SpringBoard *)[UIApplication sharedApplication] addStatusBarImageNamed:QSStatusBarImageName];
+            }];
+        }
+        else {
+            [[QSCameraController sharedInstance] stopVideoCaptureWithHandler:^(BOOL success) {
+                [(SpringBoard *)[UIApplication sharedApplication] removeStatusBarImageNamed:QSStatusBarImageName];
+                _isCapturingVideo = NO;
+            }];
+        }
+    }
+
+    // options window
+    else if ([[[LAActivator sharedInstance] assignedListenerNameForEvent:event] isEqualToString:QSOptionsWindowListenerName]) {
         if (!_optionsWindow) {
-            _optionsWindow = [[QSCameraOptionsWindow alloc] initWithFrame:(CGRect){{0, 20}, {200, 190}} showFlash:YES showHDR:YES showCameraToggle:YES]; 
+            _optionsWindow = [[QSCameraOptionsWindow alloc] initWithFrame:(CGRect){{0, 20}, {200, 102}} showFlash:YES showHDR:YES showCameraToggle:YES]; 
             _optionsWindow.windowLevel = 1200;
             _optionsWindow.delegate = self;
             [self _preferencesChanged:nil]; // make sure the delay times 'n' shit are set.
@@ -60,8 +90,9 @@ static NSString * const QSOptionsListenerName = @"com.caughtinflux.quickshootpro
         else {
             [_optionsWindow hideWindowAnimated];
         }
-        [event setHandled:YES];
     }
+
+    [event setHandled:YES];
 }
 
 #pragma mark - Options Window Delegate
@@ -71,7 +102,7 @@ static NSString * const QSOptionsListenerName = @"com.caughtinflux.quickshootpro
     [[QSCameraController sharedInstance] setCameraDevice:((currentDevice == QSCameraDeviceRear) ? QSCameraDeviceFront : QSCameraDeviceRear)];
 
     NSMutableDictionary *prefsDict = [NSMutableDictionary dictionaryWithContentsOfFile:kPrefPath];
-    prefsDict[QSCameraDeviceKey] = QSStringFromCameraDevice([QSCameraController sharedInstance].cameraDevice);
+    prefsDict[QSCameraDeviceKey] = QSStringFromCameraDevice([QSCameraController sharedInstance].cameraDevice); 
     [prefsDict writeToFile:kPrefPath atomically:YES];
 }
 

@@ -5,15 +5,21 @@
 #import <sys/utsname.h>
 
 
-NSString * const QSEnabledKey                   = @"kQSEnabled";
-NSString * const QSFlashModeKey                 = @"kQSFlashMode";
-NSString * const QSCameraDeviceKey              = @"kQSCameraDevice";
-NSString * const QSHDRModeKey                   = @"kQSHDREnabled";
-NSString * const QSWaitForFocusKey              = @"kQSWaitForFocus";
-NSString * const QSOptionsWindowHideDelayKey    = @"kQSOptionsWindowHideDelay";
-NSString * const QSPrefsChangedNotificationName = @"kQSPrefsChangedNotif";
-NSString * const QSVideoQualityKey              = @"kQSVideoQuality";
-NSString * const QSTorchModeKey                 = @"kQSTorchMode";
+NSString * const QSEnabledKey                    = @"kQSEnabled";
+NSString * const QSFlashModeKey                  = @"kQSFlashMode";
+NSString * const QSCameraDeviceKey               = @"kQSCameraDevice";
+NSString * const QSHDRModeKey                    = @"kQSHDREnabled";
+NSString * const QSWaitForFocusKey               = @"kQSWaitForFocus";
+NSString * const QSOptionsWindowHideDelayKey     = @"kQSOptionsWindowHideDelay";
+NSString * const QSPrefsChangedNotificationName  = @"kQSPrefsChangedNotif";
+NSString * const QSVideoQualityKey               = @"kQSVideoQuality";
+NSString * const QSTorchModeKey                  = @"kQSTorchMode";
+
+NSString * const QSImageCaptureListenerName      = @"com.caughtinflux.quickshootpro.imagecapturelistener";
+NSString * const QSVideoCaptureListenerName      = @"com.caughtinflux.quickshootpro.videocapturelistener";
+NSString * const QSOptionsWindowListenerName     = @"com.caughtinflux.quickshootpro.optionslistener";
+
+NSString * const QSStatusBarImageName            = @"QSSBRecordingIcon";
 
 static NSString * const QSCameraDeviceFrontValue = @"kQSCameraDeviceFront";
 static NSString * const QSCameraDeviceRearValue  = @"kQSCameraDeviceRear";
@@ -24,11 +30,11 @@ static NSString * const QSFlashModeOffValue      = @"kQSFlashModeOff";
 
 QSFlashMode QSFlashModeFromString(NSString *string)
 {
-    if ([string isEqualToString:@"kQSFlashModeOn"])
+    if ([string isEqualToString:QSFlashModeOnValue])
         return QSFlashModeOn;
-    if ([string isEqualToString:@"kQSFlashModeAuto"])
+    if ([string isEqualToString:QSFlashModeAutoValue])
         return QSFlashModeAuto;
-    if ([string isEqualToString:@"kQSFlashModeOff"])
+    if ([string isEqualToString:QSFlashModeOffValue])
         return QSFlashModeOff;
     
     return QSFlashModeAuto; // default value, in case string is nil.
@@ -36,9 +42,9 @@ QSFlashMode QSFlashModeFromString(NSString *string)
 
 QSCameraDevice QSCameraDeviceFromString(NSString *string)
 {
-    if ([string isEqualToString:@"kQSCameraDeviceRear"])
+    if ([string isEqualToString:QSCameraDeviceRearValue])
         return QSCameraDeviceRear;
-    if ([string isEqualToString:@"kQSCameraDeviceFront"])
+    if ([string isEqualToString:QSCameraDeviceFrontValue])
         return QSCameraDeviceFront;
     
     return QSCameraDeviceRear;
@@ -75,12 +81,12 @@ inline id QSObjectFromPrefsForKey(NSString *key)
 
 inline NSString * QSStringFromCameraDevice(QSCameraDevice device)
 {
-    return ((device == QSCameraDeviceRear) ? @"kQSCameraDeviceRear" : @"kQSCameraDeviceFront");
+    return ((device == QSCameraDeviceRear) ? QSCameraDeviceRearValue : QSCameraDeviceFrontValue);
 }
 
 inline NSString * QSStringFromFlashMode(QSFlashMode flashMode)
 {
-    return ((flashMode == QSFlashModeAuto) ? @"kQSFlashModeAuto" : ((flashMode == QSFlashModeOn) ? @"kQSFlashModeOn" : @"kQSFlashModeOff"));
+    return ((flashMode == QSFlashModeAuto) ? QSFlashModeAutoValue : ((flashMode == QSFlashModeOn) ? QSFlashModeOnValue : QSFlashModeOffValue));
 }
 
 inline NSString * QSGetMachineName(void)

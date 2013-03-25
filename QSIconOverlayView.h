@@ -6,7 +6,7 @@ typedef void (^QSAnimationCompletionHandler)(void);
 
 @property (nonatomic, copy) QSAnimationCompletionHandler animationCompletionHandler;
 
-- (void)imageCaptureBegan;
-- (void)imageCaptureCompleted;
+- (void)captureBegan;
+- (void)captureCompleted;
 
 @end

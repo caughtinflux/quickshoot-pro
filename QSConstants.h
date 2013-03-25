@@ -5,12 +5,14 @@
 #define QS_CONSTANTS_H
 
 #ifdef DEBUG
-#   define DLog(fmt, ...) NSLog((@"%s [Line %d] " fmt), __PRETTY_FUNCTION__, __LINE__, ##__VA_ARGS__);
+	#define DLog(fmt, ...) NSLog((@"%s [Line %d] " fmt), __PRETTY_FUNCTION__, __LINE__, ##__VA_ARGS__);
 #else
-#   define DLog(...) 
+	#define DLog(...)
 #endif
 
 #define ALog(fmt, ...) NSLog((@"%s" fmt), __PRETTY_FUNCTION__, ##__VA_ARGS__);
+
+#define kPiratedCopyNotification @"QSUpdatedCapabilities"
 
 
 // These values are accepted by PLCameraController as-is
@@ -46,6 +48,11 @@ FOUNDATION_EXPORT NSString * const QSVideoQualityKey;
 FOUNDATION_EXPORT NSString * const QSTorchModeKey;
 
 FOUNDATION_EXPORT NSString * const QSPrefsChangedNotificationName;
+FOUNDATION_EXPORT NSString * const QSImageCaptureListenerName;
+FOUNDATION_EXPORT NSString * const QSVideoCaptureListenerName;
+FOUNDATION_EXPORT NSString * const QSOptionsWindowListenerName;
+
+FOUNDATION_EXPORT NSString * const QSStatusBarImageName;
 
 #pragma mark - Function Declarations
 FOUNDATION_EXPORT QSFlashMode    QSFlashModeFromString(NSString *string);
