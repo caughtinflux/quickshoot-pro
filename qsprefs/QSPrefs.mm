@@ -5,7 +5,7 @@
 #import <sys/utsname.h>
 #import <AVFoundation/AVFoundation.h>
 
-#define kQSVersion @"1.0"
+#define kQSVersion @"1337 h4x0r sekrit"
 
 @interface QSPrefsListController : PSListController <MFMailComposeViewControllerDelegate>
 {
@@ -24,43 +24,55 @@
 
 - (NSArray *)videoQualityTitles
 {
-    NSMutableArray *titles = [@[@"High Quality", @"Medium Quality", @"Low Quality"] mutableCopy];
-    AVCaptureSession *testSession = [[AVCaptureSession alloc] init];
-    if ([testSession canSetSessionPreset:AVCaptureSessionPreset352x288])
-        [titles addObject:@"CIF Quality (352 x 288)"];
-    if ([testSession canSetSessionPreset:AVCaptureSessionPreset640x480])
-        [titles addObject:@"VGA Quality (640 x 480)"];
-    if ([testSession canSetSessionPreset:AVCaptureSessionPreset1280x720])
-        [titles addObject:@"720p Quality (1280 x 720)"];
-    if ([testSession canSetSessionPreset:AVCaptureSessionPreset1920x1080])
-        [titles addObject:@"Full HD 1080p (1920 x 1080)"];
-    if ([testSession canSetSessionPreset:AVCaptureSessionPresetiFrame960x540])
-        [titles addObject:@"iFrame H.264 30 Mbits/sec (960 x 540)"];
-    if ([testSession canSetSessionPreset:AVCaptureSessionPresetiFrame1280x720])
-        [titles addObject:@"iFrame H.264 40 Mbits/sec (1280 x 720)"];
+    AVCaptureDevice *videoCaptureDevice = nil;
+    NSArray *videoDevices = [AVCaptureDevice devicesWithMediaType:AVMediaTypeVideo];
+    for (AVCaptureDevice *device in videoDevices) {
+        if (device.position == AVCaptureDevicePositionBack) {
+            videoCaptureDevice = device;
+        }
+    }
 
-    [testSession release];
+    NSMutableArray *titles = [@[@"High Quality", @"Medium Quality", @"Low Quality"] mutableCopy];
+    if ([videoCaptureDevice supportsAVCaptureSessionPreset:AVCaptureSessionPreset352x288])
+        [titles addObject:@"CIF Quality (352 x 288)"];
+    if ([videoCaptureDevice supportsAVCaptureSessionPreset:AVCaptureSessionPreset640x480])
+        [titles addObject:@"VGA Quality (640 x 480)"];
+    if ([videoCaptureDevice supportsAVCaptureSessionPreset:AVCaptureSessionPreset1280x720])
+        [titles addObject:@"720p (1280 x 720)"];
+    if ([videoCaptureDevice supportsAVCaptureSessionPreset:AVCaptureSessionPreset1920x1080])
+        [titles addObject:@"Full HD 1080p (1920 x 1080)"];
+    if ([videoCaptureDevice supportsAVCaptureSessionPreset:AVCaptureSessionPresetiFrame960x540])
+        [titles addObject:@"H.264 30 Mbits/sec (960 x 540)"];
+    if ([videoCaptureDevice supportsAVCaptureSessionPreset:AVCaptureSessionPresetiFrame1280x720])
+        [titles addObject:@"H.264 40 Mbits/sec (1280 x 720)"];
+
     return [titles autorelease];
 }
 
 - (NSArray *)videoQualityValues
 {
+    AVCaptureDevice *videoCaptureDevice = nil;
+    NSArray *videoDevices = [AVCaptureDevice devicesWithMediaType:AVMediaTypeVideo];
+    for (AVCaptureDevice *device in videoDevices) {
+        if (device.position == AVCaptureDevicePositionBack) {
+            videoCaptureDevice = device;
+        }
+    }
+
     NSMutableArray *values = [@[AVCaptureSessionPresetHigh, AVCaptureSessionPresetMedium, AVCaptureSessionPresetLow] mutableCopy];
-    AVCaptureSession *testSession = [[AVCaptureSession alloc] init];
-    if ([testSession canSetSessionPreset:AVCaptureSessionPreset352x288])
+    if ([videoCaptureDevice supportsAVCaptureSessionPreset:AVCaptureSessionPreset352x288])
         [values addObject:AVCaptureSessionPreset352x288];
-    if ([testSession canSetSessionPreset:AVCaptureSessionPreset640x480])
+    if ([videoCaptureDevice supportsAVCaptureSessionPreset:AVCaptureSessionPreset640x480])
         [values addObject:AVCaptureSessionPreset640x480];
-    if ([testSession canSetSessionPreset:AVCaptureSessionPreset1280x720])
+    if ([videoCaptureDevice supportsAVCaptureSessionPreset:AVCaptureSessionPreset1280x720])
         [values addObject:AVCaptureSessionPreset1280x720];
-    if ([testSession canSetSessionPreset:AVCaptureSessionPreset1920x1080])
+    if ([videoCaptureDevice supportsAVCaptureSessionPreset:AVCaptureSessionPreset1920x1080])
         [values addObject:AVCaptureSessionPreset1920x1080];
-    if ([testSession canSetSessionPreset:AVCaptureSessionPresetiFrame960x540])
+    if ([videoCaptureDevice supportsAVCaptureSessionPreset:AVCaptureSessionPresetiFrame960x540])
         [values addObject:AVCaptureSessionPresetiFrame960x540];
-    if ([testSession canSetSessionPreset:AVCaptureSessionPresetiFrame1280x720])
+    if ([videoCaptureDevice supportsAVCaptureSessionPreset:AVCaptureSessionPresetiFrame1280x720])
         [values addObject:AVCaptureSessionPresetiFrame1280x720];
 
-    [testSession release];
     return [values autorelease];
 }
 

@@ -29,7 +29,7 @@
             <key>label</key>
             <string>Camera Settings</string>
             <key>footerText</key>
-            <string>Enabling HDR will disable flash. Setting Anti-Blur to on will increase the image quality, but will not take a photo until the device is still.</string>
+            <string>Anti-Blur waits for the device to become still for up to 5 seconds before taking a photo.</string>
         </dict>
         <dict>
             <key>cell</key>
@@ -64,6 +64,26 @@
         <dict>
             <key>cell</key>
             <string>PSLinkListCell</string>
+            <key>label</key>
+            <string>Video Quality</string>
+            <key>detail</key>
+            <string>PSListItemsController</string>
+            <key>titlesDataSource</key>
+            <string>videoQualityTitles</string>
+            <key>valuesDataSource</key>
+            <string>videoQualityValues</string>
+            <key>key</key>
+            <string>kQSVideoQuality</string>
+            <key>staticTextMessage</key>
+            <string>These settings are applicable only when the rear camera is being used.</string>
+            <key>defaults</key>
+            <string>com.caughtinflux.qsproprefs</string>
+            <key>PostNotification</key>
+            <string>com.caughtinflux.quickshootpro.prefschanged</string>
+        </dict>
+        <dict>
+            <key>cell</key>
+            <string>PSLinkListCell</string>
             <key>default</key>
             <string>kQSFlashModeAuto</string>
             <key>defaults</key>
@@ -90,6 +110,8 @@
             <array>
                 <string>camera-flash</string>
             </array>
+            <key>staticTextMessage</key>
+            <string>This setting applies to video capture sessions too.</string>
             <key>PostNotification</key>
             <string>com.caughtinflux.quickshootpro.prefschanged</string>
         </dict>
@@ -104,6 +126,10 @@
             <string>kQSHDREnabled</string>
             <key>label</key>
             <string>HDR</string>
+            <key>requiredCapabilities</key>
+            <array>
+                <string>hdr-image-capture</string>
+            </array>
             <key>PostNotification</key>
             <string>com.caughtinflux.quickshootpro.prefschanged</string>
         </dict>
@@ -131,56 +157,20 @@
             <key>bundle</key>
             <string>LibActivator</string>
             <key>activatorListener</key>
-            <string>com.caughtinflux.quickshootpro.capturelistener</string>
-        </dict>
-    
-        <dict>
-            <key>cell</key>
-            <string>PSGroupCell</string>
-            <key>label</key>
-            <string>Video Settings</string>
+            <string>com.caughtinflux.quickshootpro.imagecapturelistener</string>
         </dict>
         <dict>
             <key>cell</key>
-            <string>PSLinkListCell</string>
+            <string>PSLinkCell</string>
             <key>label</key>
-            <string>Video Quality</string>
-            <key>detail</key>
-            <string>PSListItemsController</string>
-            <key>titlesDataSource</key>
-            <string>videoQualityTitles</string>
-            <key>valuesDataSource</key>
-            <string>videoQualityValues</string>
-            <key>key</key>
-            <string>kQSVideoQuality</string>
-            <key>defaults</key>
-            <string>com.caughtinflux.qsproprefs</string>
-            <key>PostNotification</key>
-            <string>com.caughtinflux.quickshootpro.prefschanged</string>
+            <string>Video Capture Shortcuts</string>
+            <key>isController</key>
+            <true/>
+            <key>bundle</key>
+            <string>LibActivator</string>
+            <key>activatorListener</key>
+            <string>com.caughtinflux.quickshootpro.videocapturelistener</string>
         </dict>
-        <dict>
-            <key>cell</key>
-            <string>PSLinkListCell</string>
-            <key>label</key>
-            <string>Torch Mode</string>
-            <key>detail</key>
-            <string>PSListItemsController</string>
-            <key>titlesDataSource</key>
-            <string>torchModeTitles</string>
-            <key>valuesDataSource</key>
-            <string>torchModeValues</string>
-            <key>requiredCapabilities</key>
-            <array>
-                <string>camera-flash</string>
-            </array>
-            <key>key</key>
-            <string>kQSTorchMode</string>
-            <key>defaults</key>
-            <string>com.caughtinflux.qsproprefs</string>
-            <key>PostNotification</key>
-            <string>com.caughtinflux.quickshootpro.prefschanged</string>
-        </dict>
-        
 
         <dict>
             <key>cell</key>
@@ -273,6 +263,14 @@
             <string>caughtinflux@me.com</string>
             <key>action</key>
             <string>showEmailComposer:</string>
+        </dict>
+        <dict>
+            <key>cell</key>
+            <string>PSLinkCell</string>
+            <key>detail</key>
+            <string>QSAboutListController</string>
+            <key>label</key>
+            <string>About</string>
         </dict>
 
     </array>
