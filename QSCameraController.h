@@ -1,7 +1,8 @@
 #import <Foundation/Foundation.h>
 #import <UIKit/UIKit.h>
-#import "QSVideoInterface.h"
 #import <PhotoLibrary/PLCameraControllerDelegate-Protocol.h>
+
+#import "QSVideoInterface.h"
 #import "QSConstants.h"
 
 @interface QSCameraController : NSObject <PLCameraControllerDelegate, QSVideoInterfaceDelegate>

@@ -2,6 +2,7 @@
 #import "QSConstants.h"
 
 #import <AssetsLibrary/AssetsLibrary.h>
+#import <CommonCrypto/CommonDigest.h>
 
 @interface QSVideoInterface ()
 {
@@ -101,10 +102,12 @@
     _captureSession = [[AVCaptureSession alloc] init];
     
     NSString *sessionPreset = self.videoQuality;
-    if (![_captureSession canSetSessionPreset:sessionPreset]) {
+    if ([_captureSession canSetSessionPreset:sessionPreset] == NO || (self.devicePosition != AVCaptureDevicePositionBack)) {
         sessionPreset = AVCaptureSessionPresetMedium;
     }
-    _captureSession.sessionPreset = sessionPreset;
+    else {
+        _captureSession.sessionPreset = sessionPreset;
+    }
 
 
     NSNotificationCenter *notificationCenter = [NSNotificationCenter defaultCenter];
@@ -238,6 +241,7 @@
 #pragma mark - AVCaptureSession Notifications Handler
 - (void)_sessionNotificationReceived:(NSNotification *)notification
 {
+    // isEqualToString: takes more time than respondsToSelector:
     if ([self.delegate respondsToSelector:@selector(videoInterfaceSessionRuntimeErrorOccurred:)] && [notification.name isEqualToString:AVCaptureSessionRuntimeErrorNotification]) {
         [self.delegate videoInterfaceSessionRuntimeErrorOccurred:self];
     }

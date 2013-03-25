@@ -5,35 +5,25 @@
 #import <AssetsLibrary/AssetsLibrary.h>
 
 #import <SpringBoard/SpringBoard.h>
+#import <SpringBoard/SBOrientationLockManager.h>
+
+#import <objc/runtime.h>
 
 #pragma mark - Private Method Declarations
-@interface QSCameraController () {}
-
-- (void)_setupCameraController;
-- (void)_setOrientationAndCaptureImage;
-- (void)_saveCameraImageToLibrary:(NSDictionary *)dict;
-
-- (void)_commonCleanup;
-- (void)_cleanupImageCaptureWithResult:(BOOL)result;
-- (void)_cleanupVideoCaptureWithResult:(BOOL)result;
-
-- (QSCompletionHandler)_blockAfterEvaluatingBlock:(QSCompletionHandler)block;
-- (void)_showCaptureFailedAlert;
-
-@end
-
-static void QSDeviceOrientationChangedCallback(CFNotificationCenterRef center, void *observer, CFStringRef name, const void *object, CFDictionaryRef userInfo);
-
-@implementation QSCameraController 
+@interface QSCameraController ()
 {
     BOOL                 _isCapturingImage;
     BOOL                 _isCapturingVideo;
+
+    BOOL                 _didChangeLockState;
 
     QSCompletionHandler  _completionHandler;
     QSCompletionHandler  _videoStartHandler;
     QSCompletionHandler  _videoStopHandler;
 
     QSVideoInterface    *_videoInterface;
+
+    NSTimer             *_captureFallbackTimer;
 
     struct {
         NSUInteger previewStarted:1;
@@ -43,6 +33,25 @@ static void QSDeviceOrientationChangedCallback(CFNotificationCenterRef center, v
     } _cameraCheckFlags;
 }
 
+- (void)_setupCameraController;
+- (void)_setOrientationAndCaptureImage;
+- (void)_saveCameraImageToLibrary:(NSDictionary *)dict;
+
+- (void)_captureFallbackTimerFired:(NSTimer *)timer;
+- (void)_setupOrientationShit;
+
+- (void)_cleanupImageCaptureWithResult:(BOOL)result;
+- (void)_cleanupVideoCaptureWithResult:(BOOL)result;
+
+- (QSCompletionHandler)_blockAfterEvaluatingBlock:(QSCompletionHandler)block;
+- (void)_showCaptureFailedAlert;
+
+- (void)_orientationChangeReceived:(NSNotification *)notifcation;
+
+@end
+
+@implementation QSCameraController 
+
 + (instancetype)sharedInstance
 {
     static QSCameraController *sharedInstance;
@@ -50,7 +59,7 @@ static void QSDeviceOrientationChangedCallback(CFNotificationCenterRef center, v
     dispatch_once(&onceToken, ^{
         sharedInstance = [[self alloc] init];
         // set up rotation notifications
-        CFNotificationCenterAddObserver(CFNotificationCenterGetLocalCenter(), NULL, QSDeviceOrientationChangedCallback, (CFStringRef)UIDeviceOrientationDidChangeNotification, NULL, CFNotificationSuspensionBehaviorCoalesce);
+        [[NSNotificationCenter defaultCenter] addObserver:sharedInstance selector:@selector(_orientationChangeReceived:) name:UIDeviceOrientationDidChangeNotification object:nil];
     });
     return sharedInstance;
 }
@@ -58,17 +67,16 @@ static void QSDeviceOrientationChangedCallback(CFNotificationCenterRef center, v
 #pragma mark - Public Methods
 - (void)takePhotoWithCompletionHandler:(QSCompletionHandler)complHandler
 {
-    DLog(@"");
-    _completionHandler = [[self _blockAfterEvaluatingBlock:complHandler] copy];
-
     if (_isCapturingImage || _isCapturingVideo) {
-        _completionHandler(NO);
-        [_completionHandler release];
+        if (complHandler) {
+            complHandler(NO);
+        }
         return;
     }
-    
+    _completionHandler = [[self _blockAfterEvaluatingBlock:complHandler] copy];
     _isCapturingImage = YES;
 
+    [self _setupOrientationShit];
     [self _setupCameraController];
     
     [[PLCameraController sharedInstance] startPreview];
@@ -77,19 +85,22 @@ static void QSDeviceOrientationChangedCallback(CFNotificationCenterRef center, v
 
 - (void)startVideoCaptureWithHandler:(QSCompletionHandler)handler
 {
-    if (_isCapturingVideo) {
+    if (_isCapturingVideo || _isCapturingVideo) {
         if (handler) {
             handler(NO);
         }
         return;
     }
 
+    [self _setupOrientationShit];
+    
     _videoStartHandler = [[self _blockAfterEvaluatingBlock:handler] copy];
     _isCapturingVideo = YES;
 
     if (!_videoInterface) {
         _videoInterface = [[QSVideoInterface alloc] init];
         _videoInterface.delegate = self;
+        [_videoInterface setDevicePosition:((self.cameraDevice == QSCameraDeviceFront) ? AVCaptureDevicePositionFront : AVCaptureDevicePositionBack)];
         [_videoInterface setVideoQuality:self.videoCaptureQuality];
         [_videoInterface setTorchModeFromFlashMode:self.videoFlashMode];
     }
@@ -132,22 +143,29 @@ static void QSDeviceOrientationChangedCallback(CFNotificationCenterRef center, v
 
 - (void)setCurrentOrientation:(UIDeviceOrientation)orientation
 {
-    DLog(@"");
     _currentOrientation = orientation;
     [[PLCameraController sharedInstance] _setCameraOrientation:_currentOrientation];
     [[PLCameraController sharedInstance] setCaptureOrientation:_currentOrientation];
 }
 
+#pragma mark - Fallback
+- (void)_captureFallbackTimerFired:(NSTimer *)timer
+{
+    // it has been ten seconds, focus not completed. Take photo anyway.
+    NSLog(@"QS: Can't wait for focus completion any longer, capturing image now!");
+    _captureFallbackTimer = nil;
+    [self _setOrientationAndCaptureImage];
+}
+
 #pragma mark - PLCameraController Delegate
 - (void)cameraControllerModeDidChange:(PLCameraController *)camController
 {
-    DLog(@"");
     _cameraCheckFlags.modeChanged = 1;
 }
 
 - (void)cameraControllerPreviewDidStart:(PLCameraController *)camController
 {
-    DLog(@"");
+    [[PLCameraController sharedInstance] _autofocus:YES autoExpose:YES];
     _cameraCheckFlags.previewStarted = 1;
 }
 
@@ -157,11 +175,15 @@ static void QSDeviceOrientationChangedCallback(CFNotificationCenterRef center, v
     if (_isCapturingImage) {
         [[PLCameraController sharedInstance] _autofocus:YES autoExpose:YES];
         _cameraCheckFlags.hasForcedAutofocus = YES;
-        
-        EXECUTE_BLOCK_AFTER_DELAY(0.4, ^{
-            // give 0.4 seconds of leeway to the camera, allow it to get a wee bit of exposure in.
-            [self _setOrientationAndCaptureImage];
-        });
+        if (self.waitForFocusCompletion == NO) {
+            EXECUTE_BLOCK_AFTER_DELAY(0.5, ^{
+                // give 0.5 seconds of leeway to the camera, allow it to get a wee bit of exposure in.
+                [self _setOrientationAndCaptureImage];
+            });
+        }
+        else {
+            _captureFallbackTimer = [NSTimer scheduledTimerWithTimeInterval:5 target:self selector:@selector(_captureFallbackTimerFired:) userInfo:nil repeats:NO];
+        }
     }
 }
    
@@ -169,8 +191,13 @@ static void QSDeviceOrientationChangedCallback(CFNotificationCenterRef center, v
 {
     DLog(@"");
     if (_isCapturingImage && self.waitForFocusCompletion) {
-        if (_cameraCheckFlags.hasForcedAutofocus && _cameraCheckFlags.hasStartedSession) {
+        if (_cameraCheckFlags.hasForcedAutofocus && _cameraCheckFlags.hasStartedSession && _captureFallbackTimer) {
+            // only if should wait for focus completion should the image be captured. Else, just leave it.
+            // make sure that the fallback timer exists too, and then invalidate it.
+            // don't want to end up with duplicates
             [self _setOrientationAndCaptureImage];
+            [_captureFallbackTimer invalidate];
+            _captureFallbackTimer = nil;
         }
     }
 }
@@ -222,24 +249,49 @@ static void QSDeviceOrientationChangedCallback(CFNotificationCenterRef center, v
         }];
     }
     else {
-        UIAlertView *videoFailAlert = [[UIAlertView alloc] initWithTitle:@"QuickShoot" message:@"Video recording failed" delegate:nil cancelButtonTitle:@"Dismiss" otherButtonTitles:nil];
+        UIAlertView *videoFailAlert = [[UIAlertView alloc] initWithTitle:@"QuickShoot" message:[NSString stringWithFormat:@"An error occurred during the recording.\nError %i, %@", error.code, error.localizedDescription] delegate:nil cancelButtonTitle:@"Dismiss" otherButtonTitles:nil];
         [videoFailAlert show];
         [videoFailAlert release];
         [self _cleanupVideoCaptureWithResult:NO];
     }
 }
 
-// stubs: TO BE DONE!
-- (void)videoInterfaceCaptureDeviceErrorOccurred:(QSVideoInterface *)interface{}
-- (void)videoInterfaceCaptureInputErrorOccurred:(QSVideoInterface *)interface{}
-- (void)videoInterfaceFileOutputErrorOccurred:(QSVideoInterface *)interface{}
+- (void)videoInterfaceCaptureDeviceErrorOccurred:(QSVideoInterface *)interface
+{
+    DLog(@"");
+    if (_isCapturingVideo) [self _cleanupVideoCaptureWithResult:NO];
+}
+
+- (void)videoInterfaceCaptureInputErrorOccurred:(QSVideoInterface *)interface
+{
+    DLog(@"");
+    if (_isCapturingVideo) [self _cleanupVideoCaptureWithResult:NO];
+}
+
+- (void)videoInterfaceFileOutputErrorOccurred:(QSVideoInterface *)interface
+{
+    DLog(@"");
+    if (_isCapturingVideo) [self _cleanupVideoCaptureWithResult:NO];
+}
 
 // session callbacks
-- (void)videoInterfaceSessionRuntimeErrorOccurred:(QSVideoInterface *)videoInterface{}
-- (void)videoInterfaceSessionDidStop:(QSVideoInterface *)videoInterface{}
-- (void)videoInterfaceSessionWasInterrupted:(QSVideoInterface *)videoInterface{}
-- (void)videoInterfaceSessionInterruptionEnded:(QSVideoInterface *)videoInterface{}
+- (void)videoInterfaceSessionRuntimeErrorOccurred:(QSVideoInterface *)videoInterface
+{
+    DLog(@"");
+    if (_isCapturingVideo) [self _cleanupVideoCaptureWithResult:NO];
+}
 
+- (void)videoInterfaceSessionWasInterrupted:(QSVideoInterface *)videoInterface
+{
+    DLog(@"");
+    if (_isCapturingVideo) [self _cleanupVideoCaptureWithResult:NO];
+}
+
+- (void)videoInterfaceSessionInterruptionEnded:(QSVideoInterface *)videoInterface
+{
+    DLog(@"");
+    if (_isCapturingVideo) [self _cleanupVideoCaptureWithResult:NO];
+}
 
 #pragma mark - Helper Methods
 - (void)_setupCameraController
@@ -254,6 +306,15 @@ static void QSDeviceOrientationChangedCallback(CFNotificationCenterRef center, v
     }
     if (self.cameraDevice && [[PLCameraController sharedInstance] hasFrontCamera]) {
         [[PLCameraController sharedInstance] setCameraDevice:(UIImagePickerControllerCameraDevice)self.cameraDevice];
+    }
+}
+
+- (void)_setupOrientationShit
+{
+    Class SBOrientationLockManager = objc_getClass("SBOrientationLockManager");
+    if ([[SBOrientationLockManager sharedInstance] isLocked]) {
+        _didChangeLockState = YES;
+        [[SBOrientationLockManager sharedInstance] unlock];
     }
 }
 
@@ -276,55 +337,57 @@ static void QSDeviceOrientationChangedCallback(CFNotificationCenterRef center, v
 
 - (void)_saveCameraImageToLibrary:(NSDictionary *)dict
 {
-    DLog(@"%@", dict);
     [[PLAssetsSaver sharedAssetsSaver] saveCameraImage:dict metadata:nil additionalProperties:nil requestEnqueuedBlock:nil]; // magick method. Now, if only I could find what the block's signature is.
     [self _cleanupImageCaptureWithResult:YES];
 }
 
-- (void)_commonCleanup
-{
-    _cameraCheckFlags.previewStarted = 0;
-    _cameraCheckFlags.hasForcedAutofocus = 0;
-    _cameraCheckFlags.hasStartedSession  = 0;
-    _cameraCheckFlags.modeChanged = 0;
-}
 
 - (void)_cleanupImageCaptureWithResult:(BOOL)result
 {
     DLog(@"");
-    [self _commonCleanup];
-    if (_completionHandler) {
-        _completionHandler(result);
-        [_completionHandler release];
-        _completionHandler = nil;
+
+    if (_didChangeLockState) {
+        [[objc_getClass("SBOrientationLockManager") sharedInstance] lock];
+        _didChangeLockState = NO;
     }
 
+    // reset everything to it's pristine state again.
+    _cameraCheckFlags.previewStarted = 0;
+    _cameraCheckFlags.hasForcedAutofocus = 0;
+    _cameraCheckFlags.hasStartedSession  = 0;
+    _cameraCheckFlags.modeChanged = 0;
+    
+    _completionHandler(result);
+    [_completionHandler release];
+    _completionHandler = nil;
+    
+    [[PLCameraController sharedInstance] setDelegate:nil];
     _isCapturingImage = NO;
 }
 
 - (void)_cleanupVideoCaptureWithResult:(BOOL)result
 {
     DLog(@"");
+    _isCapturingVideo = NO;
+
     _videoStopHandler(result);
     [_videoStopHandler release];
+    _videoStopHandler = nil;
 
     [_videoInterface release];
     _videoInterface = nil;
-
-    _isCapturingVideo = NO;
 }
 
 - (void)_showCaptureFailedAlert
 {
-    UIAlertView *alert = [[UIAlertView alloc] initWithTitle:@"QuickShoot" message:@"An error occurred during the capture" delegate:nil cancelButtonTitle:@"Dismiss" otherButtonTitles:nil];
+    UIAlertView *alert = [[UIAlertView alloc] initWithTitle:@"QuickShoot" message:@"An error occurred during the capture." delegate:nil cancelButtonTitle:@"Dismiss" otherButtonTitles:nil];
     [alert show];
     [alert release];
 }
 
-@end
-
-#pragma mark  - Orientation Callback
-static void QSDeviceOrientationChangedCallback(CFNotificationCenterRef center, void *observer, CFStringRef name, const void *object, CFDictionaryRef userInfo)
+- (void)_orientationChangeReceived:(NSNotification *)notification
 {
-    [[QSCameraController sharedInstance] setCurrentOrientation:[UIDevice currentDevice].orientation];
+    [self setCurrentOrientation:[UIDevice currentDevice].orientation];
 }
+
+@end
