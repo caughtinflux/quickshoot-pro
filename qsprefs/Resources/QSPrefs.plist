@@ -295,10 +295,10 @@
         <dict>
             <key>cell</key>
             <string>PSLinkCell</string>
-            <key>detail</key>
-            <string>QSAboutListController</string>
             <key>label</key>
             <string>About</string>
+            <key>action</key>
+            <string>showAboutController:</string>
         </dict>
 
     </array>
