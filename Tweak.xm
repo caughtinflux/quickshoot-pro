@@ -212,7 +212,9 @@ static inline void QSCheckCapabilites(void);
 - (void)_performDeferredLaunchWork
 {
     %orig;
+#ifndef DEBUG
     QSCheckCapabilites();
+#endif
 }
 %end
 
