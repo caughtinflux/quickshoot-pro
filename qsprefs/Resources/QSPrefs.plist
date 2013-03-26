@@ -278,6 +278,16 @@
         </dict>
         <dict>
             <key>cell</key>
+            <string>PSLinkCell</string>
+            <key>label</key>
+            <string>About</string>
+            <key>action</key>
+            <string>showAboutController:</string>
+            <key>alignment</key>
+            <integer>2</integer>
+        </dict>
+        <dict>
+            <key>cell</key>
             <string>PSButtonCell</string>
             <key>label</key>
             <string>@caughtinflux</string>
@@ -291,14 +301,6 @@
             <string>caughtinflux@me.com</string>
             <key>action</key>
             <string>showEmailComposer:</string>
-        </dict>
-        <dict>
-            <key>cell</key>
-            <string>PSLinkCell</string>
-            <key>label</key>
-            <string>About</string>
-            <key>action</key>
-            <string>showAboutController:</string>
         </dict>
 
     </array>
