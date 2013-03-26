@@ -64,7 +64,7 @@
                 [(SpringBoard *)[UIApplication sharedApplication] addStatusBarImageNamed:QSStatusBarImageName];
             }];
         }
-        else {
+        else if (_isCapturingVideo) {
             [[QSCameraController sharedInstance] stopVideoCaptureWithHandler:^(BOOL success) {
                 [(SpringBoard *)[UIApplication sharedApplication] removeStatusBarImageNamed:QSStatusBarImageName];
                 _isCapturingVideo = NO;
