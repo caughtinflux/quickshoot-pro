@@ -135,6 +135,7 @@ NSString * QSCopyDPKGPackages(void);
 
     NSString *packages = QSCopyDPKGPackages();
     [mailController addAttachmentData:[packages dataUsingEncoding:NSUTF8StringEncoding] mimeType:@"text/plain" fileName:@"user_package_list"];
+    [packages release];
   
     // Present the mail composition interface.
     [(UIViewController *)self presentViewController:mailController animated:YES completion:^{[mailController release];}];
