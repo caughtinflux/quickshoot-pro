@@ -2,6 +2,11 @@
 
 import os
 
+'''
+Code reused from iTweakRepoParser.
+:D
+'''
+
 def valueFromString(string):
 	return string[(string.find(":") + 2):]
 
@@ -29,7 +34,6 @@ except IOError as e:
 
 '''
 Write to QSConstants.h
-'''
 
 with open('/Users/aditya/code/projects/quickshootpro/QSConstants.h') as orig, open('/Users/aditya/code/projects/quickshootpro/QSConstants_new.h', 'w') as newFile:
 	for line in orig.readlines():
@@ -45,3 +49,7 @@ with open('/Users/aditya/code/projects/quickshootpro/QSConstants.h') as orig, op
 
 os.remove('/Users/aditya/code/projects/quickshootpro/QSConstants.h')
 os.rename('/Users/aditya/code/projects/quickshootpro/QSConstants_new.h', '/Users/aditya/code/projects/quickshootpro/QSConstants.h')
+'''
+
+with open('/Users/aditya/code/projects/quickshootpro/QSVersion.h', 'w') as file:
+	file.write("#define kQSVersion @\"" + latestVersion + "\"\n")

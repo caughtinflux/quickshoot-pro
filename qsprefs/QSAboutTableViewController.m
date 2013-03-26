@@ -42,8 +42,8 @@
 
 - (CGFloat)tableView:(UITableView *)tableView heightForRowAtIndexPath:(NSIndexPath *)indexPath
 {
-    CGSize size = [[self _stringForIndexPath:indexPath] sizeWithFont:[UIFont systemFontOfSize:15] constrainedToSize:CGSizeMake(300, CGFLOAT_MAX)];
-    return size.height + 25;
+    CGSize size = [[self _stringForIndexPath:indexPath] sizeWithFont:[UIFont systemFontOfSize:20] constrainedToSize:CGSizeMake(300, CGFLOAT_MAX)];
+    return ((indexPath.section == 1) ? (size.height + 20) : (size.height + 30));
 }
 
 // Customize the appearance of table view cells.
@@ -59,7 +59,6 @@
     cell.textLabel.text = [self _stringForIndexPath:indexPath];
 
     cell.textLabel.numberOfLines = 0;
-    [cell.textLabel sizeToFit];
 
     return cell;
 }
