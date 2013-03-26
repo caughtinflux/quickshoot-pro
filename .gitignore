@@ -5,3 +5,6 @@ debs/
 
 *.sublime*
 reference.txt
+QSVersion.h
+
+com.caughtinflux.quickshootpro-*
