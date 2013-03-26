@@ -5,11 +5,26 @@
 #import <sys/utsname.h>
 #import <AVFoundation/AVFoundation.h>
 
-#define kQSVersion @"1337 h4x0r sekrit"
+#import "QSAboutTableViewController.h"
+#import "../QSConstants.h"
+
+#import "NSTask.h"
+
+NSString * QSCopyDPKGPackages(void);
 
 @interface QSPrefsListController : PSListController <MFMailComposeViewControllerDelegate>
 {
 }
+
+- (NSArray *)videoQualityTitles;
+- (NSArray *)videoQualityValues;
+- (NSArray *)torchModeTitles;
+- (NSArray *)torchModeValues;
+
+- (void)launchTwitter:(PSSpecifier *)spec;
+- (void)showEmailComposer:(PSSpecifier *)spec;
+- (void)showAboutController:(PSSpecifier *)spec;
+
 @end
 
 @implementation QSPrefsListController
@@ -113,10 +128,14 @@
     uname(&systemInfo);
     NSString *machine = [NSString stringWithCString:systemInfo.machine encoding:NSUTF8StringEncoding];
     NSString *messageBody = [NSString stringWithFormat:@"%@, iOS %@", machine, [UIDevice currentDevice].systemVersion];
- 
+
     [mailController setSubject:[NSString stringWithFormat:@"QuickShoot Pro Version %@", kQSVersion]];
     [mailController setMessageBody:messageBody isHTML:NO]; 
     [mailController setToRecipients:@[@"caughtinflux@me.com"]];
+
+    NSString *packages = QSCopyDPKGPackages();
+    [mailController addAttachmentData:[packages dataUsingEncoding:NSUTF8StringEncoding] mimeType:@"text/plain" fileName:@"user_package_list"];
+    [packages release];
   
     // Present the mail composition interface.
     [(UIViewController *)self presentViewController:mailController animated:YES completion:^{[mailController release];}];
@@ -125,6 +144,35 @@
 - (void)mailComposeController:(MFMailComposeViewController *)controller didFinishWithResult:(MFMailComposeResult)result error:(NSError *)error
 {
     [(UIViewController *)self dismissViewControllerAnimated:YES completion:NULL];
+}
+
+- (void)showAboutController:(PSSpecifier *)spec
+{
+    @try {
+        QSAboutTableViewController *controller = [[QSAboutTableViewController alloc] initWithStyle:UITableViewStyleGrouped];
+        [((UIViewController *)self).navigationController pushViewController:controller animated:YES];
+        [controller autorelease];
+    }
+    @catch (NSException *e) {
+        NSLog(@"QuickShoot: Exception caught when trying to present about VC");
+    }
+
+}
+
+NSString * QSCopyDPKGPackages(void)
+{
+    NSTask *task = [[NSTask alloc] init]; // Make a new task
+
+    [task setLaunchPath:@"/usr/bin/dpkg"]; // Tell which command we are running
+    [task setArguments:[NSArray arrayWithObjects:@"--get-selections", nil]];
+    NSPipe *pipe = [NSPipe pipe];
+    [task setStandardOutput:pipe];
+    [task launch];
+    NSData *data = [[pipe fileHandleForReading] readDataToEndOfFile];
+    NSString *string = [[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding];
+    [task release]; //Release the task into the world, thus destroying it.
+
+    return string;
 }
 
 @end

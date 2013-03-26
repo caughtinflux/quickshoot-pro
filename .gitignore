@@ -5,3 +5,6 @@ debs/
 
 *.sublime*
 reference.txt
+QSVersion.h
+
+.theos/
