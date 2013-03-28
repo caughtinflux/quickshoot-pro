@@ -1,38 +1,79 @@
 #import "QSIconOverlayView.h"
 #import "QSConstants.h"
 
-@interface QSIconOverlayView (Private)
+#define kDoneImageName      @"Done"
+#define kIrisImageName      @"Iris"
+#define kFocusRectImageName @"Loading"
+#define kRecordOffImageName @"LoadingRecordOff"
+#define kRecordOnImageName  @"LoadingRecordOn"
+
+@interface QSIconOverlayView ()
+{
+    NSBundle      *_bundle;
+    UIImageView   *_irisImageView;
+    UIImageView   *_focusRectImageView;
+    
+    UIImageView   *_recordingLightImageView;
+    NSString      *_currentRecordingImageName;
+    QSCaptureMode  _currentCaptureMode;
+
+    BOOL           _shouldBlinkRecordLight;
+}
 
 - (UIImage *)_bundleImageNamed:(NSString *)imageName;
+
 - (void)_animateIrisViewIn;
 - (void)_animateIrisViewOut;
 - (void)_showBlinkingFocus;
 - (void)_stopBlinkingFocus;
 - (void)_animateFocusRect;
 
+- (void)_showBlinkingRecordLight;
+- (void)_stopBlinkingRecordLight;
+- (void)_blinkRecordLight;
+
 @end
 
 @implementation QSIconOverlayView
-{
-    NSBundle    *_bundle;
-    UIImageView *_irisImageView;
-    UIImageView *_focusRectImageView;
-
-    BOOL         _isLoading;
-}
-
-- (instancetype)initWithFrame:(CGRect)frame
+- (instancetype)initWithFrame:(CGRect)frame captureMode:(QSCaptureMode)captureMode
 {
     if ((self = [super initWithFrame:frame])) {
+        DLog(@"start");
         _bundle = [[NSBundle alloc] initWithPath:@"/Library/Application Support/QuickShootPro"];
+        _currentCaptureMode = captureMode;
+        DLog(@"end");
     }
     return self;
 }
 
+- (instancetype)initWithFrame:(CGRect)frame
+{
+    return [self initWithFrame:frame captureMode:QSCaptureModePhoto];
+}
+
+- (void)dealloc
+{
+    [_animationCompletionHandler release];
+    _animationCompletionHandler = nil;
+    
+    [_bundle release];
+    _bundle = nil;
+
+    [_irisImageView release];
+    _irisImageView = nil;
+
+    [_focusRectImageView release];
+    _focusRectImageView = nil;
+
+    [_recordingLightImageView release];
+    _recordingLightImageView = nil;
+
+    [super dealloc];
+}
+
 - (void)captureBegan
 {
-    DLog(@"");
-    _irisImageView = [[UIImageView alloc] initWithImage:[self _bundleImageNamed:@"Iris"]];
+    _irisImageView = [[UIImageView alloc] initWithImage:[self _bundleImageNamed:kIrisImageName]];
     CGPoint center = self.center;
     center.y += 2;
     _irisImageView.center = center;
@@ -43,18 +84,24 @@
     [self _animateIrisViewIn];
 }
 
+- (void)captureIsStopping
+{
+    _shouldBlinkRecordLight = NO;
+}
+
 - (void)captureCompleted
 {
-    DLog(@"");
-    UIImageView *doneImageView = [[[UIImageView alloc] initWithImage:[self _bundleImageNamed:@"Done"]] autorelease];
+    UIImageView *doneImageView = [[[UIImageView alloc] initWithImage:[self _bundleImageNamed:kDoneImageName]] autorelease];
     CGRect frame = doneImageView.frame;
     frame.origin.x = _irisImageView.bounds.size.width * 0.20;
     frame.origin.y = _irisImageView.bounds.origin.y - 1;
     doneImageView.frame = frame;
 
-    [self _stopBlinkingFocus]; // removes the focus rect from _irisImageView
-    [_irisImageView addSubview:doneImageView];
+    [self _stopBlinkingFocus]; // removes the focus rect from _irisImageView. Won't crash if not in photo mode.
+    [self _stopBlinkingRecordLight]; // same, albeit for video
 
+    [_irisImageView addSubview:doneImageView];
+    
     QSIconOverlayView __block *wSelf = self;
     // keep the done image on the icon for 1.5 seconds
     double delayInSeconds = 1.5;
@@ -62,6 +109,7 @@
         [doneImageView removeFromSuperview];
         [wSelf _animateIrisViewOut];
     });
+
 }
 
 
@@ -73,8 +121,9 @@
 
 - (void)_animateIrisViewIn
 {
+    DLog(@"");
     CGFloat imageHeight = _irisImageView.image.size.height;
-    CGFloat imageWidth = _irisImageView.image.size.width;
+    CGFloat imageWidth  = _irisImageView.image.size.width;
     
     CGRect zeroFrame = _irisImageView.frame;
     zeroFrame.origin.x += (imageWidth / 2.0);
@@ -98,7 +147,12 @@
         _irisImageView.frame = newFrame;
     } completion:^(BOOL finished){
         if (finished) {
-            [wSelf _showBlinkingFocus];
+            if (_currentCaptureMode == QSCaptureModePhoto) {
+                [wSelf _showBlinkingFocus];
+            }
+            else {
+                [wSelf _showBlinkingRecordLight];
+            }
         }
     }];
 }
@@ -127,8 +181,9 @@
 
 - (void)_showBlinkingFocus
 {
+    DLog(@"");
     if (!_focusRectImageView) {
-        _focusRectImageView = [[UIImageView alloc] initWithImage:[self _bundleImageNamed:@"Loading"]];
+        _focusRectImageView = [[UIImageView alloc] initWithImage:[self _bundleImageNamed:kFocusRectImageName]];
     }
     _focusRectImageView.center = (CGPoint){(_irisImageView.bounds.size.width * 0.5), (_irisImageView.bounds.size.height * 0.5)};
     [_irisImageView addSubview:_focusRectImageView];
@@ -166,21 +221,39 @@
     }];
 }
 
-- (void)dealloc
+- (void)_showBlinkingRecordLight
 {
-    [_animationCompletionHandler release];
-    _animationCompletionHandler = nil;
+    DLog(@"");
+    _recordingLightImageView = [[UIImageView alloc] initWithImage:[self _bundleImageNamed:kRecordOnImageName]];
+    _currentRecordingImageName = kRecordOffImageName; // setting this to off, even though it is on, so that _blinkRecordLight doesn't immediately switch it to the off image.
     
-    [_bundle release];
-    _bundle = nil;
+    _recordingLightImageView.frame = CGRectMake(((_irisImageView.bounds.size.width * 0.5) - (_recordingLightImageView.image.size.width * 0.5f) + 0.5),
+                                                ((_irisImageView.bounds.size.height * 0.5) - (_recordingLightImageView.image.size.height * 0.5f) + 0.5),
+                                                _recordingLightImageView.frame.size.width,
+                                                _recordingLightImageView.frame.size.height);
 
-    [_irisImageView release];
-    _irisImageView = nil;
+    [_irisImageView addSubview:_recordingLightImageView];
+    _shouldBlinkRecordLight = YES;
+    [self _blinkRecordLight];
+}
 
-    [_focusRectImageView release];
-    _focusRectImageView = nil;
+- (void)_stopBlinkingRecordLight
+{
+    [_recordingLightImageView removeFromSuperview];
+}
 
-    [super dealloc];
+- (void)_blinkRecordLight
+{
+    if (!_shouldBlinkRecordLight) {
+        _recordingLightImageView.image = [self _bundleImageNamed:kRecordOffImageName];
+        return;
+    }
+    QSIconOverlayView __block *wSelf = self;
+    _currentRecordingImageName = (([wSelf->_currentRecordingImageName isEqualToString:kRecordOnImageName]) ? kRecordOffImageName : kRecordOnImageName);
+    wSelf->_recordingLightImageView.image = [wSelf _bundleImageNamed:wSelf->_currentRecordingImageName];
+    EXECUTE_BLOCK_AFTER_DELAY(0.5, ^{
+        [wSelf _blinkRecordLight];
+    });
 }
 
 @end
