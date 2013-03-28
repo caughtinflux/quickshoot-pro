@@ -6,6 +6,8 @@
 
 
 NSString * const QSEnabledKey                    = @"kQSEnabled";
+NSString * const QSUserHasSeenAlertKey           = @"kQSUserHasSeenAlert";
+
 NSString * const QSFlashModeKey                  = @"kQSFlashMode";
 NSString * const QSCameraDeviceKey               = @"kQSCameraDevice";
 NSString * const QSHDRModeKey                    = @"kQSHDREnabled";

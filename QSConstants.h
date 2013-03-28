@@ -7,12 +7,14 @@
 #include "QSVersion.h"
 
 #ifdef DEBUG
-	#define DLog(fmt, ...) NSLog((@"%s [Line %d] " fmt), __PRETTY_FUNCTION__, __LINE__, ##__VA_ARGS__);
+	#define DLog(fmt, ...) NSLog((@"%s [Line %d] " fmt), __PRETTY_FUNCTION__, __LINE__, ##__VA_ARGS__)
+	#define CLog(fmt, ...) NSLog((@"QS: " fmt), ##__VA_ARGS__)
 #else
 	#define DLog(...)
+	#define CLog(...)
 #endif
 
-#define ALog(fmt, ...) NSLog((@"%s" fmt), __PRETTY_FUNCTION__, ##__VA_ARGS__);
+#define ALog(fmt, ...) NSLog((@"%s" fmt), __PRETTY_FUNCTION__, ##__VA_ARGS__)
 
 #define kPiratedCopyNotification @"QSUpdatedCapabilities"
 
@@ -41,6 +43,7 @@ typedef void (^QSCompletionHandler)(BOOL); // the BOOL argument is most probably
 
 #pragma mark - String Constants
 FOUNDATION_EXPORT NSString * const QSEnabledKey;
+FOUNDATION_EXPORT NSString * const QSUserHasSeenAlertKey;
 FOUNDATION_EXPORT NSString * const QSFlashModeKey;
 FOUNDATION_EXPORT NSString * const QSCameraDeviceKey;
 FOUNDATION_EXPORT NSString * const QSHDRModeKey;
