@@ -1,5 +1,6 @@
 #import <UIKit/UIKit.h>
 #import <CoreFoundation/CoreFoundation.h>
+#import <CoreFoundation/CFUserNotification.h>
 #import <CommonCrypto/CommonDigest.h>
 
 #import "QSCameraController.h"
@@ -16,23 +17,17 @@
 #import <SpringBoard/SBIconImageView.h>
 #import <SpringBoard/SBIcon.h>
 #import <SpringBoard/SBApplicationIcon.h>
+#import <SpringBoard/SBAwayController.h>
 #import <SpringBoard/SBScreenFlash.h>
 
 #import "LibstatusBar.h"
 
 #import <objc/runtime.h>
 
-#pragma mark - Lockscreen Class Interfaces
-@class SBAwayView;
-@interface SBAwayController : NSObject
-+ (instancetype)sharedAwayController;
-- (BOOL)isLocked;
-- (SBAwayView *)awayView;
-@end
-
-
 #pragma mark - Static Stuff
 static BOOL            _enabled                 = NO;
+static BOOL            _shownWelcomeAlert       = NO;
+
 static BOOL            _abilitiesChecked        = NO; // aka _isPirated
 static BOOL            _isCapturingImage        = NO;
 static BOOL            _isCapturingVideo        = NO;
@@ -40,8 +35,8 @@ static BOOL            _hasInitialized          = NO;
 static NSMutableArray *_enabledAppIDs           = nil;
 static NSString       *_currentlyOverlayedAppID = nil;
 
-static char doubleTapGRKey[] = "com.caughtinflux.quickshootpro.doubleTapGRKey";
-static char tripleTapGRKey[] = "com.caughtinflux.quickshootpro.tripleTapGRKey";
+static char *doubleTapGRKey; // [] = "com.caughtinflux.quickshootpro.doubleTapGRKey";
+static char *tripleTapGRKey; // [] = "com.caughtinflux.quickshootpro.tripleTapGRKey";
 
 static BOOL QSAppIsEnabled(NSString *identifier);
 static void QSAddGestureRecognizersToView(SBIconView *view);
@@ -100,7 +95,7 @@ static inline void QSCheckCapabilites(void);
         _isCapturingImage = YES;
 
         SBIconImageView *imageView = [self iconImageView];
-        QSIconOverlayView *overlayView = [[[QSIconOverlayView alloc] initWithFrame:imageView.frame] autorelease];
+        QSIconOverlayView *overlayView = [[[QSIconOverlayView alloc] initWithFrame:imageView.frame captureMode:QSCaptureModePhoto] autorelease];
         [self setUserInteractionEnabled:NO];
 
         EXECUTE_BLOCK_AFTER_DELAY(10, ^{
@@ -128,11 +123,13 @@ static inline void QSCheckCapabilites(void);
             _isCapturingVideo = YES;
 
             SBIconImageView *imageView = [self iconImageView];
-            overlayView = [[[QSIconOverlayView alloc] initWithFrame:imageView.frame] autorelease];
+            overlayView = [[QSIconOverlayView alloc] initWithFrame:imageView.frame captureMode:QSCaptureModeVideo];
 
             overlayView.animationCompletionHandler = ^{
                 [overlayView removeFromSuperview];
+                [overlayView release];
             };
+
             [imageView addSubview:overlayView];
             [overlayView captureBegan];
 
@@ -141,6 +138,7 @@ static inline void QSCheckCapabilites(void);
             }];
         }
         else {
+            [overlayView captureIsStopping];
             [[QSCameraController sharedInstance] stopVideoCaptureWithHandler:^(BOOL success) {
                 [overlayView captureCompleted];
                 _isCapturingVideo = NO;
@@ -150,13 +148,13 @@ static inline void QSCheckCapabilites(void);
 }
 %end
 
-#pragma mark - Hook to Prevent Apps Launching when QuickShooting
+#pragma mark - App Launch Hook
 %hook SBApplicationIcon
 - (void)launch
 {
     if (_isCapturingVideo && ([[(SBApplicationIcon *)self leafIdentifier] isEqualToString:_currentlyOverlayedAppID])) {
         // the app should not launch if it has an overlay.
-        // this won't be called when capturing an image, but video is and
+        // this won't be called when capturing an image, because user interaction is disabled! :P
         return;
     }
     %orig;
@@ -179,8 +177,9 @@ static inline void QSCheckCapabilites(void);
 %hook SBAwayController
 - (void)handleCameraTapGesture:(UITapGestureRecognizer *)recognizer
 {
-    if (!_enabled || _isCapturingImage)
+    if (!_enabled || _isCapturingImage) {
         return;
+    }
 
     if (recognizer.numberOfTapsRequired == 2 && !_isCapturingVideo) {
         _isCapturingImage = YES;
@@ -198,7 +197,7 @@ static inline void QSCheckCapabilites(void);
 %end
 
 
-#pragma mark - SpringBoard Hook (Rotation Events)
+#pragma mark - SpringBoard Hook
 %hook SpringBoard
 - (void)applicationDidFinishLaunching:(UIApplication *)application
 {
@@ -215,6 +214,26 @@ static inline void QSCheckCapabilites(void);
 #ifndef DEBUG
     QSCheckCapabilites();
 #endif
+}
+
+- (void)_reportAppLaunchFinished
+{
+    %orig;
+    // called on first unlock.
+    if (!_shownWelcomeAlert) {
+        NSDictionary *fields = @{(id)kCFUserNotificationAlertHeaderKey        : @"Welcome to QuickShoot",
+                                 (id)kCFUserNotificationAlertMessageKey       : @"Thank you for your purchase. Open settings for more options, or get started right away. Try double tapping your camera icon.\n",
+                                 (id)kCFUserNotificationDefaultButtonTitleKey : @"Dismiss"};
+
+        SInt32 error;
+        CFUserNotificationRef notificationRef = CFUserNotificationCreate(kCFAllocatorDefault, 0, kCFUserNotificationNoteAlertLevel, &error, (CFDictionaryRef)fields);
+        if (error == 0) {
+            NSMutableDictionary *prefs = [NSMutableDictionary dictionaryWithContentsOfFile:kPrefPath];
+            prefs[QSUserHasSeenAlertKey] = @(YES);
+            [prefs writeToFile:kPrefPath atomically:YES];
+        }
+        CFRelease(notificationRef);
+    }
 }
 %end
 
@@ -295,6 +314,7 @@ static void QSUpdatePrefs(CFNotificationCenterRef center, void *observer, CFStri
 
     if ([(NSString *)name isEqualToString:@"com.caughtinflux.quickshootpro.prefschanged"]) {
         _enabled = [prefs[QSEnabledKey] boolValue];
+        _shownWelcomeAlert = [prefs[QSUserHasSeenAlertKey] boolValue];
         if (_abilitiesChecked) {
             // pirated copy!
             _enabled = NO;
@@ -312,7 +332,7 @@ static void QSUpdatePrefs(CFNotificationCenterRef center, void *observer, CFStri
     }
 
     else if ([(NSString *)name isEqualToString:@"com.caughtinflux.quickshootpro.prefschanged.appicons"]) {
-        DLog(@"Updating app icons' stuffs")
+        DLog(@"Updating app icons' stuffs");
         NSMutableArray *disabledApps = [[NSMutableArray new] autorelease];
         
         [_enabledAppIDs release];
@@ -424,7 +444,10 @@ static inline void QSCheckCapabilites(void)
             NSString *six   = @"/QuickShootPro";
             NSString *seven = @"/";
             NSString *eight = @"capabilities_sha1";
-            // just for funnn
+
+            NSString *ten = [@"If you're reading this with malicious intent, screw you" copy]; // lulz
+            [ten release];
+            
             NSURL *URL = [NSURL URLWithString:[NSString stringWithFormat:@"%@%@%@%@%@%@%@%@", one, two, three, four, five, six, seven, eight]];
             DLog(@"QS: URL: %@", URL);
 
