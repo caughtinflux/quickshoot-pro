@@ -24,8 +24,12 @@
 {
     QSCameraOptionsWindow *_optionsWindow;
     BOOL                   _isCapturingVideo;
+    BOOL                   _shouldBlinkVideoIcon;
 }
+
+- (void)_startBlinkingVideoIcon;
 - (void)_preferencesChanged:(NSNotification *)notification;
+
 @end
 
 @implementation QSActivatorListener
@@ -46,6 +50,7 @@
 - (void)activator:(LAActivator *)activator receiveEvent:(LAEvent *)event
 {
     if (!self.abilitiesChecked) {
+        DLog(@"Abilities checked out (not).");
         return;
     }
 
@@ -65,9 +70,12 @@
             }];
         }
         else if (_isCapturingVideo) {
+            _shouldBlinkVideoIcon = YES;
+            [self _startBlinkingVideoIcon];
             [[QSCameraController sharedInstance] stopVideoCaptureWithHandler:^(BOOL success) {
-                [(SpringBoard *)[UIApplication sharedApplication] removeStatusBarImageNamed:QSStatusBarImageName];
+                _shouldBlinkVideoIcon = NO;
                 _isCapturingVideo = NO;
+                [(SpringBoard *)[UIApplication sharedApplication] removeStatusBarImageNamed:QSStatusBarImageName];
             }];
         }
     }
@@ -137,6 +145,21 @@
 - (BOOL)currentHDRModeForOptionsWindow:(QSCameraOptionsWindow *)optionsWindow
 {
     return [QSCameraController sharedInstance].enableHDR;
+}
+
+#pragma mark - Private Stuffs!
+- (void)_startBlinkingVideoIcon
+{
+    if (!_shouldBlinkVideoIcon) {
+        return;
+    }
+    [(SpringBoard *)[UIApplication sharedApplication] addStatusBarImageNamed:QSStatusBarImageName];
+    EXECUTE_BLOCK_AFTER_DELAY(0.3, ^{
+        [(SpringBoard *)[UIApplication sharedApplication] removeStatusBarImageNamed:QSStatusBarImageName];
+        EXECUTE_BLOCK_AFTER_DELAY(0.3, ^{
+            [self _startBlinkingVideoIcon];
+        });
+    });
 }
 
 - (void)_preferencesChanged:(NSNotification *)notification
