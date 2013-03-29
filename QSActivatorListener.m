@@ -54,14 +54,15 @@
     }
 
     // image capture
+    DLog(@"Image capture");
     if ([[[LAActivator sharedInstance] assignedListenerNameForEvent:event] isEqualToString:QSImageCaptureListenerName]) {
         [[QSCameraController sharedInstance] takePhotoWithCompletionHandler:^(BOOL success) {
             [(SBScreenFlash *)[objc_getClass("SBScreenFlash") sharedInstance] flash];
         }];
     }
-
     // video capture
     else if ([[[LAActivator sharedInstance] assignedListenerNameForEvent:event] isEqualToString:QSVideoCaptureListenerName]) {
+        DLog(@"Video handling");
         if (_isCapturingVideo == NO) {
             _isCapturingVideo = YES;
             [[QSCameraController sharedInstance] startVideoCaptureWithHandler:^(BOOL success) {
@@ -126,8 +127,9 @@
 
 - (void)optionsWindow:(QSCameraOptionsWindow *)optionsWindow flashModeChanged:(QSFlashMode)newMode
 {
-    DLog(@"");
+    DLog(@"Flash mode now: %i", newMode);
     [[QSCameraController sharedInstance] setFlashMode:newMode];
+    [[QSCameraController sharedInstance] setVideoFlashMode:newMode];
 
     NSMutableDictionary *prefsDict = [NSMutableDictionary dictionaryWithContentsOfFile:kPrefPath];
     prefsDict[QSFlashModeKey] = QSStringFromFlashMode(newMode);

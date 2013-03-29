@@ -136,6 +136,13 @@
     [[PLCameraController sharedInstance] setFlashMode:flashMode];
 }
 
+- (void)setVideoFlashMode:(QSFlashMode)flashMode
+{
+    DLog(@"");
+    _videoFlashMode = flashMode;
+    [_videoInterface setTorchModeFromFlashMode:self.videoFlashMode]; // the message will be sent to nil if _videoInterface doesn't exist, so it's all good.
+}
+
 - (void)setEnableHDR:(BOOL)enableHDR
 {
     DLog(@"");
@@ -251,6 +258,7 @@
             else {
                 [self _cleanupVideoCaptureWithResult:YES];
             }
+            [[NSFileManager defaultManager] removeItemAtURL:filePathURL error:NULL];
         }];
     }
     else {
@@ -301,8 +309,6 @@
 #pragma mark - Helper Methods
 - (void)_setupCameraController
 {
-    DLog(@"");
-
     if (self.flashMode && [[PLCameraController sharedInstance] hasFlash]) {
         [[PLCameraController sharedInstance] setFlashMode:self.flashMode];
     }
@@ -349,8 +355,6 @@
 
 - (void)_cleanupImageCaptureWithResult:(BOOL)result
 {
-    DLog(@"");
-
     if (_didChangeLockState) {
         [[objc_getClass("SBOrientationLockManager") sharedInstance] lock];
         _didChangeLockState = NO;
@@ -372,7 +376,6 @@
 
 - (void)_cleanupVideoCaptureWithResult:(BOOL)result
 {
-    DLog(@"");
     _isCapturingVideo = NO;
 
     _videoStopHandler(result);
