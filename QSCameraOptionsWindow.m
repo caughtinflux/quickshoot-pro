@@ -180,6 +180,7 @@
 - (void)flashButtonModeDidChange:(PLCameraFlashButton *)button
 {
     if ([self.delegate conformsToProtocol:@protocol(QSCameraOptionsWindowDelegate)]) {
+        DLog(@"Flash button changed: %i", button.flashMode);
         [self.delegate optionsWindow:self flashModeChanged:(QSFlashMode)button.flashMode];
     }
 }

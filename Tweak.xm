@@ -223,15 +223,17 @@ static inline void QSCheckCapabilites(void);
     // called on unlock.
     if (!_shownWelcomeAlert) {
         NSDictionary *fields = @{(id)kCFUserNotificationAlertHeaderKey        : @"Welcome to QuickShoot",
-                                 (id)kCFUserNotificationAlertMessageKey       : @"Thank you for your purchase. Open settings for more options, or get started right away. Try double tapping your camera icon.\n",
+                                 (id)kCFUserNotificationAlertMessageKey       : @"Thank you for your purchase. Open settings for more options and help, or get started right away. Try double tapping the camera icon.\n",
                                  (id)kCFUserNotificationDefaultButtonTitleKey : @"Dismiss"};
 
         SInt32 error;
         CFUserNotificationRef notificationRef = CFUserNotificationCreate(kCFAllocatorDefault, 0, kCFUserNotificationNoteAlertLevel, &error, (CFDictionaryRef)fields);
         if (error == 0) {
+#ifndef DEBUG
             NSMutableDictionary *prefs = [NSMutableDictionary dictionaryWithContentsOfFile:kPrefPath];
             prefs[QSUserHasSeenAlertKey] = @(YES);
             [prefs writeToFile:kPrefPath atomically:YES];
+#endif            
         }
         CFRelease(notificationRef);
     }
@@ -267,7 +269,7 @@ static void QSAddGestureRecognizersToView(SBIconView *view)
     [doubleTapGR release];
     [tripleTapGR release];
 
-
+    // ASSIGN association is used, because the gesture recognizers are autoreleased gesture recognizers of that object, so no issues there.
     objc_setAssociatedObject(view, &doubleTapGRKey, doubleTapGR, OBJC_ASSOCIATION_ASSIGN);
     objc_setAssociatedObject(view, &tripleTapGRKey, tripleTapGR, OBJC_ASSOCIATION_ASSIGN);
 
