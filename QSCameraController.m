@@ -131,12 +131,14 @@
 
 - (void)setFlashMode:(QSFlashMode)flashMode
 {
+    DLog(@"");
     _flashMode = flashMode;
     [[PLCameraController sharedInstance] setFlashMode:flashMode];
 }
 
 - (void)setEnableHDR:(BOOL)enableHDR
 {
+    DLog(@"");
     _enableHDR = enableHDR;
     [[PLCameraController sharedInstance] setHDREnabled:enableHDR];
 }
@@ -160,17 +162,20 @@
 #pragma mark - PLCameraController Delegate
 - (void)cameraControllerModeDidChange:(PLCameraController *)camController
 {
+    DLog(@"");
     _cameraCheckFlags.modeChanged = 1;
 }
 
 - (void)cameraControllerPreviewDidStart:(PLCameraController *)camController
 {
+    DLog(@"");
     [[PLCameraController sharedInstance] _autofocus:YES autoExpose:YES];
     _cameraCheckFlags.previewStarted = 1;
 }
 
 - (void)cameraControllerSessionDidStart:(PLCameraController *)camController
 {
+    DLog(@"");
     _cameraCheckFlags.hasStartedSession = 1;
     if (_isCapturingImage) {
         [[PLCameraController sharedInstance] _autofocus:YES autoExpose:YES];

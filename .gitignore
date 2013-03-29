@@ -9,3 +9,5 @@ reference.txt
 .theos/
 
 QSVersion.h
+
+QSLink.h

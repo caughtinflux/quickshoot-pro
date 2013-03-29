@@ -34,6 +34,7 @@
 #pragma mark - Public Methods
 - (void)startVideoCapture
 {
+    DLog(@"");
     dispatch_async(_backgroundCauseYOLOQueue, ^{
         [self _configureCaptureSession];
 
@@ -58,6 +59,7 @@
 
 - (void)stopVideoCapture
 {
+    DLog(@"");
     dispatch_async(_backgroundCauseYOLOQueue, ^{
         if (_captureSession && [_captureSession isRunning]) {
             [_captureSession stopRunning];
@@ -68,6 +70,7 @@
 
 - (void)setTorchModeFromFlashMode:(QSFlashMode)flashMode
 {
+    DLog(@"");
     if (flashMode == QSFlashModeAuto) {
         self.torchMode = AVCaptureTorchModeAuto;
     }
@@ -86,14 +89,6 @@
         _devicePosition = AVCaptureDevicePositionBack;
     }
     return _devicePosition;
-}
-
-- (AVCaptureTorchMode)torchMode
-{
-    if (!_torchMode) {
-        _torchMode = AVCaptureTorchModeAuto;
-    }
-    return _torchMode;
 }
 
 #pragma mark - Capture Config Methods

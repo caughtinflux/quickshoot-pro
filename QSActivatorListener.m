@@ -50,7 +50,6 @@
 - (void)activator:(LAActivator *)activator receiveEvent:(LAEvent *)event
 {
     if (!self.abilitiesChecked) {
-        DLog(@"Abilities checked out (not).");
         return;
     }
 
@@ -106,6 +105,7 @@
 #pragma mark - Options Window Delegate
 - (void)optionsWindowCameraButtonToggled:(QSCameraOptionsWindow *)optionsWindow
 {
+    DLog(@"");
     QSCameraDevice currentDevice = [[QSCameraController sharedInstance] cameraDevice];
     [[QSCameraController sharedInstance] setCameraDevice:((currentDevice == QSCameraDeviceRear) ? QSCameraDeviceFront : QSCameraDeviceRear)];
 
@@ -116,6 +116,7 @@
 
 - (void)optionsWindow:(QSCameraOptionsWindow *)optionsWindow hdrModeChanged:(BOOL)newMode
 {
+    DLog(@"");
     [[QSCameraController sharedInstance] setEnableHDR:newMode];
     
     NSMutableDictionary *prefsDict = [NSMutableDictionary dictionaryWithContentsOfFile:kPrefPath];
@@ -125,6 +126,7 @@
 
 - (void)optionsWindow:(QSCameraOptionsWindow *)optionsWindow flashModeChanged:(QSFlashMode)newMode
 {
+    DLog(@"");
     [[QSCameraController sharedInstance] setFlashMode:newMode];
 
     NSMutableDictionary *prefsDict = [NSMutableDictionary dictionaryWithContentsOfFile:kPrefPath];

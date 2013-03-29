@@ -18,4 +18,6 @@ before-all::
 	-$(ECHO_NOTHING)./updateversion.py$(ECHO_END)
 
 before-install::
+ifneq (($DEBUG), 1)
 	-$(ECHO_NOTHING)./updatemd5.sh$(ECHO_END)
+endif

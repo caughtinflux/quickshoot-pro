@@ -39,7 +39,7 @@ QSFlashMode QSFlashModeFromString(NSString *string)
     if ([string isEqualToString:QSFlashModeOffValue])
         return QSFlashModeOff;
     
-    return QSFlashModeAuto; // default value, in case string is nil.
+    return QSFlashModeOff; // default value, in case string is nil.
 }
 
 QSCameraDevice QSCameraDeviceFromString(NSString *string)

@@ -21,14 +21,7 @@ try:
 				latestVersion = valueFromString(line).replace(" ", "")
 
 	with open("/Users/aditya/code/projects/quickshootpro/QSVersion.h", "w") as file:
-		versionSuffix = ""
-		if "DEBUG" in os.environ:
-			print("DEBUG!!!\n")
-			versionSuffix = "_debug"
-		if  "BETA" in os.environ:
-			versionSuffix += "_beta"
-
-		versionString = latestVersion + versionSuffix
+		versionString = latestVersion
 
 		print("Version is {0}".format(versionString))
 
