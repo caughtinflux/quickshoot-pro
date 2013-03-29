@@ -10,7 +10,7 @@
 @end
 
 @implementation QSAboutTableViewController
-							
+                            
 - (void)dealloc
 { 
    [super dealloc];
@@ -20,10 +20,10 @@
 {
     [super viewDidLoad];
     self.navigationItem.title = @"About";
+    self.tableView.allowsSelection = NO;
 }
 
-#pragma mark - Table View
-
+#pragma mark - Table View Data Source
 - (NSInteger)numberOfSectionsInTableView:(UITableView *)tableView
 {
     return 2;
@@ -31,12 +31,17 @@
 
 - (NSString *)tableView:(UITableView *)tableView titleForHeaderInSection:(NSInteger)section
 {
-	return ((section == 0) ? @"Usage" : @"Acknowledgements");
+    return ((section == 0) ? @"Usage" : @"Acknowledgements");
 }
+
+- (NSString *)tableView:(UITableView *)tableView titleForFooterInSection:(NSInteger)section
+{
+    return ((section == 0) ? nil : @"Use this software responsibly, in compliance with all your local and federal laws.");
+} 
 
 - (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section
 {
-	DLog(@"Section: %i", section);
+    DLog(@"Section: %i", section);
     return ((section == 0) ? 2 : 1);
 }
 
@@ -47,25 +52,25 @@
     BOOL isiPad = (UI_USER_INTERFACE_IDIOM() == UIUserInterfaceIdiomPad);
 
     if ((indexPath.section == 0) && (indexPath.row == 1)) {
-    	if (isiPad) {
-    		retval -= 35;
-    	}
-    	else {
-    		retval += 15;
-    	}
+        if (isiPad) {
+            retval -= 35;
+        }
+        else {
+            retval += 18;
+        }
     }
     else if ((indexPath.section == 0) && (indexPath.row == 0)) {
-    	if (!isiPad) {
-    		retval += 30;
-    	}
+        if (!isiPad) {
+            retval += 35;
+        }
     }
     else if (indexPath.section == 1) {
-    	if (isiPad) {
-    		retval += 10;
-    	}
-    	else {
-    		retval += 60;
-    	}
+        if (isiPad) {
+            retval += 10;
+        }
+        else {
+            retval += 60;
+        }
     }
     return retval;
 }
@@ -77,7 +82,7 @@
     
     UITableViewCell *cell = [tableView dequeueReusableCellWithIdentifier:CellIdentifier];
     if (!cell) {
-    	cell = [[UITableViewCell alloc] initWithStyle:UITableViewCellStyleDefault reuseIdentifier:CellIdentifier];
+        cell = [[UITableViewCell alloc] initWithStyle:UITableViewCellStyleDefault reuseIdentifier:CellIdentifier];
     }
     cell.textLabel.font = [UIFont systemFontOfSize:((UI_USER_INTERFACE_IDIOM() == UIUserInterfaceIdiomPad) ? 15 : 15)];
     cell.textLabel.text = [self _stringForIndexPath:indexPath];
@@ -89,24 +94,24 @@
 
 - (NSString *)_stringForIndexPath:(NSIndexPath *)indexPath
 {
-	NSString *string = @"";
-	if (indexPath.section == 0 && indexPath.row == 0) {
-		string = @"QuickShoot Pro builds on the concept of its predecessor, QuickShoot, and takes it much further. Never again do you have to miss out on that perfect photo opportunity just because you were waiting for the camera app to launch."
-				 @"You can even record videos as fast as you can take photos.";
+    NSString *string = @"";
+    if (indexPath.section == 0 && indexPath.row == 0) {
+        string = @"QuickShoot Pro builds on the concept of its predecessor, QuickShoot, and takes it much further. Never again do you have to miss out on that perfect photo opportunity just because you were waiting for the camera app to launch."
+                 @"You can even record videos as fast as you can take photos.";
 
-	}
-	else if (indexPath.section == 0 && indexPath.row == 1) {
-		string = @"To capture a photo, just double tap any of the icons you have switched on in QuickShoot Pro's preferences. Triple tapping them toggles video recording.\n"
-				 @"You can also assign activator shortcuts (see settings) to capture a photo, or for video recording. The Options Window lets you change the camera settings like HDR, flash mode, and camera device without even having to enter the settings."
-				 @"Thank you for your purchase, hope you enjoy the experience!";
-	}
-	else if (indexPath.section == 1) {
-		string = @"Thanks to Sentry for his work on the icon overlay images, the pretty UI wouldn't be possible without you.\n"
-		         @"I'd also like to thank all the great people on the #theos IRC channel for the help they've given me during the course of this project.\n"
-		         @"The video camera icon for the status bar is by Anas Ramadan, from The Noun Project.";
-	}
+    }
+    else if (indexPath.section == 0 && indexPath.row == 1) {
+        string = @"To capture a photo, just double tap any of the icons you have switched on in QuickShoot Pro's preferences. Triple tapping them toggles video recording.\n"
+                 @"You can also assign activator shortcuts (see settings) to capture a photo, or to record video. The Options Window lets you change the camera settings like HDR, flash mode, and camera device without even having to enter the settings."
+                 @"Thank you for your purchase, hope you enjoy the experience!";
+    }
+    else if (indexPath.section == 1) {
+        string = @"Thanks, Sentry for your work on the UI. It wouldn't look as good without your help.\n"
+                 @"I'd also like to thank all the great people on the #theos IRC channel for the help they've given me during the course of this project.\n"
+                 @"The video camera icon for the status bar is by Anas Ramadan, from The Noun Project.";
+    }
 
-	return string;
+    return string;
 }
 
 @end
