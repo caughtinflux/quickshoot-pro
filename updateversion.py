@@ -23,7 +23,7 @@ try:
 	with open("/Users/aditya/code/projects/quickshootpro/QSVersion.h", "w") as file:
 		versionString = latestVersion
 
-		print("Version is {0}".format(versionString))
+		print("Version is {0}\n".format(versionString))
 
 		file.write("#define kQSVersion @\"{0}\"\n".format(versionString))
 

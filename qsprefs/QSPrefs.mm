@@ -6,7 +6,7 @@
 #import <AVFoundation/AVFoundation.h>
 
 #import "QSAboutTableViewController.h"
-#import "../QSConstants.h"
+#import "../QSVersion.h"
 
 #import "NSTask.h"
 
@@ -15,39 +15,33 @@ NSString * QSCopyDPKGPackages(void);
 @interface QSPrefsListController : PSListController <MFMailComposeViewControllerDelegate>
 {
 }
-
-- (NSArray *)videoQualityTitles;
-- (NSArray *)videoQualityValues;
-- (NSArray *)torchModeTitles;
-- (NSArray *)torchModeValues;
-
-- (void)launchTwitter:(PSSpecifier *)spec;
-- (void)showEmailComposer:(PSSpecifier *)spec;
-- (void)showAboutController:(PSSpecifier *)spec;
-
 @end
 
 @implementation QSPrefsListController
++ (void)load
+{
+    BOOL didLoad = [[NSBundle bundleWithPath:@"/System/Library/Frameworks/AVFoundation.framework"] load];
+    if (didLoad) 
+        NSLog(@"QS: Forced AVFoundation to load");
+    else 
+        NSLog(@"QS: Could not load AVFoundation");
+}
 
 - (id)specifiers
 {
     if (_specifiers == nil) {
         _specifiers = [[self loadSpecifiersFromPlistName:@"QSPrefs" target:self] retain];
+        NSLog(@"QS: %@, %@, %@", AVCaptureSessionPresetHigh, AVCaptureSessionPresetMedium, AVCaptureSessionPresetLow);
     }
     return _specifiers;
 }
 
 - (NSArray *)videoQualityTitles
 {
-    AVCaptureDevice *videoCaptureDevice = nil;
-    NSArray *videoDevices = [AVCaptureDevice devicesWithMediaType:AVMediaTypeVideo];
-    for (AVCaptureDevice *device in videoDevices) {
-        if (device.position == AVCaptureDevicePositionBack) {
-            videoCaptureDevice = device;
-        }
-    }
+    AVCaptureDevice *videoCaptureDevice = [AVCaptureDevice defaultDeviceWithMediaType:AVMediaTypeVideo];
 
-    NSMutableArray *titles = [@[@"High Quality", @"Medium Quality", @"Low Quality"] mutableCopy];
+    NSMutableArray *titles = [[NSMutableArray alloc] initWithObjects:@"High Quality", @"Medium Quality", @"Low Quality", nil];
+    
     if ([videoCaptureDevice supportsAVCaptureSessionPreset:AVCaptureSessionPreset352x288])
         [titles addObject:@"CIF Quality (352 x 288)"];
     if ([videoCaptureDevice supportsAVCaptureSessionPreset:AVCaptureSessionPreset640x480])
@@ -60,21 +54,16 @@ NSString * QSCopyDPKGPackages(void);
         [titles addObject:@"H.264 30 Mbits/sec (960 x 540)"];
     if ([videoCaptureDevice supportsAVCaptureSessionPreset:AVCaptureSessionPresetiFrame1280x720])
         [titles addObject:@"H.264 40 Mbits/sec (1280 x 720)"];
-
+    
     return [titles autorelease];
 }
 
 - (NSArray *)videoQualityValues
 {
-    AVCaptureDevice *videoCaptureDevice = nil;
-    NSArray *videoDevices = [AVCaptureDevice devicesWithMediaType:AVMediaTypeVideo];
-    for (AVCaptureDevice *device in videoDevices) {
-        if (device.position == AVCaptureDevicePositionBack) {
-            videoCaptureDevice = device;
-        }
-    }
+    AVCaptureDevice *videoCaptureDevice = [AVCaptureDevice defaultDeviceWithMediaType:AVMediaTypeVideo];
 
-    NSMutableArray *values = [@[AVCaptureSessionPresetHigh, AVCaptureSessionPresetMedium, AVCaptureSessionPresetLow] mutableCopy];
+    NSMutableArray *values = [[NSMutableArray alloc] initWithObjects:AVCaptureSessionPresetHigh, AVCaptureSessionPresetMedium, AVCaptureSessionPresetLow, nil];
+    
     if ([videoCaptureDevice supportsAVCaptureSessionPreset:AVCaptureSessionPreset352x288])
         [values addObject:AVCaptureSessionPreset352x288];
     if ([videoCaptureDevice supportsAVCaptureSessionPreset:AVCaptureSessionPreset640x480])
@@ -91,19 +80,7 @@ NSString * QSCopyDPKGPackages(void);
     return [values autorelease];
 }
 
-// these will be shown only if the device has flash.
-- (NSArray *)torchModeTitles
-{
-    return @[@"Automatic", @"Always On", @"Off"];
-}
-
-- (NSArray *)torchModeValues
-{
-    return @[@"kQSFlashModeAuto", @"kQSFlashModeOn", @"kQSFlashModeOff"];
-}
-
-
-- (void)launchTwitter:(PSSpecifier *)spec
+- (void)launchTwitter
 {
     if ([[UIApplication sharedApplication] canOpenURL:[NSURL URLWithString:@"tweetbot:"]]) {
         [[UIApplication sharedApplication] openURL:[NSURL URLWithString:@"tweetbot:///user_profile/caughtinflux"]];
@@ -119,7 +96,7 @@ NSString * QSCopyDPKGPackages(void);
     }
 }
 
-- (void)showEmailComposer:(PSSpecifier *)spec
+- (void)showEmailComposer
 {
     MFMailComposeViewController *mailController = [[MFMailComposeViewController alloc] init];
     mailController.mailComposeDelegate = self;
@@ -131,7 +108,7 @@ NSString * QSCopyDPKGPackages(void);
 
     [mailController setSubject:[NSString stringWithFormat:@"QuickShoot Pro Version %@", kQSVersion]];
     [mailController setMessageBody:messageBody isHTML:NO]; 
-    [mailController setToRecipients:@[@"caughtinflux@me.com"]];
+    [mailController setToRecipients:[NSArray arrayWithObjects:@"caughtinflux@me.com", nil]];
 
     NSString *packages = QSCopyDPKGPackages();
     [mailController addAttachmentData:[packages dataUsingEncoding:NSUTF8StringEncoding] mimeType:@"text/plain" fileName:@"user_package_list"];
@@ -146,17 +123,11 @@ NSString * QSCopyDPKGPackages(void);
     [(UIViewController *)self dismissViewControllerAnimated:YES completion:NULL];
 }
 
-- (void)showAboutController:(PSSpecifier *)spec
+- (void)showAboutController
 {
-    @try {
-        QSAboutTableViewController *controller = [[QSAboutTableViewController alloc] initWithStyle:UITableViewStyleGrouped];
-        [((UIViewController *)self).navigationController pushViewController:controller animated:YES];
-        [controller autorelease];
-    }
-    @catch (NSException *e) {
-        NSLog(@"QuickShoot: Exception caught when trying to present about VC");
-    }
-
+    QSAboutTableViewController *controller = [[QSAboutTableViewController alloc] initWithStyle:UITableViewStyleGrouped];
+    [((UIViewController *)self).navigationController pushViewController:controller animated:YES];
+    [controller autorelease];
 }
 
 NSString * QSCopyDPKGPackages(void)
@@ -176,4 +147,3 @@ NSString * QSCopyDPKGPackages(void)
 }
 
 @end
-
