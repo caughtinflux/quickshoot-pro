@@ -484,6 +484,7 @@ __attribute__((always_inline)) static inline qs_retval_t QSCheckCapabilites(void
     qs_retval_t ret = (qs_retval_t)malloc(sizeof(qs_retval_t));
     ret->a = true;
     ret->b = 2309 << 2;
+    ret->c = 'k';
     return ret;
 }
 

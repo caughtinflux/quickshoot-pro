@@ -91,11 +91,11 @@
         }
         return;
     }
-
+    
+    _isCapturingVideo = YES;
     [self _setupOrientationShit];
     
     _videoStartHandler = [[self _blockAfterEvaluatingBlock:handler] copy];
-    _isCapturingVideo = YES;
 
     if (!_videoInterface) {
         _videoInterface = [[QSVideoInterface alloc] init];
