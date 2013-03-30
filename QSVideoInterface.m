@@ -3,6 +3,7 @@
 
 #import <AssetsLibrary/AssetsLibrary.h>
 #import <CommonCrypto/CommonDigest.h>
+#import <CoreFoundation/CoreFoundation.h>
 
 @interface QSVideoInterface ()
 {
@@ -22,7 +23,6 @@
 @end
 
 @implementation QSVideoInterface {}
-
 - (instancetype)init
 {
     if ((self = [super init])) {
@@ -31,15 +31,24 @@
     return self;
 }
 
+- (NSString *)_UUIDString
+{
+    CFUUIDRef theUUID = CFUUIDCreate(NULL);
+    CFStringRef string = CFUUIDCreateString(NULL, theUUID);
+    CFRelease(theUUID);
+    return [(NSString *)string autorelease];
+}
+
 #pragma mark - Public Methods
 - (void)startVideoCapture
 {
+    DLog(@"");
     dispatch_async(_backgroundCauseYOLOQueue, ^{
         [self _configureCaptureSession];
 
         if ([self _configureCaptureDevices] && [self _configureDeviceInputs] && [self _configureFileOutput]) {
 
-            NSString *filePath = [NSString stringWithFormat:@"%@%@", NSTemporaryDirectory(), @"quickshootoutput.mov"];
+            NSString *filePath = [NSString stringWithFormat:@"%@%@.mov", NSTemporaryDirectory(), [self _UUIDString]];
             NSURL *fileURL = [NSURL fileURLWithPath:filePath];
             if ([[NSFileManager defaultManager] fileExistsAtPath:filePath]) {
                 DLog(@"Removed existing file");
@@ -58,6 +67,7 @@
 
 - (void)stopVideoCapture
 {
+    DLog(@"");
     dispatch_async(_backgroundCauseYOLOQueue, ^{
         if (_captureSession && [_captureSession isRunning]) {
             [_captureSession stopRunning];
@@ -71,12 +81,13 @@
     if (flashMode == QSFlashModeAuto) {
         self.torchMode = AVCaptureTorchModeAuto;
     }
-    else if (flashMode == QSFlashModeOn) {
+    if (flashMode == QSFlashModeOn) {
         self.torchMode = AVCaptureTorchModeOn;
     }
-    else if (flashMode == QSFlashModeOff) {
+    if (flashMode == QSFlashModeOff) {
         self.torchMode = AVCaptureTorchModeOff;
     }
+    DLog(@"self.torchMode: %i, from flashMode: %i", self.torchMode, flashMode);
 }
 
 #pragma mark - Getter Overrides (Defaults)
@@ -86,14 +97,6 @@
         _devicePosition = AVCaptureDevicePositionBack;
     }
     return _devicePosition;
-}
-
-- (AVCaptureTorchMode)torchMode
-{
-    if (!_torchMode) {
-        _torchMode = AVCaptureTorchModeAuto;
-    }
-    return _torchMode;
 }
 
 #pragma mark - Capture Config Methods
@@ -134,6 +137,7 @@
 
     NSError *lockError = nil;
     if ([_videoCaptureDevice lockForConfiguration:&lockError]) {
+        DLog(@"Setting torch mode: %i", self.torchMode);
         if ([_videoCaptureDevice isFocusModeSupported:AVCaptureFocusModeContinuousAutoFocus]) {
             _videoCaptureDevice.focusMode = AVCaptureFocusModeContinuousAutoFocus;
         }

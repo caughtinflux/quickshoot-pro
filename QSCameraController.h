@@ -18,7 +18,7 @@
 @property(nonatomic, assign) QSFlashMode videoFlashMode;
  
 + (instancetype)sharedInstance;
-// The completion handlers are copied
+// The completion handlers are copied. They are, however, destroyed after being called, so no need to worry about retain loops
 - (void)takePhotoWithCompletionHandler:(QSCompletionHandler)completionHandler;
 - (void)startVideoCaptureWithHandler:(QSCompletionHandler)handler;
 - (void)stopVideoCaptureWithHandler:(QSCompletionHandler)handler;

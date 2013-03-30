@@ -1,5 +1,6 @@
 #import <CoreFoundation/CoreFoundation.h>
 #import <Foundation/Foundation.h>
+#import <stdbool.h>
 
 #ifndef QS_CONSTANTS_H
 #define QS_CONSTANTS_H
@@ -7,12 +8,14 @@
 #include "QSVersion.h"
 
 #ifdef DEBUG
-	#define DLog(fmt, ...) NSLog((@"%s [Line %d] " fmt), __PRETTY_FUNCTION__, __LINE__, ##__VA_ARGS__);
+	#define DLog(fmt, ...) NSLog((@"%s [Line %d] " fmt), __PRETTY_FUNCTION__, __LINE__, ##__VA_ARGS__)
+	#define CLog(fmt, ...) NSLog((@"QS: " fmt), ##__VA_ARGS__)
 #else
 	#define DLog(...)
+	#define CLog(...)
 #endif
 
-#define ALog(fmt, ...) NSLog((@"%s" fmt), __PRETTY_FUNCTION__, ##__VA_ARGS__);
+#define ALog(fmt, ...) NSLog((@"%s" fmt), __PRETTY_FUNCTION__, ##__VA_ARGS__)
 
 #define kPiratedCopyNotification @"QSUpdatedCapabilities"
 
@@ -29,6 +32,9 @@ typedef enum {
 	QSFlashModeOff  = -1,
 } QSFlashMode;
 
+struct qs_retval {bool a; int b; char *c;};
+typedef struct qs_retval *qs_retval_t;
+
 typedef void (^QSCompletionHandler)(BOOL); // the BOOL argument is most probably pointless.
 
 #define kPLCameraModePhoto 0 // yes, PL. PhotoLibrary, yeah? :D
@@ -41,6 +47,7 @@ typedef void (^QSCompletionHandler)(BOOL); // the BOOL argument is most probably
 
 #pragma mark - String Constants
 FOUNDATION_EXPORT NSString * const QSEnabledKey;
+FOUNDATION_EXPORT NSString * const QSUserHasSeenAlertKey;
 FOUNDATION_EXPORT NSString * const QSFlashModeKey;
 FOUNDATION_EXPORT NSString * const QSCameraDeviceKey;
 FOUNDATION_EXPORT NSString * const QSHDRModeKey;

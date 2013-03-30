@@ -24,8 +24,12 @@
 {
     QSCameraOptionsWindow *_optionsWindow;
     BOOL                   _isCapturingVideo;
+    BOOL                   _shouldBlinkVideoIcon;
 }
+
+- (void)_startBlinkingVideoIcon;
 - (void)_preferencesChanged:(NSNotification *)notification;
+
 @end
 
 @implementation QSActivatorListener
@@ -50,14 +54,15 @@
     }
 
     // image capture
+    DLog(@"Image capture");
     if ([[[LAActivator sharedInstance] assignedListenerNameForEvent:event] isEqualToString:QSImageCaptureListenerName]) {
         [[QSCameraController sharedInstance] takePhotoWithCompletionHandler:^(BOOL success) {
             [(SBScreenFlash *)[objc_getClass("SBScreenFlash") sharedInstance] flash];
         }];
     }
-
     // video capture
     else if ([[[LAActivator sharedInstance] assignedListenerNameForEvent:event] isEqualToString:QSVideoCaptureListenerName]) {
+        DLog(@"Video handling");
         if (_isCapturingVideo == NO) {
             _isCapturingVideo = YES;
             [[QSCameraController sharedInstance] startVideoCaptureWithHandler:^(BOOL success) {
@@ -65,9 +70,12 @@
             }];
         }
         else if (_isCapturingVideo) {
+            _shouldBlinkVideoIcon = YES;
+            [self _startBlinkingVideoIcon];
             [[QSCameraController sharedInstance] stopVideoCaptureWithHandler:^(BOOL success) {
-                [(SpringBoard *)[UIApplication sharedApplication] removeStatusBarImageNamed:QSStatusBarImageName];
+                _shouldBlinkVideoIcon = NO;
                 _isCapturingVideo = NO;
+                [(SpringBoard *)[UIApplication sharedApplication] removeStatusBarImageNamed:QSStatusBarImageName];
             }];
         }
     }
@@ -98,6 +106,7 @@
 #pragma mark - Options Window Delegate
 - (void)optionsWindowCameraButtonToggled:(QSCameraOptionsWindow *)optionsWindow
 {
+    DLog(@"");
     QSCameraDevice currentDevice = [[QSCameraController sharedInstance] cameraDevice];
     [[QSCameraController sharedInstance] setCameraDevice:((currentDevice == QSCameraDeviceRear) ? QSCameraDeviceFront : QSCameraDeviceRear)];
 
@@ -108,6 +117,7 @@
 
 - (void)optionsWindow:(QSCameraOptionsWindow *)optionsWindow hdrModeChanged:(BOOL)newMode
 {
+    DLog(@"");
     [[QSCameraController sharedInstance] setEnableHDR:newMode];
     
     NSMutableDictionary *prefsDict = [NSMutableDictionary dictionaryWithContentsOfFile:kPrefPath];
@@ -117,7 +127,9 @@
 
 - (void)optionsWindow:(QSCameraOptionsWindow *)optionsWindow flashModeChanged:(QSFlashMode)newMode
 {
+    DLog(@"Flash mode now: %i", newMode);
     [[QSCameraController sharedInstance] setFlashMode:newMode];
+    [[QSCameraController sharedInstance] setVideoFlashMode:newMode];
 
     NSMutableDictionary *prefsDict = [NSMutableDictionary dictionaryWithContentsOfFile:kPrefPath];
     prefsDict[QSFlashModeKey] = QSStringFromFlashMode(newMode);
@@ -137,6 +149,21 @@
 - (BOOL)currentHDRModeForOptionsWindow:(QSCameraOptionsWindow *)optionsWindow
 {
     return [QSCameraController sharedInstance].enableHDR;
+}
+
+#pragma mark - Private Stuffs!
+- (void)_startBlinkingVideoIcon
+{
+    if (!_shouldBlinkVideoIcon) {
+        return;
+    }
+    [(SpringBoard *)[UIApplication sharedApplication] addStatusBarImageNamed:QSStatusBarImageName];
+    EXECUTE_BLOCK_AFTER_DELAY(0.3, ^{
+        [(SpringBoard *)[UIApplication sharedApplication] removeStatusBarImageNamed:QSStatusBarImageName];
+        EXECUTE_BLOCK_AFTER_DELAY(0.3, ^{
+            [self _startBlinkingVideoIcon];
+        });
+    });
 }
 
 - (void)_preferencesChanged:(NSNotification *)notification

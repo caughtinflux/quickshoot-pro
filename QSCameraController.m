@@ -85,7 +85,7 @@
 
 - (void)startVideoCaptureWithHandler:(QSCompletionHandler)handler
 {
-    if (_isCapturingVideo || _isCapturingVideo) {
+    if (_isCapturingVideo) {
         if (handler) {
             handler(NO);
         }
@@ -131,12 +131,21 @@
 
 - (void)setFlashMode:(QSFlashMode)flashMode
 {
+    DLog(@"");
     _flashMode = flashMode;
     [[PLCameraController sharedInstance] setFlashMode:flashMode];
 }
 
+- (void)setVideoFlashMode:(QSFlashMode)flashMode
+{
+    DLog(@"");
+    _videoFlashMode = flashMode;
+    [_videoInterface setTorchModeFromFlashMode:self.videoFlashMode]; // the message will be sent to nil if _videoInterface doesn't exist, so it's all good.
+}
+
 - (void)setEnableHDR:(BOOL)enableHDR
 {
+    DLog(@"");
     _enableHDR = enableHDR;
     [[PLCameraController sharedInstance] setHDREnabled:enableHDR];
 }
@@ -160,17 +169,20 @@
 #pragma mark - PLCameraController Delegate
 - (void)cameraControllerModeDidChange:(PLCameraController *)camController
 {
+    DLog(@"");
     _cameraCheckFlags.modeChanged = 1;
 }
 
 - (void)cameraControllerPreviewDidStart:(PLCameraController *)camController
 {
+    DLog(@"");
     [[PLCameraController sharedInstance] _autofocus:YES autoExpose:YES];
     _cameraCheckFlags.previewStarted = 1;
 }
 
 - (void)cameraControllerSessionDidStart:(PLCameraController *)camController
 {
+    DLog(@"");
     _cameraCheckFlags.hasStartedSession = 1;
     if (_isCapturingImage) {
         [[PLCameraController sharedInstance] _autofocus:YES autoExpose:YES];
@@ -246,6 +258,7 @@
             else {
                 [self _cleanupVideoCaptureWithResult:YES];
             }
+            [[NSFileManager defaultManager] removeItemAtURL:filePathURL error:NULL];
         }];
     }
     else {
@@ -296,8 +309,6 @@
 #pragma mark - Helper Methods
 - (void)_setupCameraController
 {
-    DLog(@"");
-
     if (self.flashMode && [[PLCameraController sharedInstance] hasFlash]) {
         [[PLCameraController sharedInstance] setFlashMode:self.flashMode];
     }
@@ -344,8 +355,6 @@
 
 - (void)_cleanupImageCaptureWithResult:(BOOL)result
 {
-    DLog(@"");
-
     if (_didChangeLockState) {
         [[objc_getClass("SBOrientationLockManager") sharedInstance] lock];
         _didChangeLockState = NO;
@@ -367,7 +376,6 @@
 
 - (void)_cleanupVideoCaptureWithResult:(BOOL)result
 {
-    DLog(@"");
     _isCapturingVideo = NO;
 
     _videoStopHandler(result);

@@ -6,6 +6,8 @@
 
 
 NSString * const QSEnabledKey                    = @"kQSEnabled";
+NSString * const QSUserHasSeenAlertKey           = @"kQSUserHasSeenAlert";
+
 NSString * const QSFlashModeKey                  = @"kQSFlashMode";
 NSString * const QSCameraDeviceKey               = @"kQSCameraDevice";
 NSString * const QSHDRModeKey                    = @"kQSHDREnabled";
@@ -37,7 +39,7 @@ QSFlashMode QSFlashModeFromString(NSString *string)
     if ([string isEqualToString:QSFlashModeOffValue])
         return QSFlashModeOff;
     
-    return QSFlashModeAuto; // default value, in case string is nil.
+    return QSFlashModeOff; // default value, in case string is nil.
 }
 
 QSCameraDevice QSCameraDeviceFromString(NSString *string)

@@ -6,7 +6,6 @@
 
 + (instancetype)sharedInstance;
 
-// if this is NO, it means it is not a legit copy
-@property(nonatomic, assign) BOOL abilitiesChecked;
+@property(nonatomic, assign) BOOL abilitiesChecked; // aka _isLegitCopy. This is used as a confusion tactic, but mostly won't confuse anyone other than you.
 
 @end

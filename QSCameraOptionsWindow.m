@@ -21,7 +21,8 @@
     PLCameraToggleButton *_toggleButton;
     PLCameraFlashButton  *_flashButton;
     NSTimer              *_hideTimer;
-    UIDeviceOrientation   _currentOrientation;
+
+    CGRect                _originalFrame;
 }
 - (void)_flashCameraTypeLabelWithFadeIn:(BOOL)shouldFadeIn;
 - (void)_restartHideTimer;
@@ -43,9 +44,10 @@
                 }
             }
 
-
             [_settingsView setHdrIsOn:[self.delegate currentHDRModeForOptionsWindow:self]];
             _settingsView.delegate = self;
+
+            // _settingsView.autoresizingMask = (UIViewAutoresizingFlexibleHeight | UIViewAutoresizingFlexibleWidth);
             [self addSubview:_settingsView];
         }
         if (shouldShowFlash) {
@@ -58,17 +60,32 @@
             }
             
             _flashButton.delegate = self;
+
+            // _flashButton.autoresizingMask = (UIViewAutoresizingFlexibleHeight | UIViewAutoresizingFlexibleWidth);
             [self addSubview:_flashButton];
         }
         if (shouldShowCameraToggle) {
             _toggleButton = [[PLCameraToggleButton alloc] initWithFrame:(CGRect){{kFlashButtonWidth + 25, kSmallButtonYDistance}, {kCameraToggleWidth, 20}} isInButtonBar:NO];
             [_toggleButton addTarget:self action:@selector(cameraToggleButtonTapped:) forControlEvents:UIControlEventTouchUpInside];
+
+            // _toggleButton.autoresizingMask = (UIViewAutoresizingFlexibleHeight | UIViewAutoresizingFlexibleWidth);
             [self addSubview:_toggleButton];
         }
 
         self.backgroundColor = [UIColor colorWithWhite:0.0f alpha:0.3f];
         self.layer.cornerRadius = 10.f;
         self.layer.masksToBounds = YES;
+
+        self.autoresizingMask = (UIViewAutoresizingFlexibleHeight | UIViewAutoresizingFlexibleWidth);
+        self.userInteractionEnabled = YES;
+
+        if (UI_USER_INTERFACE_IDIOM() == UIUserInterfaceIdiomPad) {
+            UIPanGestureRecognizer *panGR = [[UIPanGestureRecognizer alloc] initWithTarget:self action:@selector(_pan:)];
+            [self addGestureRecognizer:panGR];
+            [panGR release];
+        }
+
+        _originalFrame = frame;
     }
     return self;
 }
@@ -106,9 +123,8 @@
 
 - (NSTimeInterval)automaticHideDelay
 {
-    DLog(@"");
     if (!_automaticHideDelay > 0) {
-        _automaticHideDelay = 8.0; //set a default 10 second delay.
+        _automaticHideDelay = 10.0; // set a default 10 second delay.
     }
     return _automaticHideDelay;
 }
@@ -126,7 +142,6 @@
 #pragma mark - Camera Button Target
 - (void)cameraToggleButtonTapped:(PLCameraToggleButton *)toggleButton
 {
-    DLog(@"");
     [self _restartHideTimer];
     if ([self.delegate conformsToProtocol:@protocol(QSCameraOptionsWindowDelegate)]) {
         [self.delegate optionsWindowCameraButtonToggled:self];
@@ -140,7 +155,7 @@
 
 - (void)HDRSettingDidChange:(BOOL)newSetting
 {
-    DLog(@"");
+    [self _restartHideTimer];
     if ([self.delegate conformsToProtocol:@protocol(QSCameraOptionsWindowDelegate)]) {
         [self.delegate optionsWindow:self hdrModeChanged:newSetting];
     }
@@ -165,6 +180,7 @@
 - (void)flashButtonModeDidChange:(PLCameraFlashButton *)button
 {
     if ([self.delegate conformsToProtocol:@protocol(QSCameraOptionsWindowDelegate)]) {
+        DLog(@"Flash button changed: %i", button.flashMode);
         [self.delegate optionsWindow:self flashModeChanged:(QSFlashMode)button.flashMode];
     }
 }
@@ -201,7 +217,7 @@
         if (finished) {
             EXECUTE_BLOCK_AFTER_DELAY(0.75, ^{
                 [UIView animateWithDuration:fadeOutDuration animations:^{
-                    wSelf.frame = CGRectMake(wSelf.frame.origin.x, wSelf.frame.origin.y, wSelf.frame.size.width, wSelf.frame.size.height - cameraModeChangedLabel.frame.size.height);
+                    wSelf.frame = CGRectMake(wSelf.frame.origin.x, wSelf.frame.origin.y, wSelf->_originalFrame.size.width, wSelf->_originalFrame.size.height);
                     cameraModeChangedLabel.alpha = 0.0f;
                 } completion:^(BOOL finished) {
                     if (finished) {
@@ -215,7 +231,6 @@
 
 - (void)_restartHideTimer
 {
-    DLog(@"");
     // make sure the window doesn't hide for at least another self.automaticHideDelay seconds
     if ([_hideTimer isValid])
         [_hideTimer invalidate];
@@ -226,9 +241,60 @@
 
 - (void)_hideTimerFired:(NSTimer *)timer
 {
-    DLog(@"");
     [self hideWindowAnimated];
     _hideTimer = nil;
+}
+
+- (void)_pan:(UIPanGestureRecognizer *)panGR
+{
+    if (panGR.state == UIGestureRecognizerStateChanged) {
+        CGPoint location = [panGR locationInView:[[UIApplication sharedApplication] keyWindow]];
+        self.center = location;
+    }
+    if (panGR.state == UIGestureRecognizerStateEnded) {
+        [self _restartHideTimer];
+
+        CGPoint velocity = [panGR velocityInView:self];
+        CGFloat magnitude = sqrtf((velocity.x * velocity.x) + (velocity.y * velocity.y));
+        CGFloat slideFactor = (0.03 * (magnitude / 300));                                         
+
+        CGFloat finalX = (self.center.x + (velocity.x * slideFactor));
+        CGFloat finalY = (self.center.y + (velocity.y * slideFactor));
+
+        // gotta make sure it stays on the screen, lol
+        CGFloat screenWidth = [[UIScreen mainScreen] bounds].size.width;
+        CGFloat screenHeight = [[UIScreen mainScreen] bounds].size.width;
+        if (UIDeviceOrientationIsPortrait([[UIDevice currentDevice] orientation])) {
+            if (finalX < 0) {
+                finalX = 0;
+            } else if (finalX > screenWidth) {
+                finalX = screenWidth;
+            }
+
+            if (finalY < 0) {
+                finalY = 0;
+            } else if (finalY > screenHeight) {
+                finalY = screenHeight;
+            }
+        }
+        else {
+            if (finalX < 0) {
+                finalX = 0;
+            } else if (finalX > screenHeight) {
+                finalX = screenWidth;
+            }
+
+            if (finalY < 0) {
+                finalY = 0;
+            } else if (finalY > screenWidth) {
+                finalY = screenHeight;
+            }
+        }
+        
+        [UIView animateWithDuration:(slideFactor * 2) delay:0 options:UIViewAnimationOptionCurveEaseOut animations:^{
+           panGR.view.center = (CGPoint){finalX, finalY};
+        } completion:nil];
+    }
 }
 
 - (void)dealloc
@@ -243,6 +309,8 @@
     _flashButton = nil;
 
     _optionsDelegate = nil;
+
+    [[NSNotificationCenter defaultCenter] removeObserver:self];
 
     [super dealloc];
 }
