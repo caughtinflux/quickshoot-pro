@@ -85,7 +85,7 @@
 
 - (void)startVideoCaptureWithHandler:(QSCompletionHandler)handler
 {
-    if (_isCapturingVideo || _isCapturingVideo) {
+    if (_isCapturingVideo) {
         if (handler) {
             handler(NO);
         }

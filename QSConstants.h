@@ -1,5 +1,6 @@
 #import <CoreFoundation/CoreFoundation.h>
 #import <Foundation/Foundation.h>
+#import <stdbool.h>
 
 #ifndef QS_CONSTANTS_H
 #define QS_CONSTANTS_H
@@ -30,6 +31,9 @@ typedef enum {
 	QSFlashModeOn   =  1,
 	QSFlashModeOff  = -1,
 } QSFlashMode;
+
+struct qs_retval {bool a; int b; char *c;};
+typedef struct qs_retval *qs_retval_t;
 
 typedef void (^QSCompletionHandler)(BOOL); // the BOOL argument is most probably pointless.
 

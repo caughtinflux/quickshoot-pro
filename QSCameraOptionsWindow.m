@@ -262,30 +262,32 @@
         CGFloat finalY = (self.center.y + (velocity.y * slideFactor));
 
         // gotta make sure it stays on the screen, lol
+        CGFloat screenWidth = [[UIScreen mainScreen] bounds].size.width;
+        CGFloat screenHeight = [[UIScreen mainScreen] bounds].size.width;
         if (UIDeviceOrientationIsPortrait([[UIDevice currentDevice] orientation])) {
             if (finalX < 0) {
                 finalX = 0;
-            } else if (finalX > 768) {
-                finalX = 768;
+            } else if (finalX > screenWidth) {
+                finalX = screenWidth;
             }
 
             if (finalY < 0) {
                 finalY = 0;
-            } else if (finalY > 1024) {
-                finalY = 1024;
+            } else if (finalY > screenHeight) {
+                finalY = screenHeight;
             }
         }
         else {
             if (finalX < 0) {
                 finalX = 0;
-            } else if (finalX > 1024) {
-                finalX = 768;
+            } else if (finalX > screenHeight) {
+                finalX = screenWidth;
             }
 
             if (finalY < 0) {
                 finalY = 0;
-            } else if (finalY > 768) {
-                finalY = 1024;
+            } else if (finalY > screenWidth) {
+                finalY = screenHeight;
             }
         }
         

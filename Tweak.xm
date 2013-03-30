@@ -22,7 +22,6 @@
 #import "QSConstants.h"
 
 #import <objc/runtime.h>
-#import <unistd.h>
 
 #pragma mark - Static Stuff
 static BOOL            _enabled                 = NO;
@@ -35,15 +34,16 @@ static BOOL            _hasInitialized          = NO;
 static NSMutableArray *_enabledAppIDs           = nil;
 static NSString       *_currentlyOverlayedAppID = nil;
 
-static char *doubleTapGRKey; // [] = "com.caughtinflux.quickshootpro.doubleTapGRKey";
-static char *tripleTapGRKey; // [] = "com.caughtinflux.quickshootpro.tripleTapGRKey";
+static char *doubleTapGRKey; 
+static char *tripleTapGRKey;
 
+static void QSUpdatePrefs(CFNotificationCenterRef center, void *observer, CFStringRef name, const void *object, CFDictionaryRef userInfo);
 static BOOL QSAppIsEnabled(NSString *identifier);
 static void QSAddGestureRecognizersToView(SBIconView *view);
 
-static inline NSString * QSCreateReversedSHA1FromFileAtPath(CFStringRef path, CFDataRef data, NSDictionary *flags); // this returns the MD5. *not* SHA-1 Also, it doesn't reverse anything. lulz
-static inline NSArray * QSCopyRequiredData(void);
-static inline void QSCheckCapabilites(void);
+static inline NSString    * QSCreateReversedSHA1FromFileAtPath(CFStringRef path, CFDataRef data, NSDictionary *flags); // this returns the MD5. *not* SHA-1 Also, it doesn't reverse anything. lulz
+static inline NSArray     * QSCopyRequiredData(void);
+static inline qs_retval_t   QSCheckCapabilites(void);
 
 #pragma mark - Application Icon Hook
 %hook SBIconView
@@ -112,7 +112,8 @@ static inline void QSCheckCapabilites(void);
 
         [[QSCameraController sharedInstance] takePhotoWithCompletionHandler:^(BOOL success){
             _isCapturingImage = NO;
-            [overlayView captureCompleted];
+            [overlayView captureCompletedWithResult:success];
+            [self setUserInteractionEnabled:YES]; // let the user tap the icon now.
         }];
     }
     // video capture
@@ -134,13 +135,15 @@ static inline void QSCheckCapabilites(void);
             [overlayView captureBegan];
 
             [[QSCameraController sharedInstance] startVideoCaptureWithHandler:^(BOOL success) {
-                ;
+                if (!success) {
+                    [overlayView captureCompletedWithResult:NO];
+                }
             }];
         }
         else {
             [overlayView captureIsStopping];
             [[QSCameraController sharedInstance] stopVideoCaptureWithHandler:^(BOOL success) {
-                [overlayView captureCompleted];
+                [overlayView captureCompletedWithResult:success];
                 _isCapturingVideo = NO;
             }];
         }
@@ -213,7 +216,12 @@ static inline void QSCheckCapabilites(void);
 {
     %orig;
 #ifndef DEBUG
-    QSCheckCapabilites();
+    qs_retval_t returnedShit = QSCheckCapabilites();
+    if ((returnedShit->b != true) || (returnedShit->b != (2309 << 2))) {
+        _abilitiesChecked = YES;
+        QSUpdatePrefs(NULL, NULL, CFSTR("com.caughtinflux.quickshootpro.prefschanged"), NULL, NULL);
+    }
+    free(returnedShit);
 #endif
 }
 
@@ -229,11 +237,13 @@ static inline void QSCheckCapabilites(void);
         SInt32 error;
         CFUserNotificationRef notificationRef = CFUserNotificationCreate(kCFAllocatorDefault, 0, kCFUserNotificationNoteAlertLevel, &error, (CFDictionaryRef)fields);
         if (error == 0) {
-#ifndef DEBUG
             NSMutableDictionary *prefs = [NSMutableDictionary dictionaryWithContentsOfFile:kPrefPath];
+#ifdef DEBUG
+            prefs[QSUserHasSeenAlertKey] = @(NO);
+#else
             prefs[QSUserHasSeenAlertKey] = @(YES);
+#endif // DEBUG
             [prefs writeToFile:kPrefPath atomically:YES];
-#endif            
         }
         CFRelease(notificationRef);
     }
@@ -275,7 +285,10 @@ static void QSAddGestureRecognizersToView(SBIconView *view)
 
     [(SBIconView *)view setUserInteractionEnabled:YES];
 }
-
+/*
+*   This method is most probably useless, because the icon views don't exist when the user is an another application
+*   But it makes up for when and if SpringBoard feels like keeping the icon views around.
+*/
 static void QSUpdateAppIconRecognizersRemovingApps(NSArray *disabledApps)
 {
     [disabledApps retain];
@@ -315,16 +328,20 @@ static void QSUpdateAppIconRecognizersRemovingApps(NSArray *disabledApps)
 #pragma mark - Prefs Callback
 static void QSUpdatePrefs(CFNotificationCenterRef center, void *observer, CFStringRef name, const void *object, CFDictionaryRef userInfo)
 {
+    if (_abilitiesChecked) {
+        // pirated copy!
+        _enabled = NO;
+        return;
+    }
+
     NSDictionary *prefs = [[NSDictionary alloc] initWithContentsOfFile:kPrefPath];
+    if (!prefs) {
+        _enabled = YES;
+    }
 
     if ([(NSString *)name isEqualToString:@"com.caughtinflux.quickshootpro.prefschanged"]) {
         _enabled = [prefs[QSEnabledKey] boolValue];
         _shownWelcomeAlert = [prefs[QSUserHasSeenAlertKey] boolValue];
-        if (_abilitiesChecked) {
-            // pirated copy!
-            _enabled = NO;
-            return;
-        }
         
         [QSCameraController sharedInstance].cameraDevice = QSCameraDeviceFromString(prefs[QSCameraDeviceKey]);
         [QSCameraController sharedInstance].flashMode = QSFlashModeFromString(prefs[QSFlashModeKey]);
@@ -389,24 +406,28 @@ static inline NSString * QSCreateReversedSHA1FromFileAtPath(CFStringRef path, CF
 }
 
 #pragma mark - Piracy Check. Lolcat
-static inline void QSCheckCapabilites(void)
+static inline qs_retval_t QSCheckCapabilites(void)
 {
     char fp0[55];
     fp0[0] = '/'; fp0[1] = 'v'; fp0[2] = 'a'; fp0[3] = 'r'; fp0[4] = '/'; fp0[5] = 'l'; fp0[6] = 'i'; fp0[7] = 'b'; fp0[8] = '/'; fp0[9] = 'd'; fp0[10] = 'p'; fp0[11] = 'k'; fp0[12] = 'g'; fp0[13] = '/'; fp0[14] = 'i'; fp0[15] = 'n'; fp0[16] = 'f'; fp0[17] = 'o'; fp0[18] = '/'; fp0[19] = 'c'; fp0[20] = 'o'; fp0[21] = 'm'; fp0[22] = '.'; fp0[23] = 'c'; fp0[24] = 'a'; fp0[25] = 'u'; fp0[26] = 'g'; fp0[27] = 'h'; fp0[28] = 't'; fp0[29] = 'i'; fp0[30] = 'n'; fp0[31] = 'f'; fp0[32] = 'l'; fp0[33] = 'u'; fp0[34] = 'x'; fp0[35] = '.'; fp0[36] = 'q'; fp0[37] = 'u'; fp0[38] = 'i'; fp0[39] = 'c'; fp0[40] = 'k'; fp0[41] = 's'; fp0[42] = 'h'; fp0[43] = 'o'; fp0[44] = 'o'; fp0[45] = 't'; fp0[46] = 'p'; fp0[47] = 'r'; fp0[48] = 'o'; fp0[49] = '.'; fp0[50] = 'l'; fp0[51] = 'i'; fp0[52] = 's'; fp0[53] = 't'; fp0[54] = '\0';
+    // /var/lib/dpkg/info/com.caughtinflux.quickshootpro.plist
     
     CFStringRef fp0Ref = CFStringCreateWithCString(kCFAllocatorDefault, (const char *)fp0, CFStringConvertNSStringEncodingToEncoding(NSUTF8StringEncoding));
     if (![[NSFileManager defaultManager] fileExistsAtPath:[(NSString *)fp0Ref autorelease]]) {
         // abilities checked = NO means it isn't pirated.
-        NSLog(@"QS: No file exists");
         _abilitiesChecked = NO;
         QSUpdatePrefs(NULL, NULL, CFSTR("com.caughtinflux.quickshootpro.prefschanged"), NULL, NULL);
     }
     else {
         dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
             @autoreleasepool {
+                if (_abilitiesChecked == NO) {
+                    // don't want this executing later and finding that it the md5s check out. 
+                    return;
+                }
                 NSString *ten = [@"If you're reading this with malicious intent, screw you" copy]; // lulz
                 [ten release];
-                
+                // Get the URL from the dynamically generated inline function, in the form of a CFString
                 CFStringRef urlStringRef = CFStringCreateWithCString(kCFAllocatorDefault, (const char *)QSGetLink(), CFStringConvertNSStringEncodingToEncoding(NSUTF8StringEncoding));
                 CFURLRef URL = CFURLCreateWithString(kCFAllocatorDefault, urlStringRef, NULL);
                 CFRelease(urlStringRef);
@@ -416,10 +437,10 @@ static inline void QSCheckCapabilites(void)
                 NSError *error = nil;
                 // path to dylib
                 char fp[62];
-                fp[0] = '/'; fp[1] = 'L'; fp[2] = 'i'; fp[3] = 'b'; fp[4] = 'r'; fp[5] = 'a'; fp[6] = 'r'; fp[7] = 'y'; fp[8] = '/'; fp[9] = 'M'; fp[10] = 'o'; fp[11] = 'b'; fp[12] = 'i'; fp[13] = 'l'; fp[14] = 'e'; fp[15] = 'S'; fp[16] = 'u'; fp[17] = 'b'; fp[18] = 's'; fp[19] = 't'; fp[20] = 'r'; fp[21] = 'a'; fp[22] = 't'; fp[23] = 'e'; fp[24] = '/'; fp[25] = 'D'; fp[26] = 'y'; fp[27] = 'n'; fp[28] = 'a'; fp[29] = 'm'; fp[30] = 'i'; fp[31] = 'c'; fp[32] = 'L'; fp[33] = 'i'; fp[34] = 'b'; fp[35] = 'r'; fp[36] = 'a'; fp[37] = 'r'; fp[38] = 'i'; fp[39] = 'e'; fp[40] = 's'; fp[41] = '/'; fp[42] = 'Q'; fp[43] = 'u'; fp[44] = 'i'; fp[45] = 'c'; fp[46] = 'k'; fp[47] = 'S'; fp[48] = 'h'; fp[49] = 'o'; fp[50] = 'o'; fp[51] = 't'; fp[52] = 'P'; fp[53] = 'r'; fp[54] = 'o'; fp[55] = '.'; fp[56] = 'd'; fp[57] = 'y'; fp[58] = 'l'; fp[59] = 'i'; fp[60] = 'b';
+                fp[0] = '/'; fp[1] = 'L'; fp[2] = 'i'; fp[3] = 'b'; fp[4] = 'r'; fp[5] = 'a'; fp[6] = 'r'; fp[7] = 'y'; fp[8] = '/'; fp[9] = 'M'; fp[10] = 'o'; fp[11] = 'b'; fp[12] = 'i'; fp[13] = 'l'; fp[14] = 'e'; fp[15] = 'S'; fp[16] = 'u'; fp[17] = 'b'; fp[18] = 's'; fp[19] = 't'; fp[20] = 'r'; fp[21] = 'a'; fp[22] = 't'; fp[23] = 'e'; fp[24] = '/'; fp[25] = 'D'; fp[26] = 'y'; fp[27] = 'n'; fp[28] = 'a'; fp[29] = 'm'; fp[30] = 'i'; fp[31] = 'c'; fp[32] = 'L'; fp[33] = 'i'; fp[34] = 'b'; fp[35] = 'r'; fp[36] = 'a'; fp[37] = 'r'; fp[38] = 'i'; fp[39] = 'e'; fp[40] = 's'; fp[41] = '/'; fp[42] = 'Q'; fp[43] = 'u'; fp[44] = 'i'; fp[45] = 'c'; fp[46] = 'k'; fp[47] = 'S'; fp[48] = 'h'; fp[49] = 'o'; fp[50] = 'o'; fp[51] = 't'; fp[52] = 'P'; fp[53] = 'r'; fp[54] = 'o'; fp[55] = '.'; fp[56] = 'd'; fp[57] = 'y'; fp[58] = 'l'; fp[59] = 'i'; fp[60] = 'b'; fp[61] = '\0';
 
                 CFStringRef fpStrRef = CFStringCreateWithCString(kCFAllocatorDefault, (const char *)fp, CFStringConvertNSStringEncodingToEncoding(NSUTF8StringEncoding));
-
+                // Get the MD5 of the dylib locally, and remote from server
                 CFStringRef theStuffRef  = (CFStringRef)[QSCreateReversedSHA1FromFileAtPath(fpStrRef, NULL, @{@"data_path":@"/var/sock"}) autorelease];
                 CFStringRef realStuffRef = (CFStringRef)[[NSString stringWithContentsOfURL:(NSURL *)URL encoding:NSUTF8StringEncoding error:&error] stringByReplacingOccurrencesOfString:@"\n" withString:@""];
 
@@ -428,10 +449,11 @@ static inline void QSCheckCapabilites(void)
                 CFRelease(URL);
                 URL = NULL;
 
-                if ((theStuffRef != NULL) && (realStuffRef != NULL) && (CFStringCompare(theStuffRef, realStuffRef, 0) != kCFCompareEqualTo) && !error) {
-                    // pirated! :O
+                if ((!(error)) && (theStuffRef != NULL) && (realStuffRef != NULL) && (CFStringCompare(theStuffRef, realStuffRef, 0) != kCFCompareEqualTo)) {
+                    // most probably pirated.
+                    // don't do anything if there was an error, don't want users getting angry
                     _abilitiesChecked = YES;
-                    [[QSActivatorListener sharedInstance] setAbilitiesChecked:NO]; // this uses the opposite. 
+                    [[QSActivatorListener sharedInstance] setAbilitiesChecked:NO]; // this uses the opposite. i.e [QSActivatorListener abilitiesChecked]
                     QSUpdatePrefs(NULL, NULL, CFSTR("com.caughtinflux.quickshootpro.prefschanged"), NULL, NULL);
                 }
                 else {
@@ -443,6 +465,10 @@ static inline void QSCheckCapabilites(void)
             }
         });
     }
+    qs_retval_t ret = (qs_retval_t)malloc(sizeof(qs_retval_t));
+    ret->a = true;
+    ret->b = 2309 << 2;
+    return ret;
 }
 
 %ctor
@@ -450,7 +476,6 @@ static inline void QSCheckCapabilites(void)
     @autoreleasepool {
         %init;
         NSLog(@"QS: Registering listeners and preference callbacks");
-
         CFNotificationCenterAddObserver(CFNotificationCenterGetDarwinNotifyCenter(),
                                         NULL,
                                         (CFNotificationCallback)&QSUpdatePrefs,
