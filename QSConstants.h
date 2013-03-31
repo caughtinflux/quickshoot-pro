@@ -55,6 +55,7 @@ FOUNDATION_EXPORT NSString * const QSWaitForFocusKey;
 FOUNDATION_EXPORT NSString * const QSOptionsWindowHideDelayKey;
 FOUNDATION_EXPORT NSString * const QSVideoQualityKey;
 FOUNDATION_EXPORT NSString * const QSTorchModeKey;
+FOUNDATION_EXPORT NSString * const QSReferenceTimeKey;
 
 FOUNDATION_EXPORT NSString * const QSPrefsChangedNotificationName;
 FOUNDATION_EXPORT NSString * const QSImageCaptureListenerName;
