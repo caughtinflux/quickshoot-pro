@@ -133,6 +133,7 @@
     }
     if (!_videoCaptureDevice) {
         success = NO;
+        goto error;
     }
 
     NSError *lockError = nil;
@@ -147,6 +148,10 @@
         if ([_videoCaptureDevice hasTorch] && [_videoCaptureDevice isTorchModeSupported:self.torchMode]) {
             _videoCaptureDevice.torchMode = self.torchMode;
         }
+        if (!([_videoCaptureDevice supportsAVCaptureSessionPreset:self.videoQuality])) {
+            success = NO;
+            goto error;
+        }
         [_videoCaptureDevice unlockForConfiguration];
 
         success = YES;
@@ -154,12 +159,16 @@
     else {
         DLog(@"QS: An error occurred while trying to acquire a lock for video configuration: %i %@ with device: %@", lockError.code, lockError.localizedDescription, _videoCaptureDevice);
         success = NO;
+        goto error;
     }
 
     _audioCaptureDevice = [AVCaptureDevice defaultDeviceWithMediaType:AVMediaTypeAudio];
-    if (!_audioCaptureDevice)
+    if (!_audioCaptureDevice) {
         success = NO;
+        goto error;
+    }
 
+error:
     if (!success) {
         if ([self.delegate respondsToSelector:@selector(videoInterfaceCaptureDeviceErrorOccurred:)]) {
             [self.delegate videoInterfaceCaptureDeviceErrorOccurred:self];
