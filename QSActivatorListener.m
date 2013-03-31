@@ -46,14 +46,19 @@
     }
     // image capture
     if ([[[LAActivator sharedInstance] assignedListenerNameForEvent:event] isEqualToString:QSImageCaptureListenerName]) {
-        DLog(@"Image capture");
+        if ([QSCameraController sharedInstance].isCapturingImage) {
+            return;
+        }
         [[QSCameraController sharedInstance] takePhotoWithCompletionHandler:^(BOOL success) {
             [(SBScreenFlash *)[objc_getClass("SBScreenFlash") sharedInstance] flash];
         }];
     }
     // video capture
     else if ([[[LAActivator sharedInstance] assignedListenerNameForEvent:event] isEqualToString:QSVideoCaptureListenerName]) {
-        DLog(@"Video handling");
+        if ([QSCameraController sharedInstance].isCapturingVideo) {
+            // this check is necessary, because the user might be recording a video some other way, too.
+            return;
+        }
         if (_isCapturingVideo == NO) {
             _isCapturingVideo = YES;
             [[QSCameraController sharedInstance] startVideoCaptureWithHandler:^(BOOL success) {

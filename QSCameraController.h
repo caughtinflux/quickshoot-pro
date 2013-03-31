@@ -13,6 +13,9 @@
 @property(nonatomic, assign) BOOL waitForFocusCompletion;
 @property(nonatomic, assign) UIDeviceOrientation currentOrientation;
 
+@property(nonatomic, assign, readonly, getter = isCapturingVideo) BOOL capturingVideo;
+@property(nonatomic, assign, readonly, getter = isCapturingImage) BOOL capturingImage;
+
 // video properties
 @property(nonatomic, copy) NSString *videoCaptureQuality;
 @property(nonatomic, assign) QSFlashMode videoFlashMode;

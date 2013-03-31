@@ -12,9 +12,6 @@
 #pragma mark - Private Method Declarations
 @interface QSCameraController ()
 {
-    BOOL                 _isCapturingImage;
-    BOOL                 _isCapturingVideo;
-
     BOOL                 _didChangeLockState;
 
     QSCompletionHandler  _completionHandler;
@@ -51,6 +48,9 @@
 @end
 
 @implementation QSCameraController 
+
+@synthesize capturingVideo = _isCapturingVideo;
+@synthesize capturingImage = _isCapturingImage;
 
 + (instancetype)sharedInstance
 {
