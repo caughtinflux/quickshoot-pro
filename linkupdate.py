@@ -4,8 +4,8 @@ import commands
 def mangleString(inputString, arrayName):
 	outputString = "	static char {0}[{1}];\n".format(arrayName, (len(inputString) + 1))
 	index = 0
+	outputString += "	"
 	for character in inputString:
-		outputString += "	"
 		outputString += "{0}[{1}] = '{2}'; ".format(arrayName, index, character)
 		index += 1
 

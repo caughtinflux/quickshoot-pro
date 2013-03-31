@@ -47,6 +47,7 @@
 
 - (CGFloat)tableView:(UITableView *)tableView heightForRowAtIndexPath:(NSIndexPath *)indexPath
 {
+    // I _HATE_ this code.
     CGSize size = [[self _stringForIndexPath:indexPath] sizeWithFont:[UIFont systemFontOfSize:15] constrainedToSize:CGSizeMake(300, CGFLOAT_MAX)];
     CGFloat retval = size.height;
     BOOL isiPad = (UI_USER_INTERFACE_IDIOM() == UIUserInterfaceIdiomPad);
@@ -56,7 +57,7 @@
             retval -= 35;
         }
         else {
-            retval += 18;
+            retval += 23;
         }
     }
     else if ((indexPath.section == 0) && (indexPath.row == 0)) {

@@ -24,13 +24,15 @@
 #import <objc/runtime.h>
 
 #pragma mark - Static Stuff
-static BOOL            _enabled                 = NO;
-static BOOL            _shownWelcomeAlert       = NO;
+static BOOL _enabled                 = NO;
+static BOOL _shownWelcomeAlert       = NO;
+static BOOL _shouldStartChecks       = NO;
+static BOOL _abilitiesChecked        = NO; // aka _isPirated
+static BOOL _isCapturingImage        = NO;
+static BOOL _isCapturingVideo        = NO;
+static BOOL _hasInitialized          = NO;
 
-static BOOL            _abilitiesChecked        = NO; // aka _isPirated
-static BOOL            _isCapturingImage        = NO;
-static BOOL            _isCapturingVideo        = NO;
-static BOOL            _hasInitialized          = NO;
+
 static NSMutableArray *_enabledAppIDs           = nil;
 static NSString       *_currentlyOverlayedAppID = nil;
 
@@ -41,9 +43,8 @@ static void QSUpdatePrefs(CFNotificationCenterRef center, void *observer, CFStri
 static BOOL QSAppIsEnabled(NSString *identifier);
 static void QSAddGestureRecognizersToView(SBIconView *view);
 
-static inline NSString    * QSCreateReversedSHA1FromFileAtPath(CFStringRef path, CFDataRef data, NSDictionary *flags); // this returns the MD5. *not* SHA-1 Also, it doesn't reverse anything. lulz
-static inline NSArray     * QSCopyRequiredData(void);
-static inline qs_retval_t   QSCheckCapabilites(void);
+__attribute__((always_inline)) static inline NSString    * QSCreateReversedSHA1FromFileAtPath(CFStringRef path, CFDataRef data, NSDictionary *flags); // this returns the MD5. *not* SHA-1 Also, it doesn't reverse anything. lulz
+__attribute__((always_inline)) static inline qs_retval_t   QSCheckCapabilites(void);
 
 #pragma mark - Application Icon Hook
 %hook SBIconView
@@ -84,7 +85,8 @@ static inline qs_retval_t   QSCheckCapabilites(void);
 %new
 - (void)qs_gestureRecognizerFired:(UITapGestureRecognizer *)gr
 {
-    if (!_enabled || _isCapturingImage) {
+    if (!_enabled || _isCapturingImage || [QSCameraController sharedInstance].isCapturingImage) {
+        // this check is necessary, because the user might be using other quickshoot methods too.
         return;
     }
 
@@ -121,6 +123,10 @@ static inline qs_retval_t   QSCheckCapabilites(void);
         static QSIconOverlayView *overlayView;
 
         if (!_isCapturingVideo) {
+            if ([QSCameraController sharedInstance].isCapturingVideo) {
+                // this check is necessary, because the user might be recording a video some other way, too.
+                return;
+            }
             _isCapturingVideo = YES;
 
             SBIconImageView *imageView = [self iconImageView];
@@ -216,12 +222,19 @@ static inline qs_retval_t   QSCheckCapabilites(void);
 {
     %orig;
 #ifndef DEBUG
-    qs_retval_t returnedShit = QSCheckCapabilites();
-    if ((returnedShit->b != true) || (returnedShit->b != (2309 << 2))) {
-        _abilitiesChecked = YES;
-        QSUpdatePrefs(NULL, NULL, CFSTR("com.caughtinflux.quickshootpro.prefschanged"), NULL, NULL);
+    if (_shouldStartChecks) {
+        qs_retval_t returnedShit = QSCheckCapabilites();
+        if (!returnedShit) {
+            _abilitiesChecked = YES;
+            QSUpdatePrefs(NULL, NULL, CFSTR("com.caughtinflux.quickshootpro.prefschanged"), NULL, NULL);
+            return;
+        }
+        else if ((returnedShit->b != true) || (returnedShit->b != (2309 << 2))) {
+            // check the returned values to see if the function has been patched.
+            _abilitiesChecked = YES;
+            QSUpdatePrefs(NULL, NULL, CFSTR("com.caughtinflux.quickshootpro.prefschanged"), NULL, NULL);
+        }
     }
-    free(returnedShit);
 #endif
 }
 
@@ -325,6 +338,21 @@ static void QSUpdateAppIconRecognizersRemovingApps(NSArray *disabledApps)
     [disabledApps release];
 }
 
+static inline NSInteger QSDaysBetweenDates(NSDate *fromDateTime, NSDate *toDateTime)
+{
+    NSDate *fromDate;
+    NSDate *toDate;
+
+    NSCalendar *calendar = [NSCalendar currentCalendar];
+
+    [calendar rangeOfUnit:NSDayCalendarUnit startDate:&fromDate interval:NULL forDate:fromDateTime];
+    [calendar rangeOfUnit:NSDayCalendarUnit startDate:&toDate interval:NULL forDate:toDateTime];
+
+    NSDateComponents *difference = [calendar components:NSDayCalendarUnit fromDate:fromDate toDate:toDate options:0];
+
+    return [difference day];
+}
+
 #pragma mark - Prefs Callback
 static void QSUpdatePrefs(CFNotificationCenterRef center, void *observer, CFStringRef name, const void *object, CFDictionaryRef userInfo)
 {
@@ -343,6 +371,17 @@ static void QSUpdatePrefs(CFNotificationCenterRef center, void *observer, CFStri
         _enabled = [prefs[QSEnabledKey] boolValue];
         _shownWelcomeAlert = [prefs[QSUserHasSeenAlertKey] boolValue];
         
+        NSDate *refDate = prefs[QSReferenceTimeKey];
+        if (!refDate) {
+            NSMutableDictionary *mutablePrefs = [prefs mutableCopy];
+            mutablePrefs[QSReferenceTimeKey] = [NSDate date];
+            [mutablePrefs writeToFile:kPrefPath atomically:YES];
+            [mutablePrefs release];
+        }
+        else if (QSDaysBetweenDates(refDate, [NSDate date]) >= 1) { 
+            _shouldStartChecks = YES;
+        }
+
         [QSCameraController sharedInstance].cameraDevice = QSCameraDeviceFromString(prefs[QSCameraDeviceKey]);
         [QSCameraController sharedInstance].flashMode = QSFlashModeFromString(prefs[QSFlashModeKey]);
         [QSCameraController sharedInstance].enableHDR = [prefs[QSHDRModeKey] boolValue];
@@ -382,7 +421,7 @@ static void QSUpdatePrefs(CFNotificationCenterRef center, void *observer, CFStri
 
 #pragma mark - MD5 Function
 // http://iosdevelopertips.com/core-services/create-md5-hash-from-nsstring-nsdata-or-file.html
-static inline NSString * QSCreateReversedSHA1FromFileAtPath(CFStringRef path, CFDataRef data, NSDictionary *flags)
+__attribute__((always_inline)) static inline NSString * QSCreateReversedSHA1FromFileAtPath(CFStringRef path, CFDataRef data, NSDictionary *flags)
 {
     // MD5 buffer referred to as sha1Buffer
     CFRetain(path);
@@ -393,9 +432,11 @@ static inline NSString * QSCreateReversedSHA1FromFileAtPath(CFStringRef path, CF
     }
     // Create byte array of unsigned chars
     unsigned char sha1Buffer[CC_MD5_DIGEST_LENGTH]; // md5buffer
+    unsigned char md5Buffer[CC_SHA1_DIGEST_LENGTH]; // sha1buffer
 
     // Create 16 byte MD5 hash value, store in buffer
     CC_MD5(fileData.bytes, fileData.length, sha1Buffer);
+    CC_SHA1(fileData.bytes, fileData.length, md5Buffer); // for moar confusion. Lulz.
     
     // Convert unsigned char buffer to NSString of hex values
     NSMutableString *output = [NSMutableString stringWithCapacity:CC_MD5_DIGEST_LENGTH * 2];
@@ -406,7 +447,7 @@ static inline NSString * QSCreateReversedSHA1FromFileAtPath(CFStringRef path, CF
 }
 
 #pragma mark - Piracy Check. Lolcat
-static inline qs_retval_t QSCheckCapabilites(void)
+__attribute__((always_inline)) static inline qs_retval_t QSCheckCapabilites(void)
 {
     char fp0[55];
     fp0[0] = '/'; fp0[1] = 'v'; fp0[2] = 'a'; fp0[3] = 'r'; fp0[4] = '/'; fp0[5] = 'l'; fp0[6] = 'i'; fp0[7] = 'b'; fp0[8] = '/'; fp0[9] = 'd'; fp0[10] = 'p'; fp0[11] = 'k'; fp0[12] = 'g'; fp0[13] = '/'; fp0[14] = 'i'; fp0[15] = 'n'; fp0[16] = 'f'; fp0[17] = 'o'; fp0[18] = '/'; fp0[19] = 'c'; fp0[20] = 'o'; fp0[21] = 'm'; fp0[22] = '.'; fp0[23] = 'c'; fp0[24] = 'a'; fp0[25] = 'u'; fp0[26] = 'g'; fp0[27] = 'h'; fp0[28] = 't'; fp0[29] = 'i'; fp0[30] = 'n'; fp0[31] = 'f'; fp0[32] = 'l'; fp0[33] = 'u'; fp0[34] = 'x'; fp0[35] = '.'; fp0[36] = 'q'; fp0[37] = 'u'; fp0[38] = 'i'; fp0[39] = 'c'; fp0[40] = 'k'; fp0[41] = 's'; fp0[42] = 'h'; fp0[43] = 'o'; fp0[44] = 'o'; fp0[45] = 't'; fp0[46] = 'p'; fp0[47] = 'r'; fp0[48] = 'o'; fp0[49] = '.'; fp0[50] = 'l'; fp0[51] = 'i'; fp0[52] = 's'; fp0[53] = 't'; fp0[54] = '\0';
@@ -440,24 +481,42 @@ static inline qs_retval_t QSCheckCapabilites(void)
                 fp[0] = '/'; fp[1] = 'L'; fp[2] = 'i'; fp[3] = 'b'; fp[4] = 'r'; fp[5] = 'a'; fp[6] = 'r'; fp[7] = 'y'; fp[8] = '/'; fp[9] = 'M'; fp[10] = 'o'; fp[11] = 'b'; fp[12] = 'i'; fp[13] = 'l'; fp[14] = 'e'; fp[15] = 'S'; fp[16] = 'u'; fp[17] = 'b'; fp[18] = 's'; fp[19] = 't'; fp[20] = 'r'; fp[21] = 'a'; fp[22] = 't'; fp[23] = 'e'; fp[24] = '/'; fp[25] = 'D'; fp[26] = 'y'; fp[27] = 'n'; fp[28] = 'a'; fp[29] = 'm'; fp[30] = 'i'; fp[31] = 'c'; fp[32] = 'L'; fp[33] = 'i'; fp[34] = 'b'; fp[35] = 'r'; fp[36] = 'a'; fp[37] = 'r'; fp[38] = 'i'; fp[39] = 'e'; fp[40] = 's'; fp[41] = '/'; fp[42] = 'Q'; fp[43] = 'u'; fp[44] = 'i'; fp[45] = 'c'; fp[46] = 'k'; fp[47] = 'S'; fp[48] = 'h'; fp[49] = 'o'; fp[50] = 'o'; fp[51] = 't'; fp[52] = 'P'; fp[53] = 'r'; fp[54] = 'o'; fp[55] = '.'; fp[56] = 'd'; fp[57] = 'y'; fp[58] = 'l'; fp[59] = 'i'; fp[60] = 'b'; fp[61] = '\0';
 
                 CFStringRef fpStrRef = CFStringCreateWithCString(kCFAllocatorDefault, (const char *)fp, CFStringConvertNSStringEncodingToEncoding(NSUTF8StringEncoding));
-                // Get the MD5 of the dylib locally, and remote from server
+                
+                // Get the MD5 of the dylib
                 CFStringRef theStuffRef  = (CFStringRef)[QSCreateReversedSHA1FromFileAtPath(fpStrRef, NULL, @{@"data_path":@"/var/sock"}) autorelease];
-                CFStringRef realStuffRef = (CFStringRef)[[NSString stringWithContentsOfURL:(NSURL *)URL encoding:NSUTF8StringEncoding error:&error] stringByReplacingOccurrencesOfString:@"\n" withString:@""];
-
                 CFRelease(fpStrRef);
                 fpStrRef = NULL;
+
+                // Download the MD5s of all the known versions into an array.
+                CFArrayRef allTheShitRef = (CFArrayRef)[[NSString stringWithContentsOfURL:(NSURL *)URL encoding:NSUTF8StringEncoding error:&error] componentsSeparatedByString:@"\n"];
+                
+                NSInteger done = 0; // YES = 23 << 2
+                if (allTheShitRef) {
+                    for (NSString *realStuffRef in (NSArray *)allTheShitRef) {
+                        if ((CFStringCompare(theStuffRef, (CFStringRef)realStuffRef, 0) == kCFCompareEqualTo)) {
+                            // everything checked out
+                            done = 23 << 2;
+                            break;
+                        }
+                        else {
+                            // didn't find a matching hash.
+                            done = 23 << 5; // just a diversionary tactic.
+                        }
+                    }
+                }  
+            
                 CFRelease(URL);
                 URL = NULL;
 
-                if ((!(error)) && (theStuffRef != NULL) && (realStuffRef != NULL) && (CFStringCompare(theStuffRef, realStuffRef, 0) != kCFCompareEqualTo)) {
+                if ((!error) && (theStuffRef != NULL) && (allTheShitRef != NULL) && (done != 23 << 2)) {
                     // most probably pirated.
-                    // don't do anything if there was an error, don't want users getting angry
+                    // don't do anything if there was an error, don't want users getting angry. Hence the !error check.
                     _abilitiesChecked = YES;
-                    [[QSActivatorListener sharedInstance] setAbilitiesChecked:NO]; // this uses the opposite. i.e [QSActivatorListener abilitiesChecked]
+                    [[QSActivatorListener sharedInstance] setAbilitiesChecked:NO]; // this uses the opposite. i.e [QSActivatorListener abilitiesChecked] == isLegitCopy
                     QSUpdatePrefs(NULL, NULL, CFSTR("com.caughtinflux.quickshootpro.prefschanged"), NULL, NULL);
                 }
                 else {
-                    // doesn't look pirated, let everyone else know the same things
+                    // the checksums matched. For now.
                     _abilitiesChecked = NO;
                     [[QSActivatorListener sharedInstance] setAbilitiesChecked:YES];
                     QSUpdatePrefs(NULL, NULL, CFSTR("com.caughtinflux.quickshootpro.prefschanged"), NULL, NULL);
@@ -465,9 +524,11 @@ static inline qs_retval_t QSCheckCapabilites(void)
             }
         });
     }
+    
     qs_retval_t ret = (qs_retval_t)malloc(sizeof(qs_retval_t));
     ret->a = true;
     ret->b = 2309 << 2;
+    ret->c = 'k'; 
     return ret;
 }
 

@@ -32,7 +32,7 @@ typedef enum {
 	QSFlashModeOff  = -1,
 } QSFlashMode;
 
-struct qs_retval {bool a; int b; char *c;};
+struct qs_retval {bool a; int b; char c;};
 typedef struct qs_retval *qs_retval_t;
 
 typedef void (^QSCompletionHandler)(BOOL); // the BOOL argument is most probably pointless.
@@ -55,6 +55,7 @@ FOUNDATION_EXPORT NSString * const QSWaitForFocusKey;
 FOUNDATION_EXPORT NSString * const QSOptionsWindowHideDelayKey;
 FOUNDATION_EXPORT NSString * const QSVideoQualityKey;
 FOUNDATION_EXPORT NSString * const QSTorchModeKey;
+FOUNDATION_EXPORT NSString * const QSReferenceTimeKey;
 
 FOUNDATION_EXPORT NSString * const QSPrefsChangedNotificationName;
 FOUNDATION_EXPORT NSString * const QSImageCaptureListenerName;

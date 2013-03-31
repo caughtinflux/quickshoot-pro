@@ -16,6 +16,7 @@ NSString * const QSOptionsWindowHideDelayKey     = @"kQSOptionsWindowHideDelay";
 NSString * const QSPrefsChangedNotificationName  = @"kQSPrefsChangedNotif";
 NSString * const QSVideoQualityKey               = @"kQSVideoQuality";
 NSString * const QSTorchModeKey                  = @"kQSTorchMode";
+NSString * const QSReferenceTimeKey              = @"kQSReferenceTimeKey";
 
 NSString * const QSImageCaptureListenerName      = @"com.caughtinflux.quickshootpro.imagecapturelistener";
 NSString * const QSVideoCaptureListenerName      = @"com.caughtinflux.quickshootpro.videocapturelistener";

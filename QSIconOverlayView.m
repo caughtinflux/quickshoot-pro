@@ -94,6 +94,7 @@
 {
     NSString *completedImageName = ((result == YES) ? kDoneImageName : kCaptureFailedImageName);
     UIImageView *doneImageView = [[[UIImageView alloc] initWithImage:[self _bundleImageNamed:completedImageName]] autorelease];
+    
     CGRect frame = doneImageView.frame;
     frame.origin.x = _irisImageView.bounds.size.width * 0.20;
     frame.origin.y = _irisImageView.bounds.origin.y - 1;

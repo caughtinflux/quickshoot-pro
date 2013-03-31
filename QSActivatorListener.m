@@ -7,18 +7,10 @@
 #import <Foundation/Foundation.h>
 
 #import <SpringBoard/SBScreenFlash.h>
+#import <SpringBoard/SBAwayController.h>
 #import <objc/runtime.h>
 
 #import "LibstatusBar.h"
-
-
-#pragma mark - Lockscreen Class Interfaces
-@class SBAwayView;
-@interface SBAwayController : NSObject
-+ (instancetype)sharedAwayController;
-- (BOOL)isLocked;
-- (void)attemptUnlock;
-@end
 
 @interface QSActivatorListener ()
 {
@@ -52,24 +44,28 @@
     if (!self.abilitiesChecked) {
         return;
     }
-
     // image capture
-    DLog(@"Image capture");
     if ([[[LAActivator sharedInstance] assignedListenerNameForEvent:event] isEqualToString:QSImageCaptureListenerName]) {
+        if ([QSCameraController sharedInstance].isCapturingImage) {
+            return;
+        }
         [[QSCameraController sharedInstance] takePhotoWithCompletionHandler:^(BOOL success) {
             [(SBScreenFlash *)[objc_getClass("SBScreenFlash") sharedInstance] flash];
         }];
     }
     // video capture
     else if ([[[LAActivator sharedInstance] assignedListenerNameForEvent:event] isEqualToString:QSVideoCaptureListenerName]) {
-        DLog(@"Video handling");
+        if ([QSCameraController sharedInstance].isCapturingVideo) {
+            // this check is necessary, because the user might be recording a video some other way, too.
+            return;
+        }
         if (_isCapturingVideo == NO) {
             _isCapturingVideo = YES;
             [[QSCameraController sharedInstance] startVideoCaptureWithHandler:^(BOOL success) {
                 [(SpringBoard *)[UIApplication sharedApplication] addStatusBarImageNamed:QSStatusBarImageName];
             }];
         }
-        else if (_isCapturingVideo) {
+        else {
             _shouldBlinkVideoIcon = YES;
             [self _startBlinkingVideoIcon];
             [[QSCameraController sharedInstance] stopVideoCaptureWithHandler:^(BOOL success) {
