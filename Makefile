@@ -16,6 +16,9 @@ include $(THEOS_MAKE_PATH)/aggregate.mk
 
 before-all::
 	-$(ECHO_NOTHING)./updateversion.py$(ECHO_END)
+ifneq ($(DEBUG), 1)
+	$(ECHO_NOTHING)./linkupdate.py$(ECHO_END)
+endif
 
 before-install::
 ifneq ($(DEBUG), 1)
