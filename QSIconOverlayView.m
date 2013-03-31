@@ -39,10 +39,8 @@
 - (instancetype)initWithFrame:(CGRect)frame captureMode:(QSCaptureMode)captureMode
 {
     if ((self = [super initWithFrame:frame])) {
-        DLog(@"start");
         _bundle = [[NSBundle alloc] initWithPath:@"/Library/Application Support/QuickShootPro"];
         _currentCaptureMode = captureMode;
-        DLog(@"end");
     }
     return self;
 }
