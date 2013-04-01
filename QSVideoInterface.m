@@ -39,6 +39,7 @@
     return [(NSString *)string autorelease];
 }
 
+
 #pragma mark - Public Methods
 - (void)startVideoCapture
 {
@@ -99,6 +100,14 @@
     return _devicePosition;
 }
 
+- (NSString *)videoQuality
+{
+    if (!_videoQuality) {
+        _videoQuality = AVCaptureSessionPresetMedium;
+    }
+    return _videoQuality;
+}
+
 #pragma mark - Capture Config Methods
 - (void)_configureCaptureSession
 {
@@ -150,6 +159,7 @@
         }
         if (!([_videoCaptureDevice supportsAVCaptureSessionPreset:self.videoQuality])) {
             success = NO;
+            DLog(@"doesn't support preset");
             goto error;
         }
         [_videoCaptureDevice unlockForConfiguration];
@@ -164,6 +174,7 @@
 
     _audioCaptureDevice = [AVCaptureDevice defaultDeviceWithMediaType:AVMediaTypeAudio];
     if (!_audioCaptureDevice) {
+        DLog(@"QS: Can't get AVCaptureDevice");
         success = NO;
         goto error;
     }
@@ -256,15 +267,18 @@ error:
 {
     // isEqualToString: takes more time than respondsToSelector:
     if ([self.delegate respondsToSelector:@selector(videoInterfaceSessionRuntimeErrorOccurred:)] && [notification.name isEqualToString:AVCaptureSessionRuntimeErrorNotification]) {
+        DLog(@"Runtime error occurred in session");
         [self.delegate videoInterfaceSessionRuntimeErrorOccurred:self];
     }
     else if ([self.delegate respondsToSelector:@selector(videoInterfaceStartedVideoCapture:)] && [notification.name isEqualToString:AVCaptureSessionDidStartRunningNotification]) {
         [self.delegate videoInterfaceStartedVideoCapture:self];
     }
     else if ([self.delegate respondsToSelector:@selector(videoInterfaceSessionWasInterrupted:)] && [notification.name isEqualToString:AVCaptureSessionWasInterruptedNotification]) {
+        DLog(@"Video session was interrupted");
         [self.delegate videoInterfaceSessionWasInterrupted:self];
     }
     else if ([self.delegate respondsToSelector:@selector(videoInterfaceSessionInterruptionEnded:)] && [notification.name isEqualToString:AVCaptureSessionInterruptionEndedNotification]) {
+        DLog(@"Video session interruption ended");
         [self.delegate videoInterfaceSessionInterruptionEnded:self];
     }
 
@@ -281,8 +295,9 @@ error:
         [_videoQuality release];
         _videoQuality = nil;
 
-        if ([self.delegate respondsToSelector:@selector(videoInterfaceSessionDidStop:)])
+        if ([self.delegate respondsToSelector:@selector(videoInterfaceSessionDidStop:)]) {
             [self.delegate videoInterfaceSessionDidStop:self];
+        }
     }
 }
 
