@@ -5,6 +5,7 @@
 
 #import <UIKit/UIKit.h>
 #import <Foundation/Foundation.h>
+#import <CoreFoundation/CFUserNotification.h>
 
 #import <SpringBoard/SBScreenFlash.h>
 #import <SpringBoard/SBAwayController.h>
@@ -55,11 +56,11 @@
     }
     // video capture
     else if ([[[LAActivator sharedInstance] assignedListenerNameForEvent:event] isEqualToString:QSVideoCaptureListenerName]) {
-        if ([QSCameraController sharedInstance].isCapturingVideo) {
-            // this check is necessary, because the user might be recording a video some other way, too.
-            return;
-        }
         if (_isCapturingVideo == NO) {
+            if ([QSCameraController sharedInstance].isCapturingVideo) {
+                // this check is necessary, because the user might be recording a video some other way, too.
+                return;
+            }
             _isCapturingVideo = YES;
             [[QSCameraController sharedInstance] startVideoCaptureWithHandler:^(BOOL success) {
                 [(SpringBoard *)[UIApplication sharedApplication] addStatusBarImageNamed:QSStatusBarImageName];
@@ -72,6 +73,9 @@
                 _shouldBlinkVideoIcon = NO;
                 _isCapturingVideo = NO;
                 [(SpringBoard *)[UIApplication sharedApplication] removeStatusBarImageNamed:QSStatusBarImageName];
+                if (!success) {
+                    SHOW_USER_NOTIFICATION(@"QuickShoot", @"The video recording did not complete successfully.\nPlease try again.", @"Dismiss");
+                }
             }];
         }
     }
