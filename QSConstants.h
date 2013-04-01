@@ -5,8 +5,6 @@
 #ifndef QS_CONSTANTS_H
 #define QS_CONSTANTS_H
 
-#include "QSVersion.h"
-
 #ifdef DEBUG
 	#define DLog(fmt, ...) NSLog((@"%s [Line %d] " fmt), __PRETTY_FUNCTION__, __LINE__, ##__VA_ARGS__)
 	#define CLog(fmt, ...) NSLog((@"QS: " fmt), ##__VA_ARGS__)
@@ -18,7 +16,19 @@
 #define ALog(fmt, ...) NSLog((@"%s" fmt), __PRETTY_FUNCTION__, ##__VA_ARGS__)
 
 #define kPiratedCopyNotification @"QSUpdatedCapabilities"
+#define kPLCameraModePhoto 0 // yes, PL. PhotoLibrary, yeah? :D
+#define kPLCameraModeVideo 1
 
+#define kPrefPath [NSHomeDirectory() stringByAppendingString:@"/Library/Preferences/com.caughtinflux.qsproprefs.plist"]
+
+#define EXECUTE_BLOCK_AFTER_DELAY(delayInSeconds, block) dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(delayInSeconds * NSEC_PER_SEC)), dispatch_get_main_queue(), block)
+
+#define SHOW_USER_NOTIFICATION(title, message, dismissButtonTitle) \
+							   NSDictionary *fields = @{(id)kCFUserNotificationAlertHeaderKey        : title, \
+                                 						(id)kCFUserNotificationAlertMessageKey       : message, \
+                                                        (id)kCFUserNotificationDefaultButtonTitleKey : dismissButtonTitle}; \
+        					   CFUserNotificationRef notificationRef = CFUserNotificationCreate(kCFAllocatorDefault, 0, kCFUserNotificationNoteAlertLevel, NULL, (CFDictionaryRef)fields); \
+        					   CFRelease(notificationRef)
 
 // These values are accepted by PLCameraController as-is
 typedef enum {
@@ -36,13 +46,6 @@ struct qs_retval {bool a; int b; char c;};
 typedef struct qs_retval *qs_retval_t;
 
 typedef void (^QSCompletionHandler)(BOOL); // the BOOL argument is most probably pointless.
-
-#define kPLCameraModePhoto 0 // yes, PL. PhotoLibrary, yeah? :D
-#define kPLCameraModeVideo 1
-
-#define kPrefPath [NSHomeDirectory() stringByAppendingString:@"/Library/Preferences/com.caughtinflux.qsproprefs.plist"]
-
-#define EXECUTE_BLOCK_AFTER_DELAY(delayInSeconds, block) dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(delayInSeconds * NSEC_PER_SEC)), dispatch_get_main_queue(), block)
 
 
 #pragma mark - String Constants

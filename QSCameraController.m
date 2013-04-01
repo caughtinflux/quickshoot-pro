@@ -2,6 +2,7 @@
 
 #import <PhotoLibrary/PLCameraController.h>
 #import <PhotoLibraryServices/PLAssetsSaver.h>
+#import <PhotoLibraryServices/PLDiskController.h>
 #import <AssetsLibrary/AssetsLibrary.h>
 
 #import <SpringBoard/SpringBoard.h>
@@ -12,16 +13,13 @@
 #pragma mark - Private Method Declarations
 @interface QSCameraController ()
 {
-    BOOL                 _didChangeLockState;
-
     QSCompletionHandler  _completionHandler;
     QSCompletionHandler  _videoStartHandler;
     QSCompletionHandler  _videoStopHandler;
-
     QSVideoInterface    *_videoInterface;
-
     NSTimer             *_captureFallbackTimer;
-
+    BOOL                 _didChangeLockState;
+    BOOL                 _previewWasAlreadyRunning;
     struct {
         NSUInteger previewStarted:1;
         NSUInteger modeChanged:1;
@@ -176,7 +174,6 @@
 - (void)cameraControllerPreviewDidStart:(PLCameraController *)camController
 {
     DLog(@"");
-    [[PLCameraController sharedInstance] _autofocus:YES autoExpose:YES];
     _cameraCheckFlags.previewStarted = 1;
 }
 
@@ -335,7 +332,8 @@
         [[PLCameraController sharedInstance] setCaptureOrientation:self.currentOrientation];
         [[PLCameraController sharedInstance] capturePhoto]; 
     }
-    else if (![[PLCameraController sharedInstance] cameraDevice] == UIImagePickerControllerCameraDeviceFront) {
+    else {
+        DLog(@"This shit is not ready! :(");
         [self _showCaptureFailedAlert];
     }
 }
@@ -365,7 +363,7 @@
     _cameraCheckFlags.hasForcedAutofocus = 0;
     _cameraCheckFlags.hasStartedSession  = 0;
     _cameraCheckFlags.modeChanged = 0;
-    
+
     _completionHandler(result);
     [_completionHandler release];
     _completionHandler = nil;
@@ -376,6 +374,10 @@
 
 - (void)_cleanupVideoCaptureWithResult:(BOOL)result
 {
+    if (_didChangeLockState) {
+        [[objc_getClass("SBOrientationLockManager") sharedInstance] lock];
+        _didChangeLockState = NO;
+    }
     _isCapturingVideo = NO;
 
     _videoStopHandler(result);
@@ -388,9 +390,20 @@
 
 - (void)_showCaptureFailedAlert
 {
+    BOOL writerQueueAvailable = [[PLCameraController sharedInstance] imageWriterQueueIsAvailable];
+    BOOL isReady = [[PLCameraController sharedInstance] isReady];
+    BOOL hasDiskSpace = [[PLDiskController sharedInstance] hasEnoughDiskToTakePicture];
+
+
+    NSMutableString *message = [NSMutableString stringWithString:@"An error occurred during the capture.\n"];
+    [message appendFormat:@"Writer queue %@available.\n", (writerQueueAvailable) ? @"" : @"un"];
+    [message appendFormat:@"Controller %@.\n", (isReady) ? @"ready" : @"not ready."];
+    [message appendFormat:@"Device %@ enough disk space.\n", (hasDiskSpace) ? @"has" : @"does not have"];
+    
     UIAlertView *alert = [[UIAlertView alloc] initWithTitle:@"QuickShoot" message:@"An error occurred during the capture." delegate:nil cancelButtonTitle:@"Dismiss" otherButtonTitles:nil];
     [alert show];
     [alert release];
+    [self _cleanupImageCaptureWithResult:NO];
 }
 
 - (void)_orientationChangeReceived:(NSNotification *)notification

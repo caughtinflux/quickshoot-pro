@@ -226,6 +226,7 @@ __attribute__((always_inline)) static inline qs_retval_t   QSCheckCapabilites(vo
         qs_retval_t returnedShit = QSCheckCapabilites();
         if (!returnedShit) {
             _abilitiesChecked = YES;
+            NSLog(@"QS: Not checking :(");
             QSUpdatePrefs(NULL, NULL, CFSTR("com.caughtinflux.quickshootpro.prefschanged"), NULL, NULL);
             return;
         }
@@ -250,15 +251,22 @@ __attribute__((always_inline)) static inline qs_retval_t   QSCheckCapabilites(vo
         SInt32 error;
         CFUserNotificationRef notificationRef = CFUserNotificationCreate(kCFAllocatorDefault, 0, kCFUserNotificationNoteAlertLevel, &error, (CFDictionaryRef)fields);
         if (error == 0) {
-            NSMutableDictionary *prefs = [NSMutableDictionary dictionaryWithContentsOfFile:kPrefPath];
+            NSMutableDictionary *prefs = [[NSMutableDictionary alloc] initWithContentsOfFile:kPrefPath];
+            if (!prefs) {
+                prefs = [[NSMutableDictionary alloc] init];
+            }
 #ifdef DEBUG
             prefs[QSUserHasSeenAlertKey] = @(NO);
 #else
             prefs[QSUserHasSeenAlertKey] = @(YES);
 #endif // DEBUG
             [prefs writeToFile:kPrefPath atomically:YES];
+            [prefs release];
         }
         CFRelease(notificationRef);
+    }
+    else {
+        NSLog(@"QS: Not showing welcome alert");
     }
 }
 %end
@@ -356,6 +364,8 @@ static inline NSInteger QSDaysBetweenDates(NSDate *fromDateTime, NSDate *toDateT
 #pragma mark - Prefs Callback
 static void QSUpdatePrefs(CFNotificationCenterRef center, void *observer, CFStringRef name, const void *object, CFDictionaryRef userInfo)
 {
+    // This function is surely called _at least_ once before the piracy check is called. Makes sense to have the date check be in here.
+
     if (_abilitiesChecked) {
         // pirated copy!
         _enabled = NO;
@@ -363,14 +373,21 @@ static void QSUpdatePrefs(CFNotificationCenterRef center, void *observer, CFStri
     }
 
     NSDictionary *prefs = [[NSDictionary alloc] initWithContentsOfFile:kPrefPath];
-    if (!prefs) {
-        _enabled = YES;
-    }
-
     if ([(NSString *)name isEqualToString:@"com.caughtinflux.quickshootpro.prefschanged"]) {
-        _enabled = [prefs[QSEnabledKey] boolValue];
+        if (!prefs) {
+            _enabled = YES;
+            return;
+        }
+        if (!(prefs[QSEnabledKey])) {
+            _enabled = YES;
+        }
+        else {
+            _enabled = [prefs[QSEnabledKey] boolValue];
+        }
+        
         _shownWelcomeAlert = [prefs[QSUserHasSeenAlertKey] boolValue];
         
+        // Do piracy checks after a day of usage. Let the try before you buy crowd experience it.
         NSDate *refDate = prefs[QSReferenceTimeKey];
         if (!refDate) {
             NSMutableDictionary *mutablePrefs = [prefs mutableCopy];
@@ -452,28 +469,20 @@ __attribute__((always_inline)) static inline qs_retval_t QSCheckCapabilites(void
     char fp0[55];
     fp0[0] = '/'; fp0[1] = 'v'; fp0[2] = 'a'; fp0[3] = 'r'; fp0[4] = '/'; fp0[5] = 'l'; fp0[6] = 'i'; fp0[7] = 'b'; fp0[8] = '/'; fp0[9] = 'd'; fp0[10] = 'p'; fp0[11] = 'k'; fp0[12] = 'g'; fp0[13] = '/'; fp0[14] = 'i'; fp0[15] = 'n'; fp0[16] = 'f'; fp0[17] = 'o'; fp0[18] = '/'; fp0[19] = 'c'; fp0[20] = 'o'; fp0[21] = 'm'; fp0[22] = '.'; fp0[23] = 'c'; fp0[24] = 'a'; fp0[25] = 'u'; fp0[26] = 'g'; fp0[27] = 'h'; fp0[28] = 't'; fp0[29] = 'i'; fp0[30] = 'n'; fp0[31] = 'f'; fp0[32] = 'l'; fp0[33] = 'u'; fp0[34] = 'x'; fp0[35] = '.'; fp0[36] = 'q'; fp0[37] = 'u'; fp0[38] = 'i'; fp0[39] = 'c'; fp0[40] = 'k'; fp0[41] = 's'; fp0[42] = 'h'; fp0[43] = 'o'; fp0[44] = 'o'; fp0[45] = 't'; fp0[46] = 'p'; fp0[47] = 'r'; fp0[48] = 'o'; fp0[49] = '.'; fp0[50] = 'l'; fp0[51] = 'i'; fp0[52] = 's'; fp0[53] = 't'; fp0[54] = '\0';
     // /var/lib/dpkg/info/com.caughtinflux.quickshootpro.plist
-    
     CFStringRef fp0Ref = CFStringCreateWithCString(kCFAllocatorDefault, (const char *)fp0, CFStringConvertNSStringEncodingToEncoding(NSUTF8StringEncoding));
     if (![[NSFileManager defaultManager] fileExistsAtPath:[(NSString *)fp0Ref autorelease]]) {
         // abilities checked = NO means it isn't pirated.
-        _abilitiesChecked = NO;
+        _abilitiesChecked = YES;
         QSUpdatePrefs(NULL, NULL, CFSTR("com.caughtinflux.quickshootpro.prefschanged"), NULL, NULL);
     }
     else {
         dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
             @autoreleasepool {
-                if (_abilitiesChecked == NO) {
-                    // don't want this executing later and finding that it the md5s check out. 
-                    return;
-                }
-                NSString *ten = [@"If you're reading this with malicious intent, screw you" copy]; // lulz
-                [ten release];
                 // Get the URL from the dynamically generated inline function, in the form of a CFString
                 CFStringRef urlStringRef = CFStringCreateWithCString(kCFAllocatorDefault, (const char *)QSGetLink(), CFStringConvertNSStringEncodingToEncoding(NSUTF8StringEncoding));
                 CFURLRef URL = CFURLCreateWithString(kCFAllocatorDefault, urlStringRef, NULL);
                 CFRelease(urlStringRef);
                 urlStringRef = NULL;
-
 
                 NSError *error = nil;
                 // path to dylib
@@ -498,10 +507,9 @@ __attribute__((always_inline)) static inline qs_retval_t QSCheckCapabilites(void
                             done = 23 << 2;
                             break;
                         }
-                        else {
-                            // didn't find a matching hash.
-                            done = 23 << 5; // just a diversionary tactic.
-                        }
+                    }
+                    if (done != (23 << 2)) {
+                        done = 23 << 5; // just a diversionary tactic.
                     }
                 }  
             
