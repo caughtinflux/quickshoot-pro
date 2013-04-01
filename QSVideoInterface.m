@@ -48,7 +48,7 @@
 
        if ([self _configureCaptureDevices] && [self _configureDeviceInputs] && [self _configureFileOutput]) {
             // use a randomized file path.
-            NSString *filePath = [NSString stringWithFormat:@"%@_quickshoot_temp_record_    %@.mov", NSTemporaryDirectory(), [self _UUIDString]];
+            NSString *filePath = [NSString stringWithFormat:@"%@_quickshoot_temp_record_%@.mov", NSTemporaryDirectory(), [self _UUIDString]];
             [_captureSession startRunning];
             [_fileOutput startRecordingToOutputFileURL:[NSURL fileURLWithPath:filePath] recordingDelegate:self];
         }
