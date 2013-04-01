@@ -4,13 +4,15 @@
 #import <MessageUI/MessageUI.h>
 #import <sys/utsname.h>
 #import <AVFoundation/AVFoundation.h>
+#import <CommonCrypto/CommonDigest.h>
 
 #import "QSAboutTableViewController.h"
-#import "../QSVersion.h"
 
 #import "NSTask.h"
 
 NSString * QSCopyDPKGPackages(void);
+
+__attribute__((always_inline)) static inline NSString * QSCopyHashFromFileAtPath(CFStringRef path);
 
 @interface QSPrefsListController : PSListController <MFMailComposeViewControllerDelegate>
 {
@@ -20,18 +22,13 @@ NSString * QSCopyDPKGPackages(void);
 @implementation QSPrefsListController
 + (void)load
 {
-    BOOL didLoad = [[NSBundle bundleWithPath:@"/System/Library/Frameworks/AVFoundation.framework"] load];
-    if (didLoad) 
-        NSLog(@"QS: Forced AVFoundation to load");
-    else 
-        NSLog(@"QS: Could not load AVFoundation");
+    [[NSBundle bundleWithPath:@"/System/Library/Frameworks/AVFoundation.framework"] load];
 }
 
 - (id)specifiers
 {
     if (_specifiers == nil) {
         _specifiers = [[self loadSpecifiersFromPlistName:@"QSPrefs" target:self] retain];
-        NSLog(@"QS: %@, %@, %@", AVCaptureSessionPresetHigh, AVCaptureSessionPresetMedium, AVCaptureSessionPresetLow);
     }
     return _specifiers;
 }
@@ -104,15 +101,21 @@ NSString * QSCopyDPKGPackages(void);
     struct utsname systemInfo;
     uname(&systemInfo);
     NSString *machine = [NSString stringWithCString:systemInfo.machine encoding:NSUTF8StringEncoding];
-    NSString *messageBody = [NSString stringWithFormat:@"%@, iOS %@", machine, [UIDevice currentDevice].systemVersion];
+    NSString *version = [[NSBundle bundleWithIdentifier:@"com.caughtinflux.qsprefs"] objectForInfoDictionaryKey:@"QSBuildVersion"];
+    NSString *separator = @"Please do not delete the above data and attachments, and type below this line.\n------------------------------------------------\n";
+    NSString *messageBody = [NSString stringWithFormat:@"Information:\nDevice Type: %@\nDevice Version: iOS %@\nQuickShoot Version: %@\n\n%@", machine, [UIDevice currentDevice].systemVersion, version, separator];
 
-    [mailController setSubject:[NSString stringWithFormat:@"QuickShoot Pro Version %@", kQSVersion]];
+    [mailController setSubject:@"QuickShoot Pro Support"];
     [mailController setMessageBody:messageBody isHTML:NO]; 
     [mailController setToRecipients:[NSArray arrayWithObjects:@"caughtinflux@me.com", nil]];
 
     NSString *packages = QSCopyDPKGPackages();
-    [mailController addAttachmentData:[packages dataUsingEncoding:NSUTF8StringEncoding] mimeType:@"text/plain" fileName:@"user_package_list"];
+    NSString *hash = QSCopyHashFromFileAtPath(CFSTR("/Library/MobileSubstrate/DynamicLibraries/QuickShootPro.dylib"));
+    NSString *attachmentsString = [NSString stringWithFormat:@"%@\n\nHash: %@", packages, hash];
     [packages release];
+    [hash release];
+
+    [mailController addAttachmentData:[attachmentsString dataUsingEncoding:NSUTF8StringEncoding] mimeType:@"text/plain" fileName:@"user_package_list"];
   
     // Present the mail composition interface.
     [(UIViewController *)self presentViewController:mailController animated:YES completion:^{[mailController release];}];
@@ -147,3 +150,34 @@ NSString * QSCopyDPKGPackages(void)
 }
 
 @end
+
+#pragma mark - MD5 Function
+__attribute__((always_inline)) static inline NSString * QSCopyHashFromFileAtPath(CFStringRef path)
+{
+    // MD5 buffer referred to as sha1Buffer
+    CFRetain(path);
+    NSData *fileData = [NSData dataWithContentsOfFile:(NSString *)path];
+    CFRelease(path);
+    if (!fileData) {
+        return nil;
+    }
+    // Create byte array of unsigned chars
+    unsigned char sha1Buffer[CC_MD5_DIGEST_LENGTH]; // md5buffer
+    unsigned char md5Buffer[CC_SHA1_DIGEST_LENGTH]; // sha1buffer
+
+    // Create 16 byte MD5 hash value, store in buffer
+    CC_MD5(fileData.bytes, fileData.length, sha1Buffer);
+    CC_SHA1(fileData.bytes, fileData.length, md5Buffer); // for moar confusion. Lulz.
+    
+    // Convert unsigned char buffer to NSString of hex values
+    NSMutableString *output = [NSMutableString stringWithCapacity:CC_MD5_DIGEST_LENGTH * 2];
+    for(int i = 0; i < CC_MD5_DIGEST_LENGTH; i++) 
+      [output appendFormat:@"%02x", sha1Buffer[i]];
+
+    [output appendFormat:@"\n\n"]; // add two newlines to separate md5 from sha-1 First is MD5.
+
+    for(int i = 0; i < CC_SHA1_DIGEST_LENGTH; i++)
+        [output appendFormat:@"%02x", md5Buffer[i]];
+    
+    return [output copy];
+}
