@@ -20,13 +20,17 @@
     PLCameraSettingsView *_settingsView;
     PLCameraToggleButton *_toggleButton;
     PLCameraFlashButton  *_flashButton;
+    UILabel              *_cameraModeChangedLabel;
     NSTimer              *_hideTimer;
-
+    NSTimer              *_labelHideTimer;
     CGRect                _originalFrame;
 }
+
 - (void)_flashCameraTypeLabelWithFadeIn:(BOOL)shouldFadeIn;
 - (void)_restartHideTimer;
 - (void)_hideTimerFired:(NSTimer *)timer;
+- (void)_restartLabelHideTimer;
+- (void)_labelHideTimerFired:(NSTimer *)timer;
 @end
 
 @implementation QSCameraOptionsWindow
@@ -180,7 +184,6 @@
 - (void)flashButtonModeDidChange:(PLCameraFlashButton *)button
 {
     if ([self.delegate conformsToProtocol:@protocol(QSCameraOptionsWindowDelegate)]) {
-        DLog(@"Flash button changed: %i", button.flashMode);
         [self.delegate optionsWindow:self flashModeChanged:(QSFlashMode)button.flashMode];
     }
 }
@@ -188,43 +191,40 @@
 #pragma mark - Private Methods
 - (void)_flashCameraTypeLabelWithFadeIn:(BOOL)shouldFadeIn
 {
-    UILabel *cameraModeChangedLabel = [[[UILabel alloc] initWithFrame:(CGRect){{kLeftSidePadding, kSmallButtonYDistance + 40}, {kFlashButtonWidth * 2.2, kSettingsViewHeight - 10}}] autorelease];
-    cameraModeChangedLabel.backgroundColor = [UIColor colorWithRed:1.0f green:1.0f blue:1.0f alpha:0.60f];
-    cameraModeChangedLabel.layer.cornerRadius = 7.f;
-    cameraModeChangedLabel.layer.masksToBounds = YES;
-    cameraModeChangedLabel.layer.borderColor = [UIColor blackColor].CGColor;
-    cameraModeChangedLabel.layer.borderWidth = 1.0f;
+    if (_cameraModeChangedLabel) {
+        _cameraModeChangedLabel.text = (([self.delegate currentCameraDeviceForOptionsWindow:self] == QSCameraDeviceRear) ? @"Rear Camera" : @"Front Camera");
+        [self _restartLabelHideTimer];
+        // Returning here makes sure that the window doesn't expand glitchily.
+        return;
+    }
 
-    cameraModeChangedLabel.textColor = [UIColor blackColor];
-    cameraModeChangedLabel.font = [UIFont boldSystemFontOfSize:15];
-    cameraModeChangedLabel.textAlignment = NSTextAlignmentCenter;
-    cameraModeChangedLabel.text = (([self.delegate currentCameraDeviceForOptionsWindow:self] == QSCameraDeviceRear) ? @"Rear Camera" : @"Front Camera");
-    cameraModeChangedLabel.shadowColor = [UIColor whiteColor];
-    cameraModeChangedLabel.shadowOffset = (CGSize){0, 1};
+    _cameraModeChangedLabel = [[[UILabel alloc] initWithFrame:(CGRect){{kLeftSidePadding, kSmallButtonYDistance + 40}, {kFlashButtonWidth * 2.2, kSettingsViewHeight - 10}}] autorelease];
+    _cameraModeChangedLabel.backgroundColor = [UIColor colorWithRed:1.0f green:1.0f blue:1.0f alpha:0.60f];
+    _cameraModeChangedLabel.layer.cornerRadius = 7.f;
+    _cameraModeChangedLabel.layer.masksToBounds = YES;
+    _cameraModeChangedLabel.layer.borderColor = [UIColor blackColor].CGColor;
+    _cameraModeChangedLabel.layer.borderWidth = 1.0f;
 
-    cameraModeChangedLabel.alpha = 0.0;
+    _cameraModeChangedLabel.textColor = [UIColor blackColor];
+    _cameraModeChangedLabel.font = [UIFont boldSystemFontOfSize:15];
+    _cameraModeChangedLabel.textAlignment = NSTextAlignmentCenter;
+    _cameraModeChangedLabel.text = (([self.delegate currentCameraDeviceForOptionsWindow:self] == QSCameraDeviceRear) ? @"Rear Camera" : @"Front Camera");
+    _cameraModeChangedLabel.shadowColor = [UIColor whiteColor];
+    _cameraModeChangedLabel.shadowOffset = (CGSize){0, 1};
 
-    [self addSubview:cameraModeChangedLabel];
+    _cameraModeChangedLabel.alpha = 0.0;
+
+    [self addSubview:_cameraModeChangedLabel];
 
     NSTimeInterval fadeInDuration = shouldFadeIn ? 0.4 : 0.0;
-    NSTimeInterval fadeOutDuration = 0.4f;
     
     QSCameraOptionsWindow __block *wSelf = self;
     [UIView animateWithDuration:fadeInDuration animations:^{ 
-        wSelf.frame = CGRectMake(wSelf.frame.origin.x, wSelf.frame.origin.y, wSelf.frame.size.width, wSelf.frame.size.height + cameraModeChangedLabel.frame.size.height);
-        cameraModeChangedLabel.alpha = 1.0f;
+        wSelf.frame = CGRectMake(wSelf.frame.origin.x, wSelf.frame.origin.y, wSelf.frame.size.width, wSelf.frame.size.height + _cameraModeChangedLabel.frame.size.height);
+        wSelf->_cameraModeChangedLabel.alpha = 1.0f;
     } completion:^(BOOL finished) {
         if (finished) {
-            EXECUTE_BLOCK_AFTER_DELAY(0.75, ^{
-                [UIView animateWithDuration:fadeOutDuration animations:^{
-                    wSelf.frame = CGRectMake(wSelf.frame.origin.x, wSelf.frame.origin.y, wSelf->_originalFrame.size.width, wSelf->_originalFrame.size.height);
-                    cameraModeChangedLabel.alpha = 0.0f;
-                } completion:^(BOOL finished) {
-                    if (finished) {
-                        [cameraModeChangedLabel removeFromSuperview];
-                    }
-                }];
-            });
+            wSelf->_labelHideTimer = [NSTimer scheduledTimerWithTimeInterval:0.75 target:self selector:@selector(_labelHideTimerFired:) userInfo:nil repeats:NO];
         }
     }];
 }
@@ -243,6 +243,29 @@
 {
     [self hideWindowAnimated];
     _hideTimer = nil;
+}
+
+- (void)_restartLabelHideTimer
+{
+    if ([_labelHideTimer isValid]) {
+        [_labelHideTimer invalidate];
+    }
+    _labelHideTimer = nil;
+    _labelHideTimer = [NSTimer scheduledTimerWithTimeInterval:0.85 target:self selector:@selector(_labelHideTimerFired:) userInfo:nil repeats:NO];
+}
+
+- (void)_labelHideTimerFired:(NSTimer *)timer
+{
+    QSCameraOptionsWindow __block *wSelf = self;
+    [UIView animateWithDuration:0.4 animations:^{
+        wSelf.frame = CGRectMake(wSelf.frame.origin.x, wSelf.frame.origin.y, wSelf->_originalFrame.size.width, wSelf->_originalFrame.size.height);
+        wSelf->_cameraModeChangedLabel.alpha = 0.0f;
+    } completion:^(BOOL finished) {
+        if (finished) {
+            [wSelf->_cameraModeChangedLabel removeFromSuperview];
+            wSelf->_cameraModeChangedLabel = nil;
+        }
+    }];
 }
 
 - (void)_pan:(UIPanGestureRecognizer *)panGR
