@@ -43,25 +43,14 @@
 #pragma mark - Public Methods
 - (void)startVideoCapture
 {
-    DLog(@"");
     dispatch_async(_backgroundCauseYOLOQueue, ^{
-        [self _configureCaptureSession];
+       [self _configureCaptureSession];
 
-        if ([self _configureCaptureDevices] && [self _configureDeviceInputs] && [self _configureFileOutput]) {
-
-            NSString *filePath = [NSString stringWithFormat:@"%@%@.mov", NSTemporaryDirectory(), [self _UUIDString]];
-            NSURL *fileURL = [NSURL fileURLWithPath:filePath];
-            if ([[NSFileManager defaultManager] fileExistsAtPath:filePath]) {
-                DLog(@"Removed existing file");
-                [[NSFileManager defaultManager] removeItemAtPath:filePath error:nil];
-            }
-
-            DLog(@"Starting session");
+       if ([self _configureCaptureDevices] && [self _configureDeviceInputs] && [self _configureFileOutput]) {
+            // use a randomized file path.
+            NSString *filePath = [NSString stringWithFormat:@"%@_quickshoot_temp_record_    %@.mov", NSTemporaryDirectory(), [self _UUIDString]];
             [_captureSession startRunning];
-            [_fileOutput startRecordingToOutputFileURL:fileURL recordingDelegate:self];
-        }
-        else {
-            DLog(@"QS: Error occurred when capturing video");
+            [_fileOutput startRecordingToOutputFileURL:[NSURL fileURLWithPath:filePath] recordingDelegate:self];
         }
     });
 }
@@ -185,7 +174,6 @@ error:
             [self.delegate videoInterfaceCaptureDeviceErrorOccurred:self];
         }
     }
-
     return success;
 }
 
