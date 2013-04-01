@@ -376,6 +376,10 @@
 
 - (void)_cleanupVideoCaptureWithResult:(BOOL)result
 {
+    if (_didChangeLockState) {
+        [[objc_getClass("SBOrientationLockManager") sharedInstance] lock];
+        _didChangeLockState = NO;
+    }
     _isCapturingVideo = NO;
 
     _videoStopHandler(result);
