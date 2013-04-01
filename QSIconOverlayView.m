@@ -72,6 +72,7 @@
 
 - (void)captureBegan
 {
+    DLog(@"");
     _irisImageView = [[UIImageView alloc] initWithImage:[self _bundleImageNamed:kIrisImageName]];
     CGPoint center = self.center;
     center.y += 2;
@@ -85,11 +86,13 @@
 
 - (void)captureIsStopping
 {
+    DLog(@"");
     _shouldBlinkRecordLight = NO;
 }
 
 - (void)captureCompletedWithResult:(BOOL)result
 {
+    DLog(@"");
     NSString *completedImageName = ((result == YES) ? kDoneImageName : kCaptureFailedImageName);
     UIImageView *doneImageView = [[[UIImageView alloc] initWithImage:[self _bundleImageNamed:completedImageName]] autorelease];
     
@@ -160,6 +163,7 @@
 
 - (void)_animateIrisViewOut
 {
+    DLog(@"");
     CGFloat imageHeight = _irisImageView.image.size.height;
     CGFloat imageWidth = _irisImageView.image.size.width;
 
@@ -193,12 +197,14 @@
 
 - (void)_stopBlinkingFocus
 {
+    DLog(@"");
     [_focusRectImageView setAlpha:0.0f];
     [_focusRectImageView removeFromSuperview];
 }
 
 - (void)_animateFocusRect
 {
+    DLog(@"");
     // this method is somewhat wonky
     QSIconOverlayView __block *wSelf = self;
     [UIView animateWithDuration:0.07 delay:0.0 options:(UIViewAnimationOptionCurveEaseInOut) animations:^{
@@ -240,6 +246,7 @@
 
 - (void)_stopBlinkingRecordLight
 {
+    DLog(@"");
     [_recordingLightImageView removeFromSuperview];
 }
 

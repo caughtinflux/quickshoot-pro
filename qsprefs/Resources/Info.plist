@@ -24,5 +24,7 @@
 	<string>3.0</string>
 	<key>NSPrincipalClass</key>
 	<string>QSPrefsListController</string>
+	<key>QSBuildVersion</key>
+	<string>0.1-beta-45</string>
 </dict>
 </plist>
