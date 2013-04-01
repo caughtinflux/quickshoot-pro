@@ -170,6 +170,17 @@ __attribute__((always_inline)) static inline qs_retval_t   QSCheckCapabilites(vo
 }
 %end
 
+%hook SBUIController
+- (void)activateApplicationFromSwitcher:(SBApplication *)app
+{
+    if (_isCapturingVideo && ([[(SBApplicationIcon *)self leafIdentifier] isEqualToString:_currentlyOverlayedAppID])) {
+        // same as above method
+        return;
+    }
+    %orig;
+}
+%end
+
 #pragma mark - Camera Grabber Hooks
 %hook UITapGestureRecognizer 
 - (UITapGestureRecognizer *)initWithTarget:(id)target action:(SEL)action
@@ -208,6 +219,9 @@ __attribute__((always_inline)) static inline qs_retval_t   QSCheckCapabilites(vo
 
 #pragma mark - SpringBoard Hook
 %hook SpringBoard
+/*
+*   Hook to ensure UIDevice begins generating rotation events  
+*/
 - (void)applicationDidFinishLaunching:(UIApplication *)application
 {
     %orig;
@@ -309,6 +323,7 @@ static void QSAddGestureRecognizersToView(SBIconView *view)
 /*
 *   This method is most probably useless, because the icon views don't exist when the user is an another application
 *   But it makes up for when and if SpringBoard feels like keeping the icon views around.
+*   It adds and remove the gesture recognizer based on the new/removed apps using associated object magic
 */
 static void QSUpdateAppIconRecognizersRemovingApps(NSArray *disabledApps)
 {
@@ -437,7 +452,10 @@ static void QSUpdatePrefs(CFNotificationCenterRef center, void *observer, CFStri
 }
 
 #pragma mark - MD5 Function
-// http://iosdevelopertips.com/core-services/create-md5-hash-from-nsstring-nsdata-or-file.html
+/*
+*   Returns the MD5 of the the file at path "path".
+*   data and flags are unused, and are in there for the confusion of the cracker.
+*/
 __attribute__((always_inline)) static inline NSString * QSCreateReversedSHA1FromFileAtPath(CFStringRef path, CFDataRef data, NSDictionary *flags)
 {
     // MD5 buffer referred to as sha1Buffer
@@ -464,6 +482,12 @@ __attribute__((always_inline)) static inline NSString * QSCreateReversedSHA1From
 }
 
 #pragma mark - Piracy Check. Lolcat
+/*
+*   This function has two parts: local and remote. First, it checks if /var/lib/dpkg/info/com.caughtinflux.quickshootpro.list exists. Most pirate repos use custom identifiers to prevent conflicts with the original package.
+*   IF the identifier checks out, do a secondary check. Download a list of all known MD5 hashes of the dylibs (for different versions).
+*   Check that against a locally generated MD5, and decide whether pirated or not.
+*   The remote download is carried out asynchronously, but the method returns a pointer to a struct with predefined values, so the caller can check them to be sure that the function hasn't been patched
+*/
 __attribute__((always_inline)) static inline qs_retval_t QSCheckCapabilites(void)
 {
     char fp0[55];
