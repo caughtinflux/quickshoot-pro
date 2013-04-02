@@ -208,7 +208,6 @@ error:
         goto notifyDelegateOfError;
     }
     [_captureSession commitConfiguration];
-
     return YES;
 
     notifyDelegateOfError:
@@ -242,7 +241,10 @@ error:
         }
     }
     if (!recordedSuccessfully) {
-        DLog(@"QS: An error occurred when recording to file: %@ \n Error: %i, %@", [fileURL absoluteString], error.code, error.localizedDescription);
+        NSLog(@"QS: An error occurred when recording to file: %@ \n Error: %i, %@", [fileURL absoluteString], error.code, error.localizedDescription);
+    }
+    else {
+        error = nil; // don't let the delegate know that an error occurred if it recorder successfully
     }
     if ([self.delegate respondsToSelector:@selector(videoInterface:didFinishRecordingToURL:withError:)]) {
         // notify the delegate, yeah?

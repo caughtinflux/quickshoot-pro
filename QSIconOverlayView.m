@@ -4,7 +4,7 @@
 #define kDoneImageName           @"Done"
 #define kIrisImageName           @"Iris"
 #define kFocusRectImageName      @"Loading"
-#define kCaptureFailedImageName @"LoadngFailed"
+#define kCaptureFailedImageName  @"LoadngFailed"
 #define kRecordOffImageName      @"LoadingRecordOff"
 #define kRecordOnImageName       @"LoadingRecordOn"
 
