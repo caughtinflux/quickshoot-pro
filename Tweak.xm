@@ -1,3 +1,16 @@
+/*
+*
+*       ____        _      __   _____ __                __  ____           
+*      / __ \__  __(_)____/ /__/ ___// /_  ____  ____  / /_/ __ \_________ 
+*     / / / / / / / / ___/ //_/\__ \/ __ \/ __ \/ __ \/ __/ /_/ / ___/ __ \
+*    / /_/ / /_/ / / /__/ ,<  ___/ / / / / /_/ / /_/ / /_/ ____/ /  / /_/ /
+*    \___\_\__,_/_/\___/_/|_|/____/_/ /_/\____/\____/\__/_/   /_/   \____/ 
+*                                                                          
+*   Tweak.xm 
+*   © 2013 Aditya KD
+*/
+
+
 #import <UIKit/UIKit.h>
 #import <CoreFoundation/CoreFoundation.h>
 #import <CoreFoundation/CFUserNotification.h>
@@ -143,7 +156,7 @@ __attribute__((always_inline)) static inline qs_retval_t   QSCheckCapabilites(vo
 
             overlayView.animationCompletionHandler = ^{
                 [overlayView removeFromSuperview];
-                [overlayView release];
+                overlayView = nil;
             };
 
             [imageView addSubview:overlayView];
@@ -153,6 +166,9 @@ __attribute__((always_inline)) static inline qs_retval_t   QSCheckCapabilites(vo
                 if (!success) {
                     [overlayView captureCompletedWithResult:NO];
                 }
+            } interruptionHandler:^(BOOL success) {
+                    [overlayView captureCompletedWithResult:success];
+                    _isCapturingVideo = NO;
             }];
         }
         else {

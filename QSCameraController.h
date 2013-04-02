@@ -23,7 +23,9 @@
 + (instancetype)sharedInstance;
 // The completion handlers are copied. They are, however, destroyed after being called, so no need to worry about retain loops
 - (void)takePhotoWithCompletionHandler:(QSCompletionHandler)completionHandler;
-- (void)startVideoCaptureWithHandler:(QSCompletionHandler)handler;
+
+// An interruption handler must be passed if you wish to receive interruption callbacks
+- (void)startVideoCaptureWithHandler:(QSCompletionHandler)handler interruptionHandler:(QSCompletionHandler)interruptionHandler;
 - (void)stopVideoCaptureWithHandler:(QSCompletionHandler)handler;
 
 @end
