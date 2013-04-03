@@ -20,7 +20,9 @@
 @property(nonatomic, assign) id<QSCameraOptionsWindowDelegate> delegate;
 @property(nonatomic, assign) NSTimeInterval automaticHideDelay; // in seconds
 
+// If YES is passed in to a argument that isn't supported, it is shown on screen, but the buttons/switches are disabled
 - (instancetype)initWithFrame:(CGRect)frame showFlash:(BOOL)shouldShowFlash showHDR:(BOOL)shouldShowHDR showCameraToggle:(BOOL)shouldShowCameraToggle;
+
 - (void)setHDRMode:(BOOL)hdrMode;
 - (void)setFlashMode:(QSFlashMode)flashMode;
 - (void)hideWindowAnimated;
