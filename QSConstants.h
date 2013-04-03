@@ -6,7 +6,7 @@
 #define QS_CONSTANTS_H
 
 #ifdef DEBUG
-	#define DLog(fmt, ...) NSLog((@"%s [Line %d] " fmt), __PRETTY_FUNCTION__, __LINE__, ##__VA_ARGS__)
+	#define DLog(fmt, ...) NSLog((@"QS: %s [Line %d] " fmt), __PRETTY_FUNCTION__, __LINE__, ##__VA_ARGS__)
 	#define CLog(fmt, ...) NSLog((@"QS: " fmt), ##__VA_ARGS__)
 #else
 	#define DLog(...)
@@ -46,6 +46,7 @@ struct qs_retval {bool a; int b; char c;};
 typedef struct qs_retval *qs_retval_t;
 
 typedef void (^QSCompletionHandler)(BOOL); // the BOOL argument is most probably pointless.
+typedef void (^QSInterruptionHandler)(void); // for when a video is interrupted.
 
 
 #pragma mark - String Constants

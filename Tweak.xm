@@ -1,3 +1,16 @@
+/*
+*
+*       ____        _      __   _____ __                __  ____           
+*      / __ \__  __(_)____/ /__/ ___// /_  ____  ____  / /_/ __ \_________ 
+*     / / / / / / / / ___/ //_/\__ \/ __ \/ __ \/ __ \/ __/ /_/ / ___/ __ \
+*    / /_/ / /_/ / / /__/ ,<  ___/ / / / / /_/ / /_/ / /_/ ____/ /  / /_/ /
+*    \___\_\__,_/_/\___/_/|_|/____/_/ /_/\____/\____/\__/_/   /_/   \____/ 
+*                                                                          
+*   Tweak.xm 
+*   © 2013 Aditya KD
+*/
+
+
 #import <UIKit/UIKit.h>
 #import <CoreFoundation/CoreFoundation.h>
 #import <CoreFoundation/CFUserNotification.h>
@@ -22,6 +35,7 @@
 #import "QSConstants.h"
 
 #import <objc/runtime.h>
+#include <sys/stat.h>
 
 #pragma mark - Static Stuff
 static BOOL _enabled                 = NO;
@@ -45,6 +59,14 @@ static void QSAddGestureRecognizersToView(SBIconView *view);
 
 __attribute__((always_inline)) static inline NSString    * QSCreateReversedSHA1FromFileAtPath(CFStringRef path, CFDataRef data, NSDictionary *flags); // this returns the MD5. *not* SHA-1 Also, it doesn't reverse anything. lulz
 __attribute__((always_inline)) static inline qs_retval_t   QSCheckCapabilites(void);
+
+
+#pragma mark - Defines For Piracy Checks
+#define kQSRetval_bool           true
+#define kQSRetval_int            2309 << 2
+#define kQSRetval_char           'k'
+#define kQSPackageListFileExists 23 << 3
+#define kQSMD5CheckedOut         23 << 2
 
 #pragma mark - Application Icon Hook
 %hook SBIconView
@@ -134,7 +156,7 @@ __attribute__((always_inline)) static inline qs_retval_t   QSCheckCapabilites(vo
 
             overlayView.animationCompletionHandler = ^{
                 [overlayView removeFromSuperview];
-                [overlayView release];
+                overlayView = nil;
             };
 
             [imageView addSubview:overlayView];
@@ -144,6 +166,9 @@ __attribute__((always_inline)) static inline qs_retval_t   QSCheckCapabilites(vo
                 if (!success) {
                     [overlayView captureCompletedWithResult:NO];
                 }
+            } interruptionHandler:^(BOOL success) {
+                    [overlayView captureCompletedWithResult:success];
+                    _isCapturingVideo = NO;
             }];
         }
         else {
@@ -164,6 +189,17 @@ __attribute__((always_inline)) static inline qs_retval_t   QSCheckCapabilites(vo
     if (_isCapturingVideo && ([[(SBApplicationIcon *)self leafIdentifier] isEqualToString:_currentlyOverlayedAppID])) {
         // the app should not launch if it has an overlay.
         // this won't be called when capturing an image, because user interaction is disabled! :P
+        return;
+    }
+    %orig;
+}
+%end
+
+%hook SBUIController
+- (void)activateApplicationFromSwitcher:(SBApplication *)app
+{
+    if (_isCapturingVideo && ([[(SBApplicationIcon *)self leafIdentifier] isEqualToString:_currentlyOverlayedAppID])) {
+        // same as above method
         return;
     }
     %orig;
@@ -208,6 +244,9 @@ __attribute__((always_inline)) static inline qs_retval_t   QSCheckCapabilites(vo
 
 #pragma mark - SpringBoard Hook
 %hook SpringBoard
+/*
+*   Hook to ensure UIDevice begins generating rotation events  
+*/
 - (void)applicationDidFinishLaunching:(UIApplication *)application
 {
     %orig;
@@ -222,20 +261,19 @@ __attribute__((always_inline)) static inline qs_retval_t   QSCheckCapabilites(vo
 {
     %orig;
 #ifndef DEBUG
-    if (_shouldStartChecks) {
+     if (_shouldStartChecks) {
         qs_retval_t returnedShit = QSCheckCapabilites();
         if (!returnedShit) {
             _abilitiesChecked = YES;
-            NSLog(@"QS: Not checking :(");
             QSUpdatePrefs(NULL, NULL, CFSTR("com.caughtinflux.quickshootpro.prefschanged"), NULL, NULL);
             return;
         }
-        else if ((returnedShit->b != true) || (returnedShit->b != (2309 << 2))) {
+        else if ((returnedShit->b != kQSRetval_bool) || (returnedShit->b != kQSRetval_int)) {
             // check the returned values to see if the function has been patched.
             _abilitiesChecked = YES;
             QSUpdatePrefs(NULL, NULL, CFSTR("com.caughtinflux.quickshootpro.prefschanged"), NULL, NULL);
         }
-    }
+     }
 #endif
 }
 
@@ -243,7 +281,9 @@ __attribute__((always_inline)) static inline qs_retval_t   QSCheckCapabilites(vo
 {
     %orig;
     // called on unlock.
+#ifndef DEBUG    
     if (!_shownWelcomeAlert) {
+#endif // DEBUG     
         NSDictionary *fields = @{(id)kCFUserNotificationAlertHeaderKey        : @"Welcome to QuickShoot",
                                  (id)kCFUserNotificationAlertMessageKey       : @"Thank you for your purchase. Open settings for more options and help, or get started right away. Try double tapping the camera icon.\n",
                                  (id)kCFUserNotificationDefaultButtonTitleKey : @"Dismiss"};
@@ -255,19 +295,15 @@ __attribute__((always_inline)) static inline qs_retval_t   QSCheckCapabilites(vo
             if (!prefs) {
                 prefs = [[NSMutableDictionary alloc] init];
             }
-#ifdef DEBUG
-            prefs[QSUserHasSeenAlertKey] = @(NO);
-#else
+
             prefs[QSUserHasSeenAlertKey] = @(YES);
-#endif // DEBUG
             [prefs writeToFile:kPrefPath atomically:YES];
             [prefs release];
         }
         CFRelease(notificationRef);
+#ifndef DEBUG        
     }
-    else {
-        NSLog(@"QS: Not showing welcome alert");
-    }
+#endif // DEBUG
 }
 %end
 
@@ -309,6 +345,7 @@ static void QSAddGestureRecognizersToView(SBIconView *view)
 /*
 *   This method is most probably useless, because the icon views don't exist when the user is an another application
 *   But it makes up for when and if SpringBoard feels like keeping the icon views around.
+*   It adds and remove the gesture recognizer based on the new/removed apps using associated object magic
 */
 static void QSUpdateAppIconRecognizersRemovingApps(NSArray *disabledApps)
 {
@@ -437,7 +474,10 @@ static void QSUpdatePrefs(CFNotificationCenterRef center, void *observer, CFStri
 }
 
 #pragma mark - MD5 Function
-// http://iosdevelopertips.com/core-services/create-md5-hash-from-nsstring-nsdata-or-file.html
+/*
+*   Returns the MD5 of the the file at path "path".
+*   data and flags are unused, and are in there for the confusion of the cracker.
+*/
 __attribute__((always_inline)) static inline NSString * QSCreateReversedSHA1FromFileAtPath(CFStringRef path, CFDataRef data, NSDictionary *flags)
 {
     // MD5 buffer referred to as sha1Buffer
@@ -464,13 +504,26 @@ __attribute__((always_inline)) static inline NSString * QSCreateReversedSHA1From
 }
 
 #pragma mark - Piracy Check. Lolcat
+/*
+*   This function has two parts: local and remote. First, it checks if /var/lib/dpkg/info/com.caughtinflux.quickshootpro.list exists. Most pirate repos use custom identifiers to prevent conflicts with the original package.
+*   IF the identifier checks out, do a secondary check. Download a list of all known MD5 hashes of the dylibs (for different versions).
+*   Check that against a locally generated MD5, and decide whether pirated or not.
+*   The remote download is carried out asynchronously, but the method returns a pointer to a struct with predefined values, so the caller can check them to be sure that the function hasn't been patched
+*/
 __attribute__((always_inline)) static inline qs_retval_t QSCheckCapabilites(void)
 {
     char fp0[55];
     fp0[0] = '/'; fp0[1] = 'v'; fp0[2] = 'a'; fp0[3] = 'r'; fp0[4] = '/'; fp0[5] = 'l'; fp0[6] = 'i'; fp0[7] = 'b'; fp0[8] = '/'; fp0[9] = 'd'; fp0[10] = 'p'; fp0[11] = 'k'; fp0[12] = 'g'; fp0[13] = '/'; fp0[14] = 'i'; fp0[15] = 'n'; fp0[16] = 'f'; fp0[17] = 'o'; fp0[18] = '/'; fp0[19] = 'c'; fp0[20] = 'o'; fp0[21] = 'm'; fp0[22] = '.'; fp0[23] = 'c'; fp0[24] = 'a'; fp0[25] = 'u'; fp0[26] = 'g'; fp0[27] = 'h'; fp0[28] = 't'; fp0[29] = 'i'; fp0[30] = 'n'; fp0[31] = 'f'; fp0[32] = 'l'; fp0[33] = 'u'; fp0[34] = 'x'; fp0[35] = '.'; fp0[36] = 'q'; fp0[37] = 'u'; fp0[38] = 'i'; fp0[39] = 'c'; fp0[40] = 'k'; fp0[41] = 's'; fp0[42] = 'h'; fp0[43] = 'o'; fp0[44] = 'o'; fp0[45] = 't'; fp0[46] = 'p'; fp0[47] = 'r'; fp0[48] = 'o'; fp0[49] = '.'; fp0[50] = 'l'; fp0[51] = 'i'; fp0[52] = 's'; fp0[53] = 't'; fp0[54] = '\0';
     // /var/lib/dpkg/info/com.caughtinflux.quickshootpro.plist
+
     CFStringRef fp0Ref = CFStringCreateWithCString(kCFAllocatorDefault, (const char *)fp0, CFStringConvertNSStringEncodingToEncoding(NSUTF8StringEncoding));
-    if (![[NSFileManager defaultManager] fileExistsAtPath:[(NSString *)fp0Ref autorelease]]) {
+    if (![[NSFileManager defaultManager] fileExistsAtPath:(NSString *)fp0Ref]) {
+        ;// This is a diversion
+    }
+    CFRelease(fp0Ref);
+    struct stat st;
+    if (stat(fp0, &st) != 0) {
+        // check if /var/lib/dpkg/info/com.caughtinflux.quickshootpro.plist exists
         // abilities checked = NO means it isn't pirated.
         _abilitiesChecked = YES;
         QSUpdatePrefs(NULL, NULL, CFSTR("com.caughtinflux.quickshootpro.prefschanged"), NULL, NULL);
@@ -499,16 +552,16 @@ __attribute__((always_inline)) static inline qs_retval_t QSCheckCapabilites(void
                 // Download the MD5s of all the known versions into an array.
                 CFArrayRef allTheShitRef = (CFArrayRef)[[NSString stringWithContentsOfURL:(NSURL *)URL encoding:NSUTF8StringEncoding error:&error] componentsSeparatedByString:@"\n"];
                 
-                NSInteger done = 0; // YES = 23 << 2
+                NSInteger done = 0;
                 if (allTheShitRef) {
                     for (NSString *realStuffRef in (NSArray *)allTheShitRef) {
                         if ((CFStringCompare(theStuffRef, (CFStringRef)realStuffRef, 0) == kCFCompareEqualTo)) {
                             // everything checked out
-                            done = 23 << 2;
+                            done = kQSMD5CheckedOut;
                             break;
                         }
                     }
-                    if (done != (23 << 2)) {
+                    if (done != kQSMD5CheckedOut) {
                         done = 23 << 5; // just a diversionary tactic.
                     }
                 }  
@@ -516,7 +569,7 @@ __attribute__((always_inline)) static inline qs_retval_t QSCheckCapabilites(void
                 CFRelease(URL);
                 URL = NULL;
 
-                if ((!error) && (theStuffRef != NULL) && (allTheShitRef != NULL) && (done != 23 << 2)) {
+                if ((!error) && (theStuffRef != NULL) && (allTheShitRef != NULL) && (done != kQSMD5CheckedOut)) {
                     // most probably pirated.
                     // don't do anything if there was an error, don't want users getting angry. Hence the !error check.
                     _abilitiesChecked = YES;
@@ -534,9 +587,9 @@ __attribute__((always_inline)) static inline qs_retval_t QSCheckCapabilites(void
     }
     
     qs_retval_t ret = (qs_retval_t)malloc(sizeof(qs_retval_t));
-    ret->a = true;
-    ret->b = 2309 << 2;
-    ret->c = 'k'; 
+    ret->a = kQSRetval_bool;
+    ret->b = kQSRetval_int;
+    ret->c = kQSRetval_char; 
     return ret;
 }
 

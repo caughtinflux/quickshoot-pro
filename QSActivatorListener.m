@@ -56,6 +56,16 @@
     }
     // video capture
     else if ([[[LAActivator sharedInstance] assignedListenerNameForEvent:event] isEqualToString:QSVideoCaptureListenerName]) {
+
+        QSCompletionHandler videoStopHandler = ^(BOOL success) {
+            _shouldBlinkVideoIcon = NO;
+            _isCapturingVideo = NO;
+            [(SpringBoard *)[UIApplication sharedApplication] removeStatusBarImageNamed:QSStatusBarImageName];
+            if (!success) {
+                SHOW_USER_NOTIFICATION(@"QuickShoot", @"The video recording did not complete successfully.\nPlease try again.", @"Dismiss");
+            }
+        };
+
         if (_isCapturingVideo == NO) {
             if ([QSCameraController sharedInstance].isCapturingVideo) {
                 // this check is necessary, because the user might be recording a video some other way, too.
@@ -63,20 +73,14 @@
             }
             _isCapturingVideo = YES;
             [[QSCameraController sharedInstance] startVideoCaptureWithHandler:^(BOOL success) {
+                DLog(@"Adding status bar image");
                 [(SpringBoard *)[UIApplication sharedApplication] addStatusBarImageNamed:QSStatusBarImageName];
-            }];
+            } interruptionHandler:videoStopHandler];
         }
         else {
             _shouldBlinkVideoIcon = YES;
             [self _startBlinkingVideoIcon];
-            [[QSCameraController sharedInstance] stopVideoCaptureWithHandler:^(BOOL success) {
-                _shouldBlinkVideoIcon = NO;
-                _isCapturingVideo = NO;
-                [(SpringBoard *)[UIApplication sharedApplication] removeStatusBarImageNamed:QSStatusBarImageName];
-                if (!success) {
-                    SHOW_USER_NOTIFICATION(@"QuickShoot", @"The video recording did not complete successfully.\nPlease try again.", @"Dismiss");
-                }
-            }];
+            [[QSCameraController sharedInstance] stopVideoCaptureWithHandler:videoStopHandler];
         }
     }
 

@@ -77,7 +77,6 @@
     if (flashMode == QSFlashModeOff) {
         self.torchMode = AVCaptureTorchModeOff;
     }
-    DLog(@"self.torchMode: %i, from flashMode: %i", self.torchMode, flashMode);
 }
 
 #pragma mark - Getter Overrides (Defaults)
@@ -112,11 +111,7 @@
 
 
     NSNotificationCenter *notificationCenter = [NSNotificationCenter defaultCenter];
-    [notificationCenter addObserver:self selector:@selector(_sessionNotificationReceived:) name:AVCaptureSessionRuntimeErrorNotification object:nil];
     [notificationCenter addObserver:self selector:@selector(_sessionNotificationReceived:) name:AVCaptureSessionDidStartRunningNotification object:nil];
-    [notificationCenter addObserver:self selector:@selector(_sessionNotificationReceived:) name:AVCaptureSessionDidStopRunningNotification object:nil];
-    [notificationCenter addObserver:self selector:@selector(_sessionNotificationReceived:) name:AVCaptureSessionWasInterruptedNotification object:nil];
-    [notificationCenter addObserver:self selector:@selector(_sessionNotificationReceived:) name:AVCaptureSessionInterruptionEndedNotification object:nil];
 }
 
 - (BOOL)_configureCaptureDevices
@@ -208,7 +203,6 @@ error:
         goto notifyDelegateOfError;
     }
     [_captureSession commitConfiguration];
-
     return YES;
 
     notifyDelegateOfError:
@@ -242,7 +236,10 @@ error:
         }
     }
     if (!recordedSuccessfully) {
-        DLog(@"QS: An error occurred when recording to file: %@ \n Error: %i, %@", [fileURL absoluteString], error.code, error.localizedDescription);
+        NSLog(@"QS: An error occurred when recording to file: %@ \n Error: %i, %@", [fileURL absoluteString], error.code, error.localizedDescription);
+    }
+    else {
+        error = nil; // don't let the delegate know that an error occurred if it recorder successfully
     }
     if ([self.delegate respondsToSelector:@selector(videoInterface:didFinishRecordingToURL:withError:)]) {
         // notify the delegate, yeah?
@@ -253,39 +250,8 @@ error:
 #pragma mark - AVCaptureSession Notifications Handler
 - (void)_sessionNotificationReceived:(NSNotification *)notification
 {
-    // isEqualToString: takes more time than respondsToSelector:
-    if ([self.delegate respondsToSelector:@selector(videoInterfaceSessionRuntimeErrorOccurred:)] && [notification.name isEqualToString:AVCaptureSessionRuntimeErrorNotification]) {
-        DLog(@"Runtime error occurred in session");
-        [self.delegate videoInterfaceSessionRuntimeErrorOccurred:self];
-    }
-    else if ([self.delegate respondsToSelector:@selector(videoInterfaceStartedVideoCapture:)] && [notification.name isEqualToString:AVCaptureSessionDidStartRunningNotification]) {
+    if ([self.delegate respondsToSelector:@selector(videoInterfaceStartedVideoCapture:)] && [notification.name isEqualToString:AVCaptureSessionDidStartRunningNotification]) {
         [self.delegate videoInterfaceStartedVideoCapture:self];
-    }
-    else if ([self.delegate respondsToSelector:@selector(videoInterfaceSessionWasInterrupted:)] && [notification.name isEqualToString:AVCaptureSessionWasInterruptedNotification]) {
-        DLog(@"Video session was interrupted");
-        [self.delegate videoInterfaceSessionWasInterrupted:self];
-    }
-    else if ([self.delegate respondsToSelector:@selector(videoInterfaceSessionInterruptionEnded:)] && [notification.name isEqualToString:AVCaptureSessionInterruptionEndedNotification]) {
-        DLog(@"Video session interruption ended");
-        [self.delegate videoInterfaceSessionInterruptionEnded:self];
-    }
-
-    if ([notification.name isEqualToString:AVCaptureSessionDidStopRunningNotification]) {
-        [_captureSession release];
-        _captureSession = nil;
-
-        [_captureSession release];
-        _captureSession = nil;
-
-        [_fileOutput release];
-        _fileOutput = nil;
-
-        [_videoQuality release];
-        _videoQuality = nil;
-
-        if ([self.delegate respondsToSelector:@selector(videoInterfaceSessionDidStop:)]) {
-            [self.delegate videoInterfaceSessionDidStop:self];
-        }
     }
 }
 

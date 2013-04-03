@@ -4,7 +4,7 @@
 #define kDoneImageName           @"Done"
 #define kIrisImageName           @"Iris"
 #define kFocusRectImageName      @"Loading"
-#define kCaptureFailedImageName @"LoadngFailed"
+#define kCaptureFailedImageName  @"LoadngFailed"
 #define kRecordOffImageName      @"LoadingRecordOff"
 #define kRecordOnImageName       @"LoadingRecordOn"
 
@@ -169,7 +169,6 @@
 
     QSIconOverlayView __block *wSelf = self;
     [UIView animateWithDuration:0.4 animations:^{
-
         CGRect zeroFrame = wSelf->_irisImageView.frame;
         zeroFrame.origin.x += (imageWidth * 0.5);
         zeroFrame.origin.y += (imageHeight * 0.5);

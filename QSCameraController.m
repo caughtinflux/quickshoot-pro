@@ -13,13 +13,18 @@
 #pragma mark - Private Method Declarations
 @interface QSCameraController ()
 {
-    QSCompletionHandler  _completionHandler;
+    QSCompletionHandler  _imageCompletionHandler;
     QSCompletionHandler  _videoStartHandler;
+    QSCompletionHandler  _interruptionHandler;
     QSCompletionHandler  _videoStopHandler;
     QSVideoInterface    *_videoInterface;
+    
     NSTimer             *_captureFallbackTimer;
+    
     BOOL                 _didChangeLockState;
     BOOL                 _previewWasAlreadyRunning;
+    BOOL                 _videoStoppedManually;
+    
     struct {
         NSUInteger previewStarted:1;
         NSUInteger modeChanged:1;
@@ -38,7 +43,7 @@
 - (void)_cleanupImageCaptureWithResult:(BOOL)result;
 - (void)_cleanupVideoCaptureWithResult:(BOOL)result;
 
-- (QSCompletionHandler)_blockAfterEvaluatingBlock:(QSCompletionHandler)block;
+- (QSCompletionHandler)_completionBlockAfterEvaluatingBlock:(QSCompletionHandler)block;
 - (void)_showCaptureFailedAlert;
 
 - (void)_orientationChangeReceived:(NSNotification *)notifcation;
@@ -71,21 +76,25 @@
         }
         return;
     }
-    _completionHandler = [[self _blockAfterEvaluatingBlock:complHandler] copy];
+    _imageCompletionHandler = [[self _completionBlockAfterEvaluatingBlock:complHandler] copy];
     _isCapturingImage = YES;
 
     [self _setupOrientationShit];
     [self _setupCameraController];
-    
     [[PLCameraController sharedInstance] startPreview];
     ((PLCameraController *)[PLCameraController sharedInstance]).delegate = self;
 }
 
-- (void)startVideoCaptureWithHandler:(QSCompletionHandler)handler
+- (void)startVideoCaptureWithHandler:(QSCompletionHandler)completionHandler
+{
+    [self startVideoCaptureWithHandler:completionHandler interruptionHandler:completionHandler];
+}
+
+- (void)startVideoCaptureWithHandler:(QSCompletionHandler)completionHandler interruptionHandler:(QSCompletionHandler)interruptionHandler;
 {
     if (_isCapturingVideo) {
-        if (handler) {
-            handler(NO);
+        if (completionHandler) {
+            completionHandler(NO);
         }
         return;
     }
@@ -93,7 +102,8 @@
     _isCapturingVideo = YES;
     [self _setupOrientationShit];
     
-    _videoStartHandler = [[self _blockAfterEvaluatingBlock:handler] copy];
+    _videoStartHandler = [[self _completionBlockAfterEvaluatingBlock:completionHandler] copy];
+    _interruptionHandler = [[self _completionBlockAfterEvaluatingBlock:interruptionHandler] copy];
 
     if (!_videoInterface) {
         _videoInterface = [[QSVideoInterface alloc] init];
@@ -109,7 +119,8 @@
 - (void)stopVideoCaptureWithHandler:(QSCompletionHandler)handler
 {
     if (_isCapturingVideo) {
-        _videoStopHandler = [[self _blockAfterEvaluatingBlock:handler] copy];
+        _videoStoppedManually = YES;
+        _videoStopHandler = [[self _completionBlockAfterEvaluatingBlock:handler] copy];
         [_videoInterface stopVideoCapture];
     }
     else {
@@ -118,7 +129,6 @@
         }
     }
 }
-
 
 #pragma mark - Setter/Getter Overrides
 - (void)setCameraDevice:(QSCameraDevice)cameraDevice
@@ -155,13 +165,10 @@
     [[PLCameraController sharedInstance] setCaptureOrientation:_currentOrientation];
 }
 
-#pragma mark - Fallback
-- (void)_captureFallbackTimerFired:(NSTimer *)timer
+- (QSCompletionHandler)_completionBlockAfterEvaluatingBlock:(QSCompletionHandler)block
 {
-    // it has been ten seconds, focus not completed. Take photo anyway.
-    NSLog(@"QS: Can't wait for focus completion any longer, capturing image now!");
-    _captureFallbackTimer = nil;
-    [self _setOrientationAndCaptureImage];
+    // simple method that returns a non-nil block, so as to avoid having to do null checks everytime.
+    return (block == nil) ? (^(BOOL success){}) : (block);
 }
 
 #pragma mark - PLCameraController Delegate
@@ -231,79 +238,6 @@
     }
 }
 
-#pragma mark - Video Interface Delegate
-- (void)videoInterfaceStartedVideoCapture:(QSVideoInterface *)interface
-{
-    DLog(@"");
-
-    _videoStartHandler(YES);
-    [_videoStartHandler release];
-    _videoStartHandler = nil;
-}
-
-- (void)videoInterface:(QSVideoInterface *)videoInterface didFinishRecordingToURL:(NSURL *)filePathURL withError:(NSError *)error
-{
-    DLog(@"");
-    if (!error) {
-        ALAssetsLibrary *library = [[ALAssetsLibrary alloc] init];
-        [library writeVideoAtPathToSavedPhotosAlbum:filePathURL completionBlock:^(NSURL *assetURL, NSError *error) {
-            if (error) {
-                UIAlertView *alert = [[UIAlertView alloc] initWithTitle:@"QuickShoot" message:[NSString stringWithFormat:@"An error occurred when saving the video.\nError %i, %@", error.code, error.localizedDescription] delegate:nil cancelButtonTitle:@"Dismiss" otherButtonTitles:nil];
-                [alert show];
-                [alert release];
-            }
-            else {
-                [self _cleanupVideoCaptureWithResult:YES];
-            }
-            [[NSFileManager defaultManager] removeItemAtURL:filePathURL error:NULL];
-        }];
-    }
-    else {
-        UIAlertView *videoFailAlert = [[UIAlertView alloc] initWithTitle:@"QuickShoot" message:[NSString stringWithFormat:@"An error occurred during the recording.\nError %i, %@", error.code, error.localizedDescription] delegate:nil cancelButtonTitle:@"Dismiss" otherButtonTitles:nil];
-        [videoFailAlert show];
-        [videoFailAlert release];
-        [self _cleanupVideoCaptureWithResult:NO];
-    }
-}
-
-- (void)videoInterfaceCaptureDeviceErrorOccurred:(QSVideoInterface *)interface
-{
-    DLog(@"");
-    if (_isCapturingVideo) [self _cleanupVideoCaptureWithResult:NO];
-}
-
-- (void)videoInterfaceCaptureInputErrorOccurred:(QSVideoInterface *)interface
-{
-    DLog(@"");
-    if (_isCapturingVideo) [self _cleanupVideoCaptureWithResult:NO];
-}
-
-- (void)videoInterfaceFileOutputErrorOccurred:(QSVideoInterface *)interface
-{
-    DLog(@"");
-    if (_isCapturingVideo) [self _cleanupVideoCaptureWithResult:NO];
-}
-
-// session callbacks
-- (void)videoInterfaceSessionRuntimeErrorOccurred:(QSVideoInterface *)videoInterface
-{
-    DLog(@"");
-    if (_isCapturingVideo) [self _cleanupVideoCaptureWithResult:NO];
-}
-
-- (void)videoInterfaceSessionWasInterrupted:(QSVideoInterface *)videoInterface
-{
-    DLog(@"");
-    if (_isCapturingVideo) [self _cleanupVideoCaptureWithResult:NO];
-}
-
-- (void)videoInterfaceSessionInterruptionEnded:(QSVideoInterface *)videoInterface
-{
-    DLog(@"");
-    if (_isCapturingVideo) [self _cleanupVideoCaptureWithResult:NO];
-}
-
-#pragma mark - Helper Methods
 - (void)_setupCameraController
 {
     if (self.flashMode && [[PLCameraController sharedInstance] hasFlash]) {
@@ -315,6 +249,14 @@
     if (self.cameraDevice && [[PLCameraController sharedInstance] hasFrontCamera]) {
         [[PLCameraController sharedInstance] setCameraDevice:(UIImagePickerControllerCameraDevice)self.cameraDevice];
     }
+}
+
+- (void)_captureFallbackTimerFired:(NSTimer *)timer
+{
+    // it has been ten seconds, focus not completed. Take photo anyway.
+    NSLog(@"QS: Can't wait for focus completion any longer, capturing image now!");
+    _captureFallbackTimer = nil;
+    [self _setOrientationAndCaptureImage];
 }
 
 - (void)_setupOrientationShit
@@ -337,13 +279,6 @@
         [self _showCaptureFailedAlert];
     }
 }
-
-- (QSCompletionHandler)_blockAfterEvaluatingBlock:(QSCompletionHandler)block
-{
-    // simple method that returns a non-nil block, so as to avoid having to do null checks everytime.
-    return (block == nil) ? (^(BOOL success){}) : (block);
-}
-
 - (void)_saveCameraImageToLibrary:(NSDictionary *)dict
 {
     [[PLAssetsSaver sharedAssetsSaver] saveCameraImage:dict metadata:nil additionalProperties:nil requestEnqueuedBlock:nil]; // magick method. Now, if only I could find what the block's signature is.
@@ -364,28 +299,12 @@
     _cameraCheckFlags.hasStartedSession  = 0;
     _cameraCheckFlags.modeChanged = 0;
 
-    _completionHandler(result);
-    [_completionHandler release];
-    _completionHandler = nil;
+    _imageCompletionHandler(result);
+    [_imageCompletionHandler release];
+    _imageCompletionHandler = nil;
     
     [[PLCameraController sharedInstance] setDelegate:nil];
     _isCapturingImage = NO;
-}
-
-- (void)_cleanupVideoCaptureWithResult:(BOOL)result
-{
-    if (_didChangeLockState) {
-        [[objc_getClass("SBOrientationLockManager") sharedInstance] lock];
-        _didChangeLockState = NO;
-    }
-    _isCapturingVideo = NO;
-
-    _videoStopHandler(result);
-    [_videoStopHandler release];
-    _videoStopHandler = nil;
-
-    [_videoInterface release];
-    _videoInterface = nil;
 }
 
 - (void)_showCaptureFailedAlert
@@ -393,7 +312,6 @@
     BOOL writerQueueAvailable = [[PLCameraController sharedInstance] imageWriterQueueIsAvailable];
     BOOL isReady = [[PLCameraController sharedInstance] isReady];
     BOOL hasDiskSpace = [[PLDiskController sharedInstance] hasEnoughDiskToTakePicture];
-
 
     NSMutableString *message = [NSMutableString stringWithString:@"An error occurred during the capture.\n"];
     [message appendFormat:@"Writer queue %@available.\n", (writerQueueAvailable) ? @"" : @"un"];
@@ -404,6 +322,69 @@
     [alert show];
     [alert release];
     [self _cleanupImageCaptureWithResult:NO];
+}
+
+#pragma mark - Video Interface Delegate
+- (void)videoInterfaceStartedVideoCapture:(QSVideoInterface *)interface
+{
+    DLog(@"");
+    _videoStartHandler(YES);
+    [_videoStartHandler release];
+    _videoStartHandler = nil;
+}
+
+- (void)videoInterface:(QSVideoInterface *)videoInterface didFinishRecordingToURL:(NSURL *)filePathURL withError:(NSError *)error
+{
+    DLog(@"URL: %@ error: %@", filePathURL, error);
+    if (!error) {
+        ALAssetsLibrary *library = [[ALAssetsLibrary alloc] init];
+        [library writeVideoAtPathToSavedPhotosAlbum:filePathURL completionBlock:^(NSURL *assetURL, NSError *error) {
+            if (error) {
+                UIAlertView *alert = [[UIAlertView alloc] initWithTitle:@"QuickShoot" message:[NSString stringWithFormat:@"An error occurred when saving the video.\nError %i, %@", error.code, error.localizedDescription] delegate:nil cancelButtonTitle:@"Dismiss" otherButtonTitles:nil];
+                [alert show];
+                [alert release];
+            }
+            else {
+                [self _cleanupVideoCaptureWithResult:YES];
+            }
+            [[NSFileManager defaultManager] removeItemAtURL:filePathURL error:NULL];
+            [library release];
+        }];
+    }
+    else {
+        UIAlertView *videoFailAlert = [[UIAlertView alloc] initWithTitle:@"QuickShoot" message:[NSString stringWithFormat:@"An error occurred during the recording.\nError %i, %@", error.code, error.localizedDescription] delegate:nil cancelButtonTitle:@"Dismiss" otherButtonTitles:nil];
+        [videoFailAlert show];
+        [videoFailAlert release];
+        [self _cleanupVideoCaptureWithResult:NO];
+    }
+}
+
+- (void)_cleanupVideoCaptureWithResult:(BOOL)result
+{
+    DLog(@"Start");
+    _isCapturingVideo = NO;
+    if (_didChangeLockState) {
+        [[objc_getClass("SBOrientationLockManager") sharedInstance] lock];
+        _didChangeLockState = NO;
+    }
+    if (_videoStoppedManually) {    
+        _videoStopHandler(result);
+    }
+    else {
+        _interruptionHandler(result);   
+    }
+
+    [_videoStopHandler release];
+    _videoStopHandler = nil;
+    
+    [_interruptionHandler release];
+    _interruptionHandler = nil;
+
+    _videoStoppedManually = NO;
+
+    [_videoInterface release];
+    _videoInterface = nil;
+    DLog(@"End!");
 }
 
 - (void)_orientationChangeReceived:(NSNotification *)notification
