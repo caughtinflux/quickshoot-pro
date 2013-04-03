@@ -88,22 +88,22 @@ NSString * QSVideoQualityFromString(NSString *string)
     return AVCaptureSessionPresetMedium;
 }
 
-inline id QSObjectFromPrefsForKey(NSString *key)
+__attribute__((always_inline)) inline id QSObjectFromPrefsForKey(NSString *key)
 {
     return [[NSDictionary dictionaryWithContentsOfFile:kPrefPath] objectForKey:key];
 }
 
-inline NSString * QSStringFromCameraDevice(QSCameraDevice device)
+__attribute__((always_inline)) inline NSString * QSStringFromCameraDevice(QSCameraDevice device)
 {
     return ((device == QSCameraDeviceRear) ? QSCameraDeviceRearValue : QSCameraDeviceFrontValue);
 }
 
-inline NSString * QSStringFromFlashMode(QSFlashMode flashMode)
+__attribute__((always_inline)) inline NSString * QSStringFromFlashMode(QSFlashMode flashMode)
 {
     return ((flashMode == QSFlashModeAuto) ? QSFlashModeAutoValue : ((flashMode == QSFlashModeOn) ? QSFlashModeOnValue : QSFlashModeOffValue));
 }
 
-inline NSString * QSGetMachineName(void)
+__attribute__((always_inline)) inline NSString * QSGetMachineName(void)
 {
     struct utsname systemInfo;
     uname(&systemInfo);
