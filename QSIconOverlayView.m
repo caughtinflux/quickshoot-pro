@@ -52,6 +52,7 @@
 
 - (void)dealloc
 {
+    DLog(@"Start");
     [_animationCompletionHandler release];
     _animationCompletionHandler = nil;
     
@@ -68,6 +69,7 @@
     _recordingLightImageView = nil;
 
     [super dealloc];
+    DLog(@"End");
 }
 
 - (void)captureBegan
@@ -177,8 +179,8 @@
 
         wSelf->_irisImageView.frame = zeroFrame;
     } completion:^(BOOL finished){
-        if (finished && wSelf.animationCompletionHandler) {
-            wSelf.animationCompletionHandler();
+        if (finished && self.animationCompletionHandler) {
+            self.animationCompletionHandler();
         }
     }];
 }
@@ -251,6 +253,7 @@
 
 - (void)_blinkRecordLight
 {
+    DLog(@"");
     if (!_shouldBlinkRecordLight) {
         _recordingLightImageView.image = [self _bundleImageNamed:kRecordOffImageName];
         return;
