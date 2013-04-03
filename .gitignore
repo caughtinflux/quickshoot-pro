@@ -11,3 +11,7 @@ reference.txt
 QSVersion.h
 
 QSLink.h
+
+qsprefs/Resources/Info.plist
+
+.theos/packages/com.caughtinflux.quickshootpro-0.1
