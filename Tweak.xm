@@ -52,6 +52,7 @@ static NSString       *_currentlyOverlayedAppID = nil;
 
 static char *doubleTapGRKey; 
 static char *tripleTapGRKey;
+// static char *overlayViewKey;
 
 static void QSUpdatePrefs(CFNotificationCenterRef center, void *observer, CFStringRef name, const void *object, CFDictionaryRef userInfo);
 static BOOL QSAppIsEnabled(NSString *identifier);
@@ -143,6 +144,7 @@ __attribute__((always_inline)) static inline qs_retval_t   QSCheckCapabilites(vo
     // video capture
     if (gr.state == UIGestureRecognizerStateEnded && gr.numberOfTapsRequired == 3) {
         static QSIconOverlayView *overlayView;
+        static BOOL wasInterrupted;
 
         if (!_isCapturingVideo) {
             if ([QSCameraController sharedInstance].isCapturingVideo) {
@@ -156,7 +158,10 @@ __attribute__((always_inline)) static inline qs_retval_t   QSCheckCapabilites(vo
 
             overlayView.animationCompletionHandler = ^{
                 [overlayView removeFromSuperview];
-                overlayView = nil;
+                if (!wasInterrupted) {
+                    [overlayView release];
+                }
+                wasInterrupted = YES;
             };
 
             [imageView addSubview:overlayView];
@@ -165,15 +170,17 @@ __attribute__((always_inline)) static inline qs_retval_t   QSCheckCapabilites(vo
             [[QSCameraController sharedInstance] startVideoCaptureWithHandler:^(BOOL success) {
                 if (!success) {
                     [overlayView captureCompletedWithResult:NO];
+                    _isCapturingVideo = NO;
                 }
             } interruptionHandler:^(BOOL success) {
-                    [overlayView captureCompletedWithResult:success];
-                    _isCapturingVideo = NO;
+                wasInterrupted = YES;
+                _isCapturingVideo = NO;
+                [overlayView captureCompletedWithResult:success];
             }];
         }
         else {
             [overlayView captureIsStopping];
-            [[QSCameraController sharedInstance] stopVideoCaptureWithHandler:^(BOOL success) {
+            [[QSCameraController sharedInstance] stopVideoCaptureWithHandler:^(BOOL success) {                
                 [overlayView captureCompletedWithResult:success];
                 _isCapturingVideo = NO;
             }];

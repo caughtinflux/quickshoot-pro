@@ -13,7 +13,7 @@
 	#define CLog(...)
 #endif
 
-#define ALog(fmt, ...) NSLog((@"%s" fmt), __PRETTY_FUNCTION__, ##__VA_ARGS__)
+#define ALog(fmt, ...) NSLog((@"QS: " fmt), ##__VA_ARGS__)	
 
 #define kPiratedCopyNotification @"QSUpdatedCapabilities"
 #define kPLCameraModePhoto 0 // yes, PL. PhotoLibrary, yeah? :D
