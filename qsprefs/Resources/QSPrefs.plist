@@ -85,7 +85,7 @@
             <key>cell</key>
             <string>PSLinkListCell</string>
             <key>default</key>
-            <string>kQSFlashModeAuto</string>
+            <string>kQSFlashModeOff</string>
             <key>defaults</key>
             <string>com.caughtinflux.qsproprefs</string>
             <key>detail</key>
@@ -137,7 +137,7 @@
             <key>cell</key>
             <string>PSSwitchCell</string>
             <key>default</key>
-            <true/>
+            <false/>
             <key>defaults</key>
             <string>com.caughtinflux.qsproprefs</string>
             <key>key</key>

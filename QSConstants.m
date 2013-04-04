@@ -1,3 +1,14 @@
+/*
+*       ____        _      __   _____ __                __  ____           
+*      / __ \__  __(_)____/ /__/ ___// /_  ____  ____  / /_/ __ \_________ 
+*     / / / / / / / / ___/ //_/\__ \/ __ \/ __ \/ __ \/ __/ /_/ / ___/ __ \
+*    / /_/ / /_/ / / /__/ ,<  ___/ / / / / /_/ / /_/ / /_/ ____/ /  / /_/ /
+*    \___\_\__,_/_/\___/_/|_|/____/_/ /_/\____/\____/\__/_/   /_/   \____/ 
+*                                                                          
+*   QSConstants.m
+*   © 2013 Aditya KD
+*/
+
 #import "QSConstants.h"
 #import "QSCameraController.h"
 #import <Foundation/Foundation.h>
@@ -77,22 +88,22 @@ NSString * QSVideoQualityFromString(NSString *string)
     return AVCaptureSessionPresetMedium;
 }
 
-inline id QSObjectFromPrefsForKey(NSString *key)
+__attribute__((always_inline)) inline id QSObjectFromPrefsForKey(NSString *key)
 {
     return [[NSDictionary dictionaryWithContentsOfFile:kPrefPath] objectForKey:key];
 }
 
-inline NSString * QSStringFromCameraDevice(QSCameraDevice device)
+__attribute__((always_inline)) inline NSString * QSStringFromCameraDevice(QSCameraDevice device)
 {
     return ((device == QSCameraDeviceRear) ? QSCameraDeviceRearValue : QSCameraDeviceFrontValue);
 }
 
-inline NSString * QSStringFromFlashMode(QSFlashMode flashMode)
+__attribute__((always_inline)) inline NSString * QSStringFromFlashMode(QSFlashMode flashMode)
 {
     return ((flashMode == QSFlashModeAuto) ? QSFlashModeAutoValue : ((flashMode == QSFlashModeOn) ? QSFlashModeOnValue : QSFlashModeOffValue));
 }
 
-inline NSString * QSGetMachineName(void)
+__attribute__((always_inline)) inline NSString * QSGetMachineName(void)
 {
     struct utsname systemInfo;
     uname(&systemInfo);

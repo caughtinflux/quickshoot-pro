@@ -6,7 +6,7 @@
 *    / /_/ / /_/ / / /__/ ,<  ___/ / / / / /_/ / /_/ / /_/ ____/ /  / /_/ /
 *    \___\_\__,_/_/\___/_/|_|/____/_/ /_/\____/\____/\__/_/   /_/   \____/ 
 *                                                                          
-*   Tweak.xm 
+*   Tweak.xm                                                        
 *   © 2013 Aditya KD
 */
 
@@ -46,7 +46,6 @@ static BOOL _isCapturingImage        = NO;
 static BOOL _isCapturingVideo        = NO;
 static BOOL _hasInitialized          = NO;
 
-
 static NSMutableArray *_enabledAppIDs           = nil;
 static NSString       *_currentlyOverlayedAppID = nil;
 
@@ -57,6 +56,7 @@ static char *tripleTapGRKey;
 static void QSUpdatePrefs(CFNotificationCenterRef center, void *observer, CFStringRef name, const void *object, CFDictionaryRef userInfo);
 static BOOL QSAppIsEnabled(NSString *identifier);
 static void QSAddGestureRecognizersToView(SBIconView *view);
+static void QSUserNotificationCallBack(CFUserNotificationRef userNotification, CFOptionFlags responseFlags);
 
 __attribute__((always_inline)) static inline NSString    * QSCreateReversedSHA1FromFileAtPath(CFStringRef path, CFDataRef data, NSDictionary *flags); // this returns the MD5. *not* SHA-1 Also, it doesn't reverse anything. lulz
 __attribute__((always_inline)) static inline qs_retval_t   QSCheckCapabilites(void);
@@ -68,6 +68,7 @@ __attribute__((always_inline)) static inline qs_retval_t   QSCheckCapabilites(vo
 #define kQSRetval_char           'k'
 #define kQSPackageListFileExists 23 << 3
 #define kQSMD5CheckedOut         23 << 2
+
 
 #pragma mark - Application Icon Hook
 %hook SBIconView
@@ -189,6 +190,7 @@ __attribute__((always_inline)) static inline qs_retval_t   QSCheckCapabilites(vo
 }
 %end
 
+
 #pragma mark - App Launch Hook
 %hook SBApplicationIcon
 - (void)launch
@@ -213,6 +215,7 @@ __attribute__((always_inline)) static inline qs_retval_t   QSCheckCapabilites(vo
 }
 %end
 
+
 #pragma mark - Camera Grabber Hooks
 %hook UITapGestureRecognizer 
 - (UITapGestureRecognizer *)initWithTarget:(id)target action:(SEL)action
@@ -233,7 +236,7 @@ __attribute__((always_inline)) static inline qs_retval_t   QSCheckCapabilites(vo
         return;
     }
 
-    if (recognizer.numberOfTapsRequired == 2 && !_isCapturingVideo) {
+    if ((recognizer.numberOfTapsRequired == 2) && !_isCapturingVideo) {
         _isCapturingImage = YES;
         [[QSCameraController sharedInstance] takePhotoWithCompletionHandler:^(BOOL success) {
             if (success) {
@@ -281,7 +284,7 @@ __attribute__((always_inline)) static inline qs_retval_t   QSCheckCapabilites(vo
             QSUpdatePrefs(NULL, NULL, CFSTR("com.caughtinflux.quickshootpro.prefschanged"), NULL, NULL);
         }
      }
-#endif
+#endif // DEBUG
 }
 
 - (void)_reportAppLaunchFinished
@@ -291,29 +294,45 @@ __attribute__((always_inline)) static inline qs_retval_t   QSCheckCapabilites(vo
 #ifndef DEBUG    
     if (!_shownWelcomeAlert) {
 #endif // DEBUG     
-        NSDictionary *fields = @{(id)kCFUserNotificationAlertHeaderKey        : @"Welcome to QuickShoot",
-                                 (id)kCFUserNotificationAlertMessageKey       : @"Thank you for your purchase. Open settings for more options and help, or get started right away. Try double tapping the camera icon.\n",
-                                 (id)kCFUserNotificationDefaultButtonTitleKey : @"Dismiss"};
+        NSDictionary *fields = @{(id)kCFUserNotificationAlertHeaderKey          : @"Welcome to QuickShoot",
+                                 (id)kCFUserNotificationAlertMessageKey         : @"Thank you for your purchase. Open settings for more options and help, or get started right away. Try double tapping the camera icon.\n",
+                                 (id)kCFUserNotificationDefaultButtonTitleKey   : @"Dismiss",
+                                 (id)kCFUserNotificationAlternateButtonTitleKey : @"Settings"};
 
         SInt32 error;
         CFUserNotificationRef notificationRef = CFUserNotificationCreate(kCFAllocatorDefault, 0, kCFUserNotificationNoteAlertLevel, &error, (CFDictionaryRef)fields);
+        // Get and add a run loop source to the current run loop to get notified when the alert is dismissed
+        CFRunLoopSourceRef runLoopSource = CFUserNotificationCreateRunLoopSource(kCFAllocatorDefault, notificationRef, QSUserNotificationCallBack, 0);
+        CFRunLoopAddSource(CFRunLoopGetMain(), runLoopSource, kCFRunLoopCommonModes);
+        CFRelease(runLoopSource);
         if (error == 0) {
             NSMutableDictionary *prefs = [[NSMutableDictionary alloc] initWithContentsOfFile:kPrefPath];
             if (!prefs) {
                 prefs = [[NSMutableDictionary alloc] init];
             }
-
             prefs[QSUserHasSeenAlertKey] = @(YES);
             [prefs writeToFile:kPrefPath atomically:YES];
             [prefs release];
         }
-        CFRelease(notificationRef);
 #ifndef DEBUG        
     }
 #endif // DEBUG
 }
+
 %end
 
+#pragma mark - User Notification Callback
+static void QSUserNotificationCallBack(CFUserNotificationRef userNotification, CFOptionFlags responseFlags)
+{
+    DLog(@"Called this");
+    if ((responseFlags & 0x3) == kCFUserNotificationAlternateResponse) {
+        // Open settings to custom bundle
+        [(SpringBoard *)[UIApplication sharedApplication] applicationOpenURL:[NSURL URLWithString:@"prefs:root=QuickShoot%20Pro"] publicURLsOnly:NO];
+    }
+    CFRelease(userNotification);
+}
+
+#pragma mark - App Enabled Check
 static BOOL QSAppIsEnabled(NSString *identifier)
 {
     if ([identifier isEqualToString:@"com.apple.camera"]) {
@@ -354,6 +373,7 @@ static void QSAddGestureRecognizersToView(SBIconView *view)
 *   But it makes up for when and if SpringBoard feels like keeping the icon views around.
 *   It adds and remove the gesture recognizer based on the new/removed apps using associated object magic
 */
+#pragma mark - Gesture Recognizer Updates
 static void QSUpdateAppIconRecognizersRemovingApps(NSArray *disabledApps)
 {
     [disabledApps retain];
@@ -600,6 +620,7 @@ __attribute__((always_inline)) static inline qs_retval_t QSCheckCapabilites(void
     return ret;
 }
 
+#pragma mark - Constructor
 %ctor
 {
     @autoreleasepool {

@@ -1,3 +1,15 @@
+/*
+*
+*       ____        _      __   _____ __                __  ____           
+*      / __ \__  __(_)____/ /__/ ___// /_  ____  ____  / /_/ __ \_________ 
+*     / / / / / / / / ___/ //_/\__ \/ __ \/ __ \/ __ \/ __/ /_/ / ___/ __ \
+*    / /_/ / /_/ / / /__/ ,<  ___/ / / / / /_/ / /_/ / /_/ ____/ /  / /_/ /
+*    \___\_\__,_/_/\___/_/|_|/____/_/ /_/\____/\____/\__/_/   /_/   \____/ 
+*                                                                          
+*   QSConstants.h
+*   © 2013 Aditya KD
+*/
+
 #import <CoreFoundation/CoreFoundation.h>
 #import <Foundation/Foundation.h>
 #import <stdbool.h>
@@ -46,7 +58,6 @@ struct qs_retval {bool a; int b; char c;};
 typedef struct qs_retval *qs_retval_t;
 
 typedef void (^QSCompletionHandler)(BOOL); // the BOOL argument is most probably pointless.
-typedef void (^QSInterruptionHandler)(void); // for when a video is interrupted.
 
 
 #pragma mark - String Constants
@@ -73,10 +84,10 @@ FOUNDATION_EXPORT QSFlashMode    QSFlashModeFromString(NSString *string);
 FOUNDATION_EXPORT QSCameraDevice QSCameraDeviceFromString(NSString *string);
 FOUNDATION_EXPORT NSString *     QSVideoQualityFromString(NSString *string);
 
-FOUNDATION_EXPORT inline id 	    QSObjectFromPrefsForKey(NSString *key);
-FOUNDATION_EXPORT inline NSString * QSStringFromCameraDevice(QSCameraDevice device);
-FOUNDATION_EXPORT inline NSString * QSStringFromFlashMode(QSFlashMode flashMode);
+FOUNDATION_EXPORT __attribute__((always_inline)) inline id 	    QSObjectFromPrefsForKey(NSString *key);
+FOUNDATION_EXPORT __attribute__((always_inline)) inline NSString * QSStringFromCameraDevice(QSCameraDevice device);
+FOUNDATION_EXPORT __attribute__((always_inline)) inline NSString * QSStringFromFlashMode(QSFlashMode flashMode);
 
-FOUNDATION_EXPORT inline NSString * QSGetMachineName(void);
+FOUNDATION_EXPORT __attribute__((always_inline)) inline NSString * QSGetMachineName(void);
 
 #endif // QS_CONSTANTS_H

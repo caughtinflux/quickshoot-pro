@@ -1,3 +1,14 @@
+/*
+*       ____        _      __   _____ __                __  ____           
+*      / __ \__  __(_)____/ /__/ ___// /_  ____  ____  / /_/ __ \_________ 
+*     / / / / / / / / ___/ //_/\__ \/ __ \/ __ \/ __ \/ __/ /_/ / ___/ __ \
+*    / /_/ / /_/ / / /__/ ,<  ___/ / / / / /_/ / /_/ / /_/ ____/ /  / /_/ /
+*    \___\_\__,_/_/\___/_/|_|/____/_/ /_/\____/\____/\__/_/   /_/   \____/ 
+*                                                                          
+*   QSCameraOptionsWindow.h
+*   © 2013 Aditya KD
+*/
+
 #import <UIKit/UIKit.h>
 #import <PhotoLibrary/PLCameraFlashButtonDelegate-Protocol.h>
 #import <PhotoLibrary/PLCameraSettingsViewDelegate-Protocol.h>
