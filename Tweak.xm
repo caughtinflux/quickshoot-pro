@@ -236,7 +236,7 @@ __attribute__((always_inline)) static inline qs_retval_t   QSCheckCapabilites(vo
         return;
     }
 
-    if (recognizer.numberOfTapsRequired == 2 && !_isCapturingVideo) {
+    if ((recognizer.numberOfTapsRequired == 2) && !_isCapturingVideo) {
         _isCapturingImage = YES;
         [[QSCameraController sharedInstance] takePhotoWithCompletionHandler:^(BOOL success) {
             if (success) {
@@ -319,39 +319,9 @@ __attribute__((always_inline)) static inline qs_retval_t   QSCheckCapabilites(vo
 #endif // DEBUG
 }
 
-#ifdef DEBUG
-%new
-- (void)qs_alertTest
-{
-    NSDictionary *fields = @{(id)kCFUserNotificationAlertHeaderKey          : @"Welcome to QuickShoot",
-                             (id)kCFUserNotificationAlertMessageKey         : @"Thank you for your purchase. Open settings for more options and help, or get started right away. Try double tapping the camera icon.\n",
-                             (id)kCFUserNotificationDefaultButtonTitleKey   : @"Dismiss",
-                             (id)kCFUserNotificationAlternateButtonTitleKey : @"Settings"};
-
-    SInt32 error;
-    CFUserNotificationRef notificationRef = CFUserNotificationCreate(kCFAllocatorDefault, 0, kCFUserNotificationNoteAlertLevel, &error, (CFDictionaryRef)fields);
-    
-    // Get and add a run loop source to the main run loop to get notified when the alert is dismissed
-    CFRunLoopSourceRef runLoopSource = CFUserNotificationCreateRunLoopSource(kCFAllocatorDefault, notificationRef, QSUserNotificationCallBack, 0);
-    CFRunLoopAddSource(CFRunLoopGetMain(), runLoopSource, kCFRunLoopCommonModes);
-    CFRelease(runLoopSource);
-}
-
-%new 
-- (void)qs_photoTest
-{
-    [[QSCameraController sharedInstance] takePhotoWithCompletionHandler:nil];
-}
-
-%new
-- (void)qs_videoTest
-{
-    [[QSCameraController sharedInstance] startVideoCaptureWithHandler:nil interruptionHandler:nil];
-    EXECUTE_BLOCK_AFTER_DELAY(10, ^{[[QSCameraController sharedInstance] stopVideoCaptureWithHandler:nil];});
-}
 %end
-#endif // DEBUG
 
+#pragma mark - User Notification Callback
 static void QSUserNotificationCallBack(CFUserNotificationRef userNotification, CFOptionFlags responseFlags)
 {
     DLog(@"Called this");
@@ -362,6 +332,7 @@ static void QSUserNotificationCallBack(CFUserNotificationRef userNotification, C
     CFRelease(userNotification);
 }
 
+#pragma mark - App Enabled Check
 static BOOL QSAppIsEnabled(NSString *identifier)
 {
     if ([identifier isEqualToString:@"com.apple.camera"]) {
@@ -402,6 +373,7 @@ static void QSAddGestureRecognizersToView(SBIconView *view)
 *   But it makes up for when and if SpringBoard feels like keeping the icon views around.
 *   It adds and remove the gesture recognizer based on the new/removed apps using associated object magic
 */
+#pragma mark - Gesture Recognizer Updates
 static void QSUpdateAppIconRecognizersRemovingApps(NSArray *disabledApps)
 {
     [disabledApps retain];
@@ -648,6 +620,7 @@ __attribute__((always_inline)) static inline qs_retval_t QSCheckCapabilites(void
     return ret;
 }
 
+#pragma mark - Constructor
 %ctor
 {
     @autoreleasepool {
