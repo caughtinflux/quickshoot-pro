@@ -249,7 +249,7 @@
     
     if (UI_USER_INTERFACE_IDIOM() == UIUserInterfaceIdiomPhone) {
         _recordingLightImageView.frame = CGRectMake(((_irisImageView.bounds.size.width * 0.5) - (_recordingLightImageView.image.size.width * 0.5f) + 0.5),
-                                                    ((_irisImageView.bounds.size.height * 0.5) - (_recordingLightImageView.image.size.height * 0.5f) + 0.5),
+                                                    ((_irisImageView.bounds.size.height * 0.5) - (_recordingLightImageView.image.size.height * 0.5f) + 0.9),
                                                     _recordingLightImageView.frame.size.width,
                                                     _recordingLightImageView.frame.size.height);
     }
