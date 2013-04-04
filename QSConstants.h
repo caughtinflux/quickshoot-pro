@@ -58,7 +58,6 @@ struct qs_retval {bool a; int b; char c;};
 typedef struct qs_retval *qs_retval_t;
 
 typedef void (^QSCompletionHandler)(BOOL); // the BOOL argument is most probably pointless.
-typedef void (^QSInterruptionHandler)(void); // for when a video is interrupted.
 
 
 #pragma mark - String Constants
