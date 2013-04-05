@@ -329,7 +329,7 @@
     [message appendFormat:@"Controller %@.\n", (isReady) ? @"ready" : @"not ready."];
     [message appendFormat:@"Device %@ enough disk space.\n", (hasDiskSpace) ? @"has" : @"does not have"];
     
-    UIAlertView *alert = [[UIAlertView alloc] initWithTitle:@"QuickShoot" message:@"An error occurred during the capture." delegate:nil cancelButtonTitle:@"Dismiss" otherButtonTitles:nil];
+    UIAlertView *alert = [[UIAlertView alloc] initWithTitle:@"QuickShoot" message:message delegate:nil cancelButtonTitle:@"Dismiss" otherButtonTitles:nil];
     [alert show];
     [alert release];
     [self _cleanupImageCaptureWithResult:NO];
