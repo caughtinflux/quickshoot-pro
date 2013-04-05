@@ -286,7 +286,6 @@
         [[PLCameraController sharedInstance] capturePhoto]; 
     }
     else {
-        DLog(@"This shit is not ready! :(");
         [self _showCaptureFailedAlert];
     }
 }
