@@ -51,7 +51,6 @@ static NSString       *_currentlyOverlayedAppID = nil;
 
 static char *doubleTapGRKey; 
 static char *tripleTapGRKey;
-// static char *overlayViewKey;
 
 static void QSUpdatePrefs(CFNotificationCenterRef center, void *observer, CFStringRef name, const void *object, CFDictionaryRef userInfo);
 static BOOL QSAppIsEnabled(NSString *identifier);
