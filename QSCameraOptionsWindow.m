@@ -110,6 +110,24 @@
     return [self initWithFrame:frame showFlash:YES showHDR:YES showCameraToggle:YES];
 }
 
+- (void)dealloc
+{
+    [_settingsView release];
+    _settingsView = nil;
+
+    [_toggleButton release];
+    _toggleButton = nil;
+
+    [_flashButton release];
+    _flashButton = nil;
+
+    _optionsDelegate = nil;
+
+    [[NSNotificationCenter defaultCenter] removeObserver:self];
+
+    [super dealloc];
+}
+
 - (void)setFlashMode:(QSFlashMode)flashMode
 {
     _flashButton.flashMode = flashMode;
@@ -329,24 +347,6 @@
            panGR.view.center = (CGPoint){finalX, finalY};
         } completion:nil];
     }
-}
-
-- (void)dealloc
-{
-    [_settingsView release];
-    _settingsView = nil;
-
-    [_toggleButton release];
-    _toggleButton = nil;
-
-    [_flashButton release];
-    _flashButton = nil;
-
-    _optionsDelegate = nil;
-
-    [[NSNotificationCenter defaultCenter] removeObserver:self];
-
-    [super dealloc];
 }
 
 @end

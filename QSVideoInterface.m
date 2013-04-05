@@ -42,6 +42,26 @@
     return self;
 }
 
+- (void)dealloc
+{
+    [_captureSession release];
+    _captureSession = nil;
+
+    [_captureSession release];
+    _captureSession = nil;
+
+    [_fileOutput release];
+    _fileOutput = nil;
+
+    [_videoQuality release];
+    _videoQuality = nil;
+    
+    [[NSNotificationCenter defaultCenter] removeObserver:self];
+
+    dispatch_release(_backgroundCauseYOLOQueue);
+    [super dealloc];
+}
+
 - (NSString *)_UUIDString
 {
     CFUUIDRef theUUID = CFUUIDCreate(NULL);
@@ -59,7 +79,7 @@
 
        if ([self _configureCaptureDevices] && [self _configureDeviceInputs] && [self _configureFileOutput]) {
             // use a randomized file path.
-            NSString *filePath = [NSString stringWithFormat:@"%@_quickshoot_temp_record_%@.mov", NSTemporaryDirectory(), [self _UUIDString]];
+            NSString *filePath = [NSString stringWithFormat:@"%@quickshoot_%@.mov", NSTemporaryDirectory(), [self _UUIDString]];
             [_captureSession startRunning];
             [_fileOutput startRecordingToOutputFileURL:[NSURL fileURLWithPath:filePath] recordingDelegate:self];
         }
@@ -142,7 +162,7 @@
 
     NSError *lockError = nil;
     if ([_videoCaptureDevice lockForConfiguration:&lockError]) {
-        DLog(@"Setting torch mode: %i", self.torchMode);
+        NSLog(@"Setting torch mode: %i", self.torchMode);
         if ([_videoCaptureDevice isFocusModeSupported:AVCaptureFocusModeContinuousAutoFocus]) {
             _videoCaptureDevice.focusMode = AVCaptureFocusModeContinuousAutoFocus;
         }
@@ -153,23 +173,22 @@
             _videoCaptureDevice.torchMode = self.torchMode;
         }
         if (!([_videoCaptureDevice supportsAVCaptureSessionPreset:self.videoQuality])) {
-            success = NO;
-            DLog(@"doesn't support preset");
-            goto error;
+            [_captureSession setSessionPreset:AVCaptureSessionPresetMedium];
+            NSLog(@"QS: Doesn't support preset %@, setting to medium ", self.videoQuality);
         }
         [_videoCaptureDevice unlockForConfiguration];
 
         success = YES;
     }
     else {
-        DLog(@"QS: An error occurred while trying to acquire a lock for video configuration: %i %@ with device: %@", lockError.code, lockError.localizedDescription, _videoCaptureDevice);
+        NSLog(@"QS: An error occurred while trying to acquire a lock for video configuration: %i %@ with device: %@", lockError.code, lockError.localizedDescription, _videoCaptureDevice);
         success = NO;
         goto error;
     }
 
     _audioCaptureDevice = [AVCaptureDevice defaultDeviceWithMediaType:AVMediaTypeAudio];
     if (!_audioCaptureDevice) {
-        DLog(@"QS: Can't get AVCaptureDevice");
+        NSLog(@"QS: Can't get audio capture device :(");
         success = NO;
         goto error;
     }
@@ -192,25 +211,25 @@ error:
 
     [_captureSession beginConfiguration];
     if (!videoInput || videoError) {
-        DLog(@"QS: Couldn't obtain video input! Error %i %@", videoError.code, videoError.localizedDescription);
+        NSLog(@"QS: Couldn't obtain video input! Error %i %@", videoError.code, videoError.localizedDescription);
         goto notifyDelegateOfError;
     }
     if (!audioInput || audioError) {
-        DLog(@"QS: Couldn't obtain audio input! Error %i %@", audioError.code, audioError.localizedDescription);
+        NSLog(@"QS: Couldn't obtain audio input! Error %i %@", audioError.code, audioError.localizedDescription);
         goto notifyDelegateOfError;
     }
     if ([_captureSession canAddInput:videoInput]) { // video
         [_captureSession addInput:videoInput];
     }
     else {
-        DLog(@"QS: Video interface was not able to add video Input to session!");
+        NSLog(@"QS: Video interface was not able to add video Input to session!");
         goto notifyDelegateOfError;
     }
     if ([_captureSession canAddInput:audioInput]) { // audio
         [_captureSession addInput:audioInput];
     }
     else {
-        DLog(@"QS: Video interface unable to add audio input to current session!");
+        NSLog(@"QS: Video interface unable to add audio input to current session!");
         goto notifyDelegateOfError;
     }
     [_captureSession commitConfiguration];
@@ -264,26 +283,6 @@ error:
     if ([self.delegate respondsToSelector:@selector(videoInterfaceStartedVideoCapture:)] && [notification.name isEqualToString:AVCaptureSessionDidStartRunningNotification]) {
         [self.delegate videoInterfaceStartedVideoCapture:self];
     }
-}
-
-- (void)dealloc
-{
-    [_captureSession release];
-    _captureSession = nil;
-
-    [_captureSession release];
-    _captureSession = nil;
-
-    [_fileOutput release];
-    _fileOutput = nil;
-
-    [_videoQuality release];
-    _videoQuality = nil;
-    
-    [[NSNotificationCenter defaultCenter] removeObserver:self];
-
-    dispatch_release(_backgroundCauseYOLOQueue);
-    [super dealloc];
 }
 
 @end
