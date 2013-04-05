@@ -192,14 +192,4 @@
     }
 }
 
-- (void)dealloc
-{
-    [_optionsWindow setHidden:YES];
-    [_optionsWindow release];
-    _optionsWindow = nil;
-
-    [[NSNotificationCenter defaultCenter] removeObserver:self];
-
-    [super dealloc];
-}
 @end

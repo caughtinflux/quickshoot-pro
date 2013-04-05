@@ -42,6 +42,26 @@
     return self;
 }
 
+- (void)dealloc
+{
+    [_captureSession release];
+    _captureSession = nil;
+
+    [_captureSession release];
+    _captureSession = nil;
+
+    [_fileOutput release];
+    _fileOutput = nil;
+
+    [_videoQuality release];
+    _videoQuality = nil;
+    
+    [[NSNotificationCenter defaultCenter] removeObserver:self];
+
+    dispatch_release(_backgroundCauseYOLOQueue);
+    [super dealloc];
+}
+
 - (NSString *)_UUIDString
 {
     CFUUIDRef theUUID = CFUUIDCreate(NULL);
@@ -264,26 +284,6 @@ error:
     if ([self.delegate respondsToSelector:@selector(videoInterfaceStartedVideoCapture:)] && [notification.name isEqualToString:AVCaptureSessionDidStartRunningNotification]) {
         [self.delegate videoInterfaceStartedVideoCapture:self];
     }
-}
-
-- (void)dealloc
-{
-    [_captureSession release];
-    _captureSession = nil;
-
-    [_captureSession release];
-    _captureSession = nil;
-
-    [_fileOutput release];
-    _fileOutput = nil;
-
-    [_videoQuality release];
-    _videoQuality = nil;
-    
-    [[NSNotificationCenter defaultCenter] removeObserver:self];
-
-    dispatch_release(_backgroundCauseYOLOQueue);
-    [super dealloc];
 }
 
 @end
