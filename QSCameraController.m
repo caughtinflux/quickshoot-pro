@@ -324,9 +324,9 @@
     BOOL hasDiskSpace = [[PLDiskController sharedInstance] hasEnoughDiskToTakePicture];
 
     NSMutableString *message = [NSMutableString stringWithString:@"An error occurred during the capture.\n"];
-    [message appendFormat:@"Writer queue %@available.\n", (writerQueueAvailable) ? @"" : @"un"];
-    [message appendFormat:@"Controller %@.\n", (isReady) ? @"ready" : @"not ready."];
-    [message appendFormat:@"Device %@ enough disk space.\n", (hasDiskSpace) ? @"has" : @"does not have"];
+    [message appendFormat:@"Writer queue %@available.\n", (writerQueueAvailable ? @"" : @"un")];
+    [message appendFormat:@"Controller %@.\n", (isReady ? @"ready" : @"not ready.")];
+    [message appendFormat:@"Device %@ enough disk space.\n", (hasDiskSpace ? @"has" : @"does not have")];
     
     UIAlertView *alert = [[UIAlertView alloc] initWithTitle:@"QuickShoot" message:message delegate:nil cancelButtonTitle:@"Dismiss" otherButtonTitles:nil];
     [alert show];
