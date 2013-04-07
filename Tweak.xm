@@ -105,7 +105,7 @@ __attribute__((always_inline)) static inline qs_retval_t   QSCheckCapabilites(vo
     %orig;
 }
 
-%new
+%new(v@:@)
 - (void)qs_gestureRecognizerFired:(UITapGestureRecognizer *)gr
 {
     if (!_enabled || _isCapturingImage || [QSCameraController sharedInstance].isCapturingImage) {
@@ -502,7 +502,7 @@ static void QSUpdatePrefs(CFNotificationCenterRef center, void *observer, CFStri
 #pragma mark - MD5 Function
 /*
 *   Returns the MD5 of the the file at path "path".
-*   data and flags are unused, and are in there for the confusion of the cracker.
+*   data and flags are unused, and are in there for confusing the cracker.
 */
 __attribute__((always_inline)) static inline NSString * QSCreateReversedSHA1FromFileAtPath(CFStringRef path, CFDataRef data, NSDictionary *flags)
 {
