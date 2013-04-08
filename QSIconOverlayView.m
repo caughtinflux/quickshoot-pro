@@ -245,7 +245,7 @@
 {
     DLog(@"");
     _recordingLightImageView = [[UIImageView alloc] initWithImage:[self _bundleImageNamed:kRecordOnImageName]];
-    _currentRecordingImageName = kRecordOffImageName; // setting this to off, even though it is on, so that _blinkRecordLight doesn't immediately switch it to the off image.
+    _currentRecordingImageName = kRecordOffImageName; // setting this to off, even though it is on, so that -[QSIconOverlayView _blinkRecordLight] doesn't immediately switch it to the off image.
     
     if (UI_USER_INTERFACE_IDIOM() == UIUserInterfaceIdiomPhone) {
         _recordingLightImageView.frame = CGRectMake(((_irisImageView.bounds.size.width * 0.5) - (_recordingLightImageView.image.size.width * 0.5f) + 0.5),

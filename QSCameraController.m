@@ -43,17 +43,22 @@
         NSUInteger hasForcedAutofocus:1;
     } _cameraCheckFlags;
 }
-
+// Sets all the preferences on PLCameraController
 - (void)_setupCameraController;
+// Does this really need to be explained?
 - (void)_setOrientationAndCaptureImage;
 - (void)_saveCameraImageToLibrary:(NSDictionary *)dict;
 
+// For use when waitForFocusCompletion is set
 - (void)_captureFallbackTimerFired:(NSTimer *)timer;
+// Setup orientation callbacks
 - (void)_setupOrientationShit;
 
+// Simple methods to set all the ivars back to 0/nil and call the respective completions handler
 - (void)_cleanupImageCaptureWithResult:(BOOL)result;
 - (void)_cleanupVideoCaptureWithResult:(BOOL)result;
 
+// Method to return an empty block if `block` is nil. Prevents having to do if-not-nil checks every time
 - (QSCompletionHandler)_completionBlockAfterEvaluatingBlock:(QSCompletionHandler)block;
 - (void)_showCaptureFailedAlert;
 
