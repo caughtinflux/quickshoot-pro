@@ -57,7 +57,7 @@ static BOOL QSAppIsEnabled(NSString *identifier);
 static void QSAddGestureRecognizersToView(SBIconView *view);
 static void QSUserNotificationCallBack(CFUserNotificationRef userNotification, CFOptionFlags responseFlags);
 
-__attribute__((always_inline)) static inline NSString    * QSCreateReversedSHA1FromFileAtPath(CFStringRef path, CFDataRef data, NSDictionary *flags); // this returns the MD5. *not* SHA-1 Also, it doesn't reverse anything. lulz
+__attribute__((always_inline)) static inline NSString * QSCreateReversedSHA1FromFileAtPath(CFStringRef path, CFDataRef data, NSDictionary *flags); // this returns the MD5. *not* SHA-1 Also, it doesn't reverse anything. lulz
 __attribute__((always_inline)) static inline qs_retval_t   QSCheckCapabilites(void);
 
 

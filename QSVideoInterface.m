@@ -266,7 +266,7 @@ error:
         }
     }
     if (!recordedSuccessfully) {
-        NSLog(@"QS: An error occurred when recording to file: %@ \n Error: %i, %@", [fileURL absoluteString], error.code, error.localizedDescription);
+        NSLog(@"QS: An error occurred when recording to file: %@ Error: %i, %@", [fileURL absoluteString], error.code, error.localizedDescription);
     }
     else {
         error = nil; // don't let the delegate know that an error occurred if it recorded successfully

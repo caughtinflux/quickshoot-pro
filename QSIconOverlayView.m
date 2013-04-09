@@ -227,6 +227,8 @@
             dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (0.4 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
                 // dispatch_after 0.4 seconds, so that the focus rect remains on screen until then.
                 // gives it a nice animation, like the focus rect in the camera app
+                // Using UIView animation options to auto reverse makes it look like shit.
+                // So...dispatch_after FTW!
                 [UIView animateWithDuration:0.07 animations:^{
                     [wSelf->_focusRectImageView setAlpha:0.0f];
                 } completion:^(BOOL finished){
