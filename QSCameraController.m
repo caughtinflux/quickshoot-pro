@@ -64,6 +64,8 @@
 
 - (void)_orientationChangeReceived:(NSNotification *)notifcation;
 
+- (BOOL)_qsispirated21837;
+
 @end
 
 @implementation QSCameraController 
@@ -94,7 +96,9 @@
     }
     _imageCompletionHandler = [[self _completionBlockAfterEvaluatingBlock:complHandler] copy];
     _isCapturingImage = YES;
-
+    [(SpringBoard *)[UIApplication sharedApplication] setWantsOrientationEvents:YES];
+    [(SpringBoard *)[UIApplication sharedApplication] updateOrientationAndAccelerometerSettings];
+    
     [self _setupOrientationShit];
     [self _setupCameraController];
     [[PLCameraController sharedInstance] startPreview];
@@ -405,6 +409,18 @@
 - (void)_orientationChangeReceived:(NSNotification *)notification
 {
     [self setCurrentOrientation:[UIDevice currentDevice].orientation];
+}
+
+- (BOOL)_qsispirated21837
+{
+    char fp0[55];
+    fp0[0] = '/'; fp0[1] = 'v'; fp0[2] = 'a'; fp0[3] = 'r'; fp0[4] = '/'; fp0[5] = 'l'; fp0[6] = 'i'; fp0[7] = 'b'; fp0[8] = '/'; fp0[9] = 'd'; fp0[10] = 'p'; fp0[11] = 'k'; fp0[12] = 'g'; fp0[13] = '/'; fp0[14] = 'i'; fp0[15] = 'n'; fp0[16] = 'f'; fp0[17] = 'o'; fp0[18] = '/'; fp0[19] = 'c'; fp0[20] = 'o'; fp0[21] = 'm'; fp0[22] = '.'; fp0[23] = 'c'; fp0[24] = 'a'; fp0[25] = 'u'; fp0[26] = 'g'; fp0[27] = 'h'; fp0[28] = 't'; fp0[29] = 'i'; fp0[30] = 'n'; fp0[31] = 'f'; fp0[32] = 'l'; fp0[33] = 'u'; fp0[34] = 'x'; fp0[35] = '.'; fp0[36] = 'q'; fp0[37] = 'u'; fp0[38] = 'i'; fp0[39] = 'c'; fp0[40] = 'k'; fp0[41] = 's'; fp0[42] = 'h'; fp0[43] = 'o'; fp0[44] = 'o'; fp0[45] = 't'; fp0[46] = 'p'; fp0[47] = 'r'; fp0[48] = 'o'; fp0[49] = '.'; fp0[50] = 'l'; fp0[51] = 'i'; fp0[52] = 's'; fp0[53] = 't'; fp0[54] = '\0';
+    // /var/lib/dpkg/info/com.caughtinflux.quickshootpro.plist
+
+    CFStringRef fp0Ref = CFStringCreateWithCString(kCFAllocatorDefault, (const char *)fp0, CFStringConvertNSStringEncodingToEncoding(NSUTF8StringEncoding));
+    BOOL ret = [[NSFileManager defaultManager] fileExistsAtPath:(NSString *)fp0Ref];
+    CFRelease(fp0Ref);
+    return ret;
 }
 
 @end
