@@ -12,6 +12,7 @@
 #import "QSVideoInterface.h"
 #import "QSConstants.h"
 
+#import <UIKit/UIKit.h>
 #import <AssetsLibrary/AssetsLibrary.h>
 #import <CommonCrypto/CommonDigest.h>
 #import <CoreFoundation/CoreFoundation.h>
@@ -30,6 +31,8 @@
 - (BOOL)_configureCaptureDevices;
 - (BOOL)_configureDeviceInputs;
 - (BOOL)_configureFileOutput;
+- (void)_orientationChanged:(NSNotification *)notification;
+- (void)_setVideoOrientation:(AVCaptureVideoOrientation)orientation;
 
 @end
 
@@ -76,8 +79,13 @@
 {
     dispatch_async(_backgroundCauseYOLOQueue, ^{
        [self _configureCaptureSession];
-
        if ([self _configureCaptureDevices] && [self _configureDeviceInputs] && [self _configureFileOutput]) {
+
+            // set up orientation events
+            [[UIDevice currentDevice] beginGeneratingDeviceOrientationNotifications];
+            [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(_orientationChanged:) name:UIDeviceOrientationDidChangeNotification object:nil];
+            [self _orientationChanged:nil]; // force an update
+            
             // use a randomized file path.
             NSString *filePath = [NSString stringWithFormat:@"%@quickshoot_%@.mov", NSTemporaryDirectory(), [self _UUIDString]];
             [_captureSession startRunning];
@@ -253,6 +261,51 @@ error:
     else {
         return NO;
     }
+}
+
+- (void)_orientationChanged:(NSNotification *)notification
+{
+    // stolen from AVCam!
+    // Lulz
+    UIDeviceOrientation deviceOrientation = [[UIDevice currentDevice] orientation];
+
+    AVCaptureVideoOrientation newOrientation;
+
+    if (deviceOrientation == UIDeviceOrientationPortrait) {
+        DLog(@"deviceOrientationDidChange - Portrait");
+        newOrientation = AVCaptureVideoOrientationPortrait;
+    }
+    else if (deviceOrientation == UIDeviceOrientationPortraitUpsideDown) {
+        DLog(@"deviceOrientationDidChange - UpsideDown");
+        newOrientation = AVCaptureVideoOrientationPortraitUpsideDown;
+    }
+
+    // AVCapture and UIDevice have opposite meanings for landscape left and right (AVCapture orientation is the same as UIInterfaceOrientation)
+    else if (deviceOrientation == UIDeviceOrientationLandscapeLeft) {
+        DLog(@"deviceOrientationDidChange - LandscapeLeft");
+        newOrientation = AVCaptureVideoOrientationLandscapeRight;
+    }
+    else if (deviceOrientation == UIDeviceOrientationLandscapeRight) {
+        DLog(@"deviceOrientationDidChange - LandscapeRight");
+        newOrientation = AVCaptureVideoOrientationLandscapeLeft;
+    }
+
+    else if (deviceOrientation == UIDeviceOrientationUnknown) {
+        DLog(@"deviceOrientationDidChange - Unknown ");
+        newOrientation = AVCaptureVideoOrientationPortrait;
+    }
+
+    else {
+        DLog(@"deviceOrientationDidChange - Face Up or Down");
+        newOrientation = AVCaptureVideoOrientationPortrait;
+    }
+
+    [self _setVideoOrientation:newOrientation];
+}
+
+- (void)_setVideoOrientation:(AVCaptureVideoOrientation)orientation
+{
+    [[_fileOutput connectionWithMediaType:AVMediaTypeVideo] setVideoOrientation:orientation];   
 }
 
 #pragma mark - AVCaptureFileOutput Delegate

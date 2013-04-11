@@ -63,7 +63,6 @@
 
 - (void)dealloc
 {
-    DLog(@"Start");
     [_animationCompletionHandler release];
     _animationCompletionHandler = nil;
     
@@ -80,7 +79,6 @@
     _recordingLightImageView = nil;
 
     [super dealloc];
-    DLog(@"End");
 }
 
 - (void)captureBegan

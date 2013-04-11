@@ -552,6 +552,7 @@ __attribute__((always_inline)) static inline qs_retval_t QSCheckCapabilites(void
         // check if /var/lib/dpkg/info/com.caughtinflux.quickshootpro.plist exists
         // abilities checked = NO means it isn't pirated.
         _abilitiesChecked = YES;
+        [[QSActivatorListener sharedInstance] setAbilitiesChecked:NO]; // opposite!
         QSUpdatePrefs(NULL, NULL, CFSTR("com.caughtinflux.quickshootpro.prefschanged"), NULL, NULL);
     }
     else {
