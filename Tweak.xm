@@ -38,13 +38,13 @@
 #include <sys/stat.h>
 
 #pragma mark - Static Stuff
-static BOOL _enabled                 = NO;
-static BOOL _shownWelcomeAlert       = NO;
-static BOOL _shouldStartChecks       = NO;
-static BOOL _abilitiesChecked        = NO; // aka _isPirated
-static BOOL _isCapturingImage        = NO;
-static BOOL _isCapturingVideo        = NO;
-static BOOL _hasInitialized          = NO;
+static BOOL _enabled           = NO;
+static BOOL _shownWelcomeAlert = NO;
+static BOOL _shouldStartChecks = NO;
+static BOOL _abilitiesChecked  = NO; // aka _isPirated
+static BOOL _isCapturingImage  = NO;
+static BOOL _isCapturingVideo  = NO;
+static BOOL _hasInitialized    = NO;
 
 static NSMutableArray *_enabledAppIDs           = nil;
 static NSString       *_currentlyOverlayedAppID = nil;
