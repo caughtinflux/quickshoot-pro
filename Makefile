@@ -15,9 +15,10 @@ SUBPROJECTS += qsprefs
 include $(THEOS_MAKE_PATH)/aggregate.mk
 
 before-package::
-	-$(ECHO_NOTHING)./updatebuild.py$(ECHO_END)
+	$(ECHO_NOTHING)./updatebuild.py $(THEOS_PACKAGE_VERSION)$(ECHO_END)
 
 before-install::
 ifneq ($(DEBUG), 1)
 	-$(ECHO_NOTHING)./updatemd5.sh$(ECHO_END)
 endif
+

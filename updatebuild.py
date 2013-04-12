@@ -19,25 +19,14 @@ latestVersionFile = ""
 latestBuild = ""
 
 try:
-	with open(controlFile) as f:
-		for line in f.readlines():
-			if keyFromString(line) == "Version":
-				latestVersionFile = valueFromString(line).replace(" ", "")
-				break
-		print("File: {0}".format(latestVersionFile))
-
-	with open("/Users/aditya/code/projects/quickshootpro/.theos/packages/com.caughtinflux.quickshootpro-{0}".format(latestVersionFile), "r") as pkgCountFile:
-		latestBuild =  pkgCountFile.readline()
-		print("Build: {0}".format(latestBuild))
-
 	prefsPlistPath = "/Users/aditya/code/projects/quickshootpro/qsprefs/Resources/Info.plist"
 
 	prefsPlist = plistlib.readPlist(prefsPlistPath)
-	prefsPlist["QSBuildVersion"] = latestBuild
+	prefsPlist["QSBuildVersion"] = sys.argv[1]
 	plistlib.writePlist(prefsPlist, prefsPlistPath)
 	
-
 except IOError as e:
 	print("I/O error({0}): {1}".format(e.errno, e.strerror))
 
+print "Build: " + sys.argv[1]
 print("")
