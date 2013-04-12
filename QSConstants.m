@@ -18,7 +18,6 @@
 
 NSString * const QSEnabledKey                    = @"kQSEnabled";
 NSString * const QSUserHasSeenAlertKey           = @"kQSUserHasSeenAlert";
-
 NSString * const QSFlashModeKey                  = @"kQSFlashMode";
 NSString * const QSCameraDeviceKey               = @"kQSCameraDevice";
 NSString * const QSHDRModeKey                    = @"kQSHDREnabled";
@@ -28,6 +27,9 @@ NSString * const QSPrefsChangedNotificationName  = @"kQSPrefsChangedNotif";
 NSString * const QSVideoQualityKey               = @"kQSVideoQuality";
 NSString * const QSTorchModeKey                  = @"kQSTorchMode";
 NSString * const QSReferenceTimeKey              = @"kQSReferenceTimeKey";
+NSString * const QSScreenFlashKey                = @"kQSScreenFlash";
+NSString * const QSRecordingIconKey              = @"kQSRecordingIcon";
+NSString * const QSShutterSoundKey               = @"kQSShutterSound";
 
 NSString * const QSImageCaptureListenerName      = @"com.caughtinflux.quickshootpro.imagecapturelistener";
 NSString * const QSVideoCaptureListenerName      = @"com.caughtinflux.quickshootpro.videocapturelistener";

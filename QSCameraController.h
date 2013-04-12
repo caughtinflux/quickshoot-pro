@@ -27,8 +27,10 @@
 // Automatically set every time the orientation changes, but you can force a different orientation, provided it doesn't change after you've forced it.
 @property(nonatomic, assign) UIDeviceOrientation currentOrientation;
 
-@property(nonatomic, assign, readonly, getter = isCapturingVideo) BOOL capturingVideo;
-@property(nonatomic, assign, readonly, getter = isCapturingImage) BOOL capturingImage;
+@property(nonatomic, readonly, getter = isCapturingVideo) BOOL capturingVideo;
+@property(nonatomic, readonly, getter = isCapturingImage) BOOL capturingImage;
+
+@property(nonatomic, assign) BOOL playShutterSound;
 
 // video properties
 @property(nonatomic, copy) NSString *videoCaptureQuality;

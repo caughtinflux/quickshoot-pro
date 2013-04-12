@@ -176,6 +176,55 @@
             <key>cell</key>
             <string>PSGroupCell</string>
             <key>label</key>
+            <string>Behavior</string>
+        </dict>
+        <dict>
+            <key>cell</key>
+            <string>PSSwitchCell</string>
+            <key>default</key>
+            <true/>
+            <key>defaults</key>
+            <string>com.caughtinflux.qsproprefs</string>
+            <key>key</key>
+            <string>kQSScreenFlash</string>
+            <key>label</key>
+            <string>Flash Screen</string>
+            <key>PostNotification</key>
+            <string>com.caughtinflux.quickshootpro.prefschanged</string>
+        </dict>
+        <dict>
+            <key>cell</key>
+            <string>PSSwitchCell</string>
+            <key>default</key>
+            <true/>
+            <key>defaults</key>
+            <string>com.caughtinflux.qsproprefs</string>
+            <key>key</key>
+            <string>kQSRecordingIcon</string>
+            <key>label</key>
+            <string>Recording Icon</string>
+            <key>PostNotification</key>
+            <string>com.caughtinflux.quickshootpro.prefschanged</string>
+        </dict>
+        <dict>
+            <key>cell</key>
+            <string>PSSwitchCell</string>
+            <key>default</key>
+            <true/>
+            <key>defaults</key>
+            <string>com.caughtinflux.qsproprefs</string>
+            <key>key</key>
+            <string>kQSShutterSound</string>
+            <key>label</key>
+            <string>Shutter Sound</string>
+            <key>PostNotification</key>
+            <string>com.caughtinflux.quickshootpro.prefschanged</string>
+        </dict>
+
+        <dict>
+            <key>cell</key>
+            <string>PSGroupCell</string>
+            <key>label</key>
             <string>Options Window</string>
             <key>footerText</key>
             <string>Window will be hidden automatically after the preferred delay.</string>

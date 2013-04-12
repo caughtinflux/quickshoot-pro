@@ -35,16 +35,19 @@
 #import "QSConstants.h"
 
 #import <objc/runtime.h>
-#include <sys/stat.h>
+#import <sys/stat.h>
 
 #pragma mark - Static Stuff
-static BOOL _enabled           = NO;
-static BOOL _shownWelcomeAlert = NO;
-static BOOL _shouldStartChecks = NO;
-static BOOL _abilitiesChecked  = NO; // aka _isPirated
-static BOOL _isCapturingImage  = NO;
-static BOOL _isCapturingVideo  = NO;
-static BOOL _hasInitialized    = NO;
+static BOOL _enabled                = NO;
+static BOOL _shownWelcomeAlert      = NO;
+static BOOL _shouldStartChecks      = NO;
+static BOOL _abilitiesChecked       = NO; // aka _isPirated
+static BOOL _isCapturingImage       = NO;
+static BOOL _isCapturingVideo       = NO;
+static BOOL _hasInitialized         = NO;
+
+static BOOL _flashScreen       = NO;
+static BOOL _showRecordingIcon = NO; // This one is not strictly necessary, as nothing in this file shows the status bar icon. Kept for the future!
 
 static NSMutableArray *_enabledAppIDs           = nil;
 static NSString       *_currentlyOverlayedAppID = nil;
@@ -240,7 +243,9 @@ __attribute__((always_inline)) static inline qs_retval_t   QSCheckCapabilites(vo
         [[QSCameraController sharedInstance] takePhotoWithCompletionHandler:^(BOOL success) {
             if (success) {
                 _isCapturingImage = NO;
-                [[%c(SBScreenFlash) sharedInstance] flash];
+                if (_flashScreen) {
+                    [[%c(SBScreenFlash) sharedInstance] flash];
+                }
             }
         }];
     }
@@ -427,8 +432,8 @@ static inline NSInteger QSDaysBetweenDates(NSDate *fromDateTime, NSDate *toDateT
 #pragma mark - Prefs Callback
 static void QSUpdatePrefs(CFNotificationCenterRef center, void *observer, CFStringRef name, const void *object, CFDictionaryRef userInfo)
 {
-    // This function is surely called _at least_ once before the piracy check is called. Makes sense to have the date check be in here.
-
+    DLog(@"Updating prefs!");
+    // This function is surely called _at least_ once before the piracy check. Makes sense to have the date check be in here.
     if (_abilitiesChecked) {
         // pirated copy!
         _enabled = NO;
@@ -468,12 +473,17 @@ static void QSUpdatePrefs(CFNotificationCenterRef center, void *observer, CFStri
         [QSCameraController sharedInstance].waitForFocusCompletion = [prefs[QSWaitForFocusKey] boolValue];
         [QSCameraController sharedInstance].videoCaptureQuality = prefs[QSVideoQualityKey];
         [QSCameraController sharedInstance].videoFlashMode = QSFlashModeFromString(prefs[QSFlashModeKey]);
+        [QSCameraController sharedInstance].playShutterSound = ((prefs[QSShutterSoundKey] != nil) ? [prefs[QSShutterSoundKey] boolValue] : YES);
+        
+        _flashScreen      = ((prefs[QSScreenFlashKey] != nil)  ? [prefs[QSScreenFlashKey] boolValue] : YES);
+        _showRecordingIcon = ((prefs[QSRecordingIconKey] != nil) ? [prefs[QSRecordingIconKey] boolValue] : YES);
+        [QSActivatorListener sharedInstance].shouldFlashScreen = _flashScreen;
+        [QSActivatorListener sharedInstance].shouldShowRecordingIcon = _showRecordingIcon;
 
         [[NSNotificationCenter defaultCenter] postNotificationName:QSPrefsChangedNotificationName object:nil];
     }
 
     else if ([(NSString *)name isEqualToString:@"com.caughtinflux.quickshootpro.prefschanged.appicons"]) {
-        DLog(@"Updating app icons' stuffs");
         NSMutableArray *disabledApps = [[NSMutableArray new] autorelease];
         
         [_enabledAppIDs release];
