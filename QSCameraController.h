@@ -30,8 +30,6 @@
 @property(nonatomic, readonly, getter = isCapturingVideo) BOOL capturingVideo;
 @property(nonatomic, readonly, getter = isCapturingImage) BOOL capturingImage;
 
-@property(nonatomic, assign) BOOL playShutterSound;
-
 // video properties
 @property(nonatomic, copy) NSString *videoCaptureQuality;
 @property(nonatomic, assign) QSFlashMode videoFlashMode;

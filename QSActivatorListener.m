@@ -95,7 +95,7 @@
             if (self.shouldShowRecordingIcon) {
                 _shouldBlinkVideoIcon = YES;
                 [self _startBlinkingVideoIcon];
-            }
+            } 
             [[QSCameraController sharedInstance] stopVideoCaptureWithHandler:videoStopHandler];
         }
     }

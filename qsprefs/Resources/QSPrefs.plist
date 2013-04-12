@@ -206,20 +206,6 @@
             <key>PostNotification</key>
             <string>com.caughtinflux.quickshootpro.prefschanged</string>
         </dict>
-        <dict>
-            <key>cell</key>
-            <string>PSSwitchCell</string>
-            <key>default</key>
-            <true/>
-            <key>defaults</key>
-            <string>com.caughtinflux.qsproprefs</string>
-            <key>key</key>
-            <string>kQSShutterSound</string>
-            <key>label</key>
-            <string>Shutter Sound</string>
-            <key>PostNotification</key>
-            <string>com.caughtinflux.quickshootpro.prefschanged</string>
-        </dict>
 
         <dict>
             <key>cell</key>

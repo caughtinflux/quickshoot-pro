@@ -5,7 +5,7 @@ include theos/makefiles/common.mk
 
 TWEAK_NAME = QuickShootPro
 QuickShootPro_FILES = QSConstants.m Tweak.xm QSCameraController.m QSVideoInterface.m QSActivatorListener.m QSCameraOptionsWindow.m QSIconOverlayView.m
-QuickShootPro_FRAMEWORKS = UIKit Foundation CoreGraphics AVFoundation AssetsLibrary QuartzCore
+QuickShootPro_FRAMEWORKS = UIKit Foundation CoreGraphics AVFoundation AssetsLibrary QuartzCore AudioToolbox
 QuickShootPro_PRIVATE_FRAMEWORKS = PhotoLibrary
 QuickShootPro_CFLAGS = -Wall -O3
 QuickShootPro_LDFLAGS = -lactivator
