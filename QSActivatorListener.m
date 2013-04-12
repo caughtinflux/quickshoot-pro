@@ -62,7 +62,9 @@
             return;
         }
         [[QSCameraController sharedInstance] takePhotoWithCompletionHandler:^(BOOL success) {
-            [(SBScreenFlash *)[objc_getClass("SBScreenFlash") sharedInstance] flash];
+            if (self.shouldFlashScreen) {
+                [(SBScreenFlash *)[objc_getClass("SBScreenFlash") sharedInstance] flash];
+            }
         }];
     }
     // video capture
@@ -84,13 +86,16 @@
             }
             _isCapturingVideo = YES;
             [[QSCameraController sharedInstance] startVideoCaptureWithHandler:^(BOOL success) {
-                DLog(@"Adding status bar image");
-                [(SpringBoard *)[UIApplication sharedApplication] addStatusBarImageNamed:QSStatusBarImageName];
+                if (self.shouldShowRecordingIcon) {
+                    [(SpringBoard *)[UIApplication sharedApplication] addStatusBarImageNamed:QSStatusBarImageName];
+                }
             } interruptionHandler:videoStopHandler];
         }
         else {
-            _shouldBlinkVideoIcon = YES;
-            [self _startBlinkingVideoIcon];
+            if (self.shouldShowRecordingIcon) {
+                _shouldBlinkVideoIcon = YES;
+                [self _startBlinkingVideoIcon];
+            } 
             [[QSCameraController sharedInstance] stopVideoCaptureWithHandler:videoStopHandler];
         }
     }

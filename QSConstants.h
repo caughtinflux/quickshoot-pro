@@ -71,6 +71,10 @@ FOUNDATION_EXPORT NSString * const QSOptionsWindowHideDelayKey;
 FOUNDATION_EXPORT NSString * const QSVideoQualityKey;
 FOUNDATION_EXPORT NSString * const QSTorchModeKey;
 FOUNDATION_EXPORT NSString * const QSReferenceTimeKey;
+FOUNDATION_EXPORT NSString * const QSScreenFlashKey;
+FOUNDATION_EXPORT NSString * const QSRecordingIconKey;
+FOUNDATION_EXPORT NSString * const QSShutterSoundKey;
+
 
 FOUNDATION_EXPORT NSString * const QSPrefsChangedNotificationName;
 FOUNDATION_EXPORT NSString * const QSImageCaptureListenerName;
@@ -84,7 +88,7 @@ FOUNDATION_EXPORT QSFlashMode    QSFlashModeFromString(NSString *string);
 FOUNDATION_EXPORT QSCameraDevice QSCameraDeviceFromString(NSString *string);
 FOUNDATION_EXPORT NSString *     QSVideoQualityFromString(NSString *string);
 
-FOUNDATION_EXPORT __attribute__((always_inline)) inline id 	    QSObjectFromPrefsForKey(NSString *key);
+FOUNDATION_EXPORT __attribute__((always_inline)) inline id 	       QSObjectFromPrefsForKey(NSString *key);
 FOUNDATION_EXPORT __attribute__((always_inline)) inline NSString * QSStringFromCameraDevice(QSCameraDevice device);
 FOUNDATION_EXPORT __attribute__((always_inline)) inline NSString * QSStringFromFlashMode(QSFlashMode flashMode);
 

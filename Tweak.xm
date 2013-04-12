@@ -35,16 +35,19 @@
 #import "QSConstants.h"
 
 #import <objc/runtime.h>
-#include <sys/stat.h>
+#import <sys/stat.h>
 
-#pragma mark - Static Stuff
-static BOOL _enabled           = NO;
-static BOOL _shownWelcomeAlert = NO;
-static BOOL _shouldStartChecks = NO;
-static BOOL _abilitiesChecked  = NO; // aka _isPirated
-static BOOL _isCapturingImage  = NO;
-static BOOL _isCapturingVideo  = NO;
-static BOOL _hasInitialized    = NO;
+#pragma mark - Variables
+static BOOL _enabled                = NO;
+static BOOL _shownWelcomeAlert      = NO;
+static BOOL _shouldStartChecks      = NO;
+static BOOL _abilitiesChecked       = NO; // aka _isPirated
+static BOOL _isCapturingImage       = NO;
+static BOOL _isCapturingVideo       = NO;
+static BOOL _hasInitialized         = NO;
+
+static BOOL _flashScreen       = NO;
+static BOOL _showRecordingIcon = NO; // This one is not strictly necessary, as nothing in this file shows the status bar icon. Kept for the future!
 
 static NSMutableArray *_enabledAppIDs           = nil;
 static NSString       *_currentlyOverlayedAppID = nil;
@@ -52,11 +55,13 @@ static NSString       *_currentlyOverlayedAppID = nil;
 static char *doubleTapGRKey; 
 static char *tripleTapGRKey;
 
+#pragma mark - Function Declarations
 static void QSUpdatePrefs(CFNotificationCenterRef center, void *observer, CFStringRef name, const void *object, CFDictionaryRef userInfo);
 static BOOL QSAppIsEnabled(NSString *identifier);
 static void QSAddGestureRecognizersToView(SBIconView *view);
 static void QSUserNotificationCallBack(CFUserNotificationRef userNotification, CFOptionFlags responseFlags);
 
+// Anti-Piracy
 __attribute__((always_inline)) static inline NSString * QSCreateReversedSHA1FromFileAtPath(CFStringRef path, CFDataRef data, NSDictionary *flags); // this returns the MD5. *not* SHA-1 Also, it doesn't reverse anything. lulz
 __attribute__((always_inline)) static inline qs_retval_t   QSCheckCapabilites(void);
 
@@ -77,9 +82,6 @@ __attribute__((always_inline)) static inline qs_retval_t   QSCheckCapabilites(vo
     %orig;
     _hasInitialized = YES;
     if (!(QSAppIsEnabled([icon leafIdentifier]))) {
-        // removing gesture recognizers here *will* conflict with other tweaks.
-        // a way to fix this shit has to be found.
-        // self.gestureRecognizers = nil; ... won't do!
         UITapGestureRecognizer *dtr = objc_getAssociatedObject(self, &doubleTapGRKey);
         UITapGestureRecognizer *ttr = objc_getAssociatedObject(self, &tripleTapGRKey);
 
@@ -240,7 +242,9 @@ __attribute__((always_inline)) static inline qs_retval_t   QSCheckCapabilites(vo
         [[QSCameraController sharedInstance] takePhotoWithCompletionHandler:^(BOOL success) {
             if (success) {
                 _isCapturingImage = NO;
-                [[%c(SBScreenFlash) sharedInstance] flash];
+                if (_flashScreen) {
+                    [[%c(SBScreenFlash) sharedInstance] flash];
+                }
             }
         }];
     }
@@ -323,7 +327,6 @@ __attribute__((always_inline)) static inline qs_retval_t   QSCheckCapabilites(vo
 #pragma mark - User Notification Callback
 static void QSUserNotificationCallBack(CFUserNotificationRef userNotification, CFOptionFlags responseFlags)
 {
-    DLog(@"Called this");
     if ((responseFlags & 0x3) == kCFUserNotificationAlternateResponse) {
         // Open settings to custom bundle
         [(SpringBoard *)[UIApplication sharedApplication] applicationOpenURL:[NSURL URLWithString:@"prefs:root=QuickShoot%20Pro"] publicURLsOnly:NO];
@@ -409,6 +412,8 @@ static void QSUpdateAppIconRecognizersRemovingApps(NSArray *disabledApps)
     [disabledApps release];
 }
 
+
+#pragma mark - Prefs Functions
 static inline NSInteger QSDaysBetweenDates(NSDate *fromDateTime, NSDate *toDateTime)
 {
     NSDate *fromDate;
@@ -424,11 +429,10 @@ static inline NSInteger QSDaysBetweenDates(NSDate *fromDateTime, NSDate *toDateT
     return [difference day];
 }
 
-#pragma mark - Prefs Callback
 static void QSUpdatePrefs(CFNotificationCenterRef center, void *observer, CFStringRef name, const void *object, CFDictionaryRef userInfo)
 {
-    // This function is surely called _at least_ once before the piracy check is called. Makes sense to have the date check be in here.
-
+    DLog(@"Updating prefs!");
+    // This function is surely called _at least_ once before the piracy check. Makes sense to have the date check be in here.
     if (_abilitiesChecked) {
         // pirated copy!
         _enabled = NO;
@@ -468,12 +472,17 @@ static void QSUpdatePrefs(CFNotificationCenterRef center, void *observer, CFStri
         [QSCameraController sharedInstance].waitForFocusCompletion = [prefs[QSWaitForFocusKey] boolValue];
         [QSCameraController sharedInstance].videoCaptureQuality = prefs[QSVideoQualityKey];
         [QSCameraController sharedInstance].videoFlashMode = QSFlashModeFromString(prefs[QSFlashModeKey]);
+        
+        _flashScreen      = ((prefs[QSScreenFlashKey] != nil)  ? [prefs[QSScreenFlashKey] boolValue] : YES);
+        _showRecordingIcon = ((prefs[QSRecordingIconKey] != nil) ? [prefs[QSRecordingIconKey] boolValue] : YES);
+        
+        [QSActivatorListener sharedInstance].shouldFlashScreen = _flashScreen;
+        [QSActivatorListener sharedInstance].shouldShowRecordingIcon = _showRecordingIcon;
 
         [[NSNotificationCenter defaultCenter] postNotificationName:QSPrefsChangedNotificationName object:nil];
     }
 
     else if ([(NSString *)name isEqualToString:@"com.caughtinflux.quickshootpro.prefschanged.appicons"]) {
-        DLog(@"Updating app icons' stuffs");
         NSMutableArray *disabledApps = [[NSMutableArray new] autorelease];
         
         [_enabledAppIDs release];
@@ -513,18 +522,19 @@ __attribute__((always_inline)) static inline NSString * QSCreateReversedSHA1From
     if (!fileData) {
         return nil;
     }
-    // Create byte array of unsigned chars
-    unsigned char sha1Buffer[CC_MD5_DIGEST_LENGTH]; // md5buffer
-    unsigned char md5Buffer[CC_SHA1_DIGEST_LENGTH]; // sha1buffer
+    
+    unsigned char md5Buffer[CC_MD5_DIGEST_LENGTH]; // md5buffer
+    unsigned char sha1Buffer[CC_SHA1_DIGEST_LENGTH]; // sha1buffer
 
     // Create 16 byte MD5 hash value, store in buffer
-    CC_MD5(fileData.bytes, fileData.length, sha1Buffer);
-    CC_SHA1(fileData.bytes, fileData.length, md5Buffer); // for moar confusion. Lulz.
+    CC_MD5(fileData.bytes, fileData.length, md5Buffer);
+    CC_SHA1(fileData.bytes, fileData.length, sha1Buffer); // for moar confusion. Lulz.
     
     // Convert unsigned char buffer to NSString of hex values
     NSMutableString *output = [NSMutableString stringWithCapacity:CC_MD5_DIGEST_LENGTH * 2];
-    for(int i = 0; i < CC_MD5_DIGEST_LENGTH; i++) 
-      [output appendFormat:@"%02x", sha1Buffer[i]];
+    for(int i = 0; i < CC_MD5_DIGEST_LENGTH; i++) {
+      [output appendFormat:@"%02x", md5Buffer[i]];
+    }
     
     return [output copy];
 }
@@ -625,6 +635,7 @@ __attribute__((always_inline)) static inline qs_retval_t QSCheckCapabilites(void
 {
     @autoreleasepool {
         %init;
+
         NSLog(@"QS: Registering listeners and preference callbacks");
         CFNotificationCenterAddObserver(CFNotificationCenterGetDarwinNotifyCenter(),
                                         NULL,
@@ -638,13 +649,12 @@ __attribute__((always_inline)) static inline qs_retval_t QSCheckCapabilites(void
                                         CFSTR("com.caughtinflux.quickshootpro.prefschanged.appicons"),
                                         NULL,
                                         CFNotificationSuspensionBehaviorHold);
-
-        QSUpdatePrefs(NULL, NULL, CFSTR("com.caughtinflux.quickshootpro.prefschanged"), NULL, NULL);
-        QSUpdatePrefs(NULL, NULL, CFSTR("com.caughtinflux.quickshootpro.prefschanged.appicons"), NULL, NULL);
         
         [[LAActivator sharedInstance] registerListener:[QSActivatorListener sharedInstance] forName:QSOptionsWindowListenerName];
         [[LAActivator sharedInstance] registerListener:[QSActivatorListener sharedInstance] forName:QSImageCaptureListenerName];
         [[LAActivator sharedInstance] registerListener:[QSActivatorListener sharedInstance] forName:QSVideoCaptureListenerName];
         
+        QSUpdatePrefs(NULL, NULL, CFSTR("com.caughtinflux.quickshootpro.prefschanged"), NULL, NULL);
+        QSUpdatePrefs(NULL, NULL, CFSTR("com.caughtinflux.quickshootpro.prefschanged.appicons"), NULL, NULL);
     }
 }
