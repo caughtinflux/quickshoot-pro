@@ -26,6 +26,8 @@
 @property(nonatomic, assign) AVCaptureTorchMode torchMode;
 @property(nonatomic, assign) id<QSVideoInterfaceDelegate> delegate;
 
+@property(nonatomic, readonly) BOOL videoCaptureSessionRunning;
+
 - (void)startVideoCapture;
 - (void)stopVideoCapture;
 - (void)setTorchModeFromFlashMode:(QSFlashMode)flashMode;

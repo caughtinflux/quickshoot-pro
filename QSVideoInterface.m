@@ -101,6 +101,8 @@
         if (_captureSession && [_captureSession isRunning]) {
             [_captureSession stopRunning];
             [_fileOutput stopRecording];
+            
+            _videoCaptureSessionRunning = NO;
         }
     });
 }
@@ -266,7 +268,6 @@ error:
 - (void)_orientationChanged:(NSNotification *)notification
 {
     // stolen from AVCam!
-    // Lulz
     UIDeviceOrientation deviceOrientation = [[UIDevice currentDevice] orientation];
 
     AVCaptureVideoOrientation newOrientation;
@@ -336,6 +337,8 @@ error:
     if ([self.delegate respondsToSelector:@selector(videoInterfaceStartedVideoCapture:)] && [notification.name isEqualToString:AVCaptureSessionDidStartRunningNotification]) {
         [self.delegate videoInterfaceStartedVideoCapture:self];
     }
+
+    _videoCaptureSessionRunning = YES;
 }
 
 @end
