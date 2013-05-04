@@ -24,6 +24,8 @@
 
 #import "LibstatusBar.h"
 
+#define STRING_FROM_BOOL(b) (b == YES ? @"YES" : @"NO")
+
 @interface QSActivatorListener ()
 {
     QSCameraOptionsWindow *_optionsWindow;
@@ -70,6 +72,8 @@
     // video capture
     else if ([[[LAActivator sharedInstance] assignedListenerNameForEvent:event] isEqualToString:QSVideoCaptureListenerName]) {
 
+        static BOOL isStartingRecording;
+
         QSCompletionHandler videoStopHandler = ^(BOOL success) {
             _shouldBlinkVideoIcon = NO;
             _isCapturingVideo = NO;
@@ -79,21 +83,38 @@
             }
         };
 
-        if (_isCapturingVideo == NO) {
+        DLog(@"isStartingRecording = %@", STRING_FROM_BOOL(isStartingRecording));
+
+        if (_isCapturingVideo == NO && !isStartingRecording) {
             if ([QSCameraController sharedInstance].isCapturingVideo) {
                 // this check is necessary, because the user might be recording a video some other way, too.
+                [(SpringBoard *)[UIApplication sharedApplication] removeStatusBarImageNamed:QSStatusBarImageName];
                 return;
             }
             _isCapturingVideo = YES;
+            isStartingRecording = YES;
+
             [[QSCameraController sharedInstance] startVideoCaptureWithHandler:^(BOOL success) {
-                if (self.shouldShowRecordingIcon) {
-                    [(SpringBoard *)[UIApplication sharedApplication] addStatusBarImageNamed:QSStatusBarImageName];
+                if (!success) {
+                    _isCapturingVideo = NO;
+                    isStartingRecording = NO;
                 }
+
+                else {
+                    DLog(@"Video recording started");
+                    if (self.shouldShowRecordingIcon) {
+                        [(SpringBoard *)[UIApplication sharedApplication] addStatusBarImageNamed:QSStatusBarImageName];
+                    }
+                    isStartingRecording = NO;
+                }
+
             } interruptionHandler:videoStopHandler];
         }
-        else {
+        else if (_isCapturingVideo == YES && !isStartingRecording) {
+            DLog(@"Not capturing video, stopping.");
             if (self.shouldShowRecordingIcon) {
                 _shouldBlinkVideoIcon = YES;
+                DLog(@"Starting to blink video icon");
                 [self _startBlinkingVideoIcon];
             } 
             [[QSCameraController sharedInstance] stopVideoCaptureWithHandler:videoStopHandler];

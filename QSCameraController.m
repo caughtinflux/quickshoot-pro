@@ -138,7 +138,7 @@
 
 - (void)stopVideoCaptureWithHandler:(QSCompletionHandler)handler
 {
-    if (_isCapturingVideo) {
+    if (_isCapturingVideo && _videoInterface.videoCaptureSessionRunning) {
         _videoStoppedManually = YES;
         _videoStopHandler = [[self _completionBlockAfterEvaluatingBlock:handler] copy];
         [_videoInterface stopVideoCapture];
@@ -240,7 +240,6 @@
 
 - (void)cameraController:(PLCameraController *)camController capturedPhoto:(NSDictionary *)photoDict error:(NSError *)error
 {
-    DLog(@"");
     [[PLCameraController sharedInstance] stopPreview];
 
     if (photoDict == nil || error) {
@@ -300,10 +299,21 @@
 }
 - (void)_saveCameraImageToLibrary:(NSDictionary *)dict
 {
-    [[PLAssetsSaver sharedAssetsSaver] saveCameraImage:dict metadata:nil additionalProperties:nil requestEnqueuedBlock:nil]; // magick method. Now, if only I could find what the block's signature is.
-    [self _cleanupImageCaptureWithResult:YES];
+    if (objc_getClass("Velox")) {
+        // Velox exists.
+        // dat_bitch
+        UIImageWriteToSavedPhotosAlbum(dict[@"kPLCameraPhotoImageKey"], self, @selector(_veloxCompatibilitySavedImage:withError:context:), NULL);
+    }
+    else {
+        [[PLAssetsSaver sharedAssetsSaver] saveCameraImage:dict metadata:nil additionalProperties:nil requestEnqueuedBlock:nil]; // magick method. Now, if only I could find what the block's signature is.
+        [self _cleanupImageCaptureWithResult:YES];
+    }
 }
 
+- (void)_veloxCompatibilitySavedImage:(UIImage *)image withError:(NSError *)error context:(void *)context
+{
+    [self _cleanupImageCaptureWithResult:!error];
+}
 
 - (void)_cleanupImageCaptureWithResult:(BOOL)result
 {
@@ -362,9 +372,11 @@
                 UIAlertView *alert = [[UIAlertView alloc] initWithTitle:@"QuickShoot" message:[NSString stringWithFormat:@"An error occurred when saving the video.\nError %i, %@", error.code, error.localizedDescription] delegate:nil cancelButtonTitle:@"Dismiss" otherButtonTitles:nil];
                 [alert show];
                 [alert release];
+
+                NSLog(@"An error occurred when saving the video. %i: %@", error.code, error.localizedDescription);
             }
-            else {
-                [self _cleanupVideoCaptureWithResult:YES];
+            else {                
+                [self _cleanupVideoCaptureWithResult:NO];
             }
             [[NSFileManager defaultManager] removeItemAtURL:filePathURL error:NULL];
             [library release];
@@ -380,7 +392,6 @@
 
 - (void)_cleanupVideoCaptureWithResult:(BOOL)result
 {
-    DLog(@"Start");
     _isCapturingVideo = NO;
     if (_didChangeLockState) {
         [[objc_getClass("SBOrientationLockManager") sharedInstance] lock];
@@ -403,7 +414,6 @@
 
     [_videoInterface release];
     _videoInterface = nil;
-    DLog(@"End!");
 }
 
 - (void)_orientationChangeReceived:(NSNotification *)notification
