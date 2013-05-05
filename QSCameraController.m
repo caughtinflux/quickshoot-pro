@@ -302,10 +302,12 @@
     if (objc_getClass("Velox")) {
         // Velox exists.
         // dat_bitch
+        NSLog(@"QS: Velox is loaded, using hack and saving image twice, because it's a lottery!");
         UIImageWriteToSavedPhotosAlbum(dict[@"kPLCameraPhotoImageKey"], self, @selector(_veloxCompatibilitySavedImage:withError:context:), NULL);
+        [[PLAssetsSaver sharedAssetsSaver] saveCameraImage:dict metadata:nil additionalProperties:nil requestEnqueuedBlock:nil];
     }
     else {
-        [[PLAssetsSaver sharedAssetsSaver] saveCameraImage:dict metadata:nil additionalProperties:nil requestEnqueuedBlock:nil]; // magick method. Now, if only I could find what the block's signature is.
+        [[PLAssetsSaver sharedAssetsSaver] saveCameraImage:dict metadata:nil additionalProperties:nil requestEnqueuedBlock:nil]; 
         [self _cleanupImageCaptureWithResult:YES];
     }
 }
@@ -376,7 +378,6 @@
                 NSLog(@"An error occurred when saving the video. %i: %@", error.code, error.localizedDescription);
             }
             else {                
-                [self _cleanupVideoCaptureWithResult:NO];
                 [self _cleanupVideoCaptureWithResult:YES];
             }
             [[NSFileManager defaultManager] removeItemAtURL:filePathURL error:NULL];
@@ -384,6 +385,7 @@
         }];
     }
     else {
+        // Remove the file anyway. Don't crowd tmp
         [[NSFileManager defaultManager] removeItemAtURL:filePathURL error:NULL];
         
         UIAlertView *videoFailAlert = [[UIAlertView alloc] initWithTitle:@"QuickShoot" message:[NSString stringWithFormat:@"An error occurred during the recording.\nError %i, %@", error.code, error.localizedDescription] delegate:nil cancelButtonTitle:@"Dismiss" otherButtonTitles:nil];

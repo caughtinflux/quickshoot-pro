@@ -40,13 +40,13 @@
 #import <sys/stat.h>
 
 #pragma mark - Variables
-static BOOL _enabled                = NO;
-static BOOL _shownWelcomeAlert      = NO;
-static BOOL _shouldStartChecks      = NO;
-static BOOL _abilitiesChecked       = NO; // aka _isPirated
-static BOOL _isCapturingImage       = NO;
-static BOOL _isCapturingVideo       = NO;
-static BOOL _hasInitialized         = NO;
+static BOOL _enabled           = NO;
+static BOOL _shownWelcomeAlert = NO;
+static BOOL _shouldStartChecks = NO;
+static BOOL _abilitiesChecked  = NO; // aka _isPirated
+static BOOL _isCapturingImage  = NO;
+static BOOL _isCapturingVideo  = NO;
+static BOOL _hasInitialized    = NO;
 
 static BOOL _flashScreen       = NO;
 static BOOL _showRecordingIcon = NO; // This one is not strictly necessary, as nothing in this file shows the status bar icon. Kept for the future!
