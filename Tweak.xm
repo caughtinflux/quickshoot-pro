@@ -27,6 +27,8 @@
 #import <SpringBoard/SBAwayController.h>
 #import <SpringBoard/SBScreenFlash.h>
 
+#import <UIKit/UIGestureRecognizerTarget.h>
+
 #import "LibstatusBar.h"
 #import "QSCameraController.h"
 #import "QSIconOverlayView.h"
@@ -218,39 +220,44 @@ __attribute__((always_inline)) static inline qs_retval_t   QSCheckCapabilites(vo
 
 
 #pragma mark - Camera Grabber Hooks
-%hook UITapGestureRecognizer 
-- (UITapGestureRecognizer *)initWithTarget:(id)target action:(SEL)action
-{
-    self = %orig;
-    if (self && (target == [%c(SBAwayController) sharedAwayController]) && (action == @selector(handleCameraTapGesture:))) {
-        DLog(@"QS: Modifying camera grabber gesture recognizer.");
-        [(UITapGestureRecognizer *)self setNumberOfTapsRequired:2];
-    }
-    return self;
-}
-%end
 
-%hook SBAwayController
-- (void)handleCameraTapGesture:(UITapGestureRecognizer *)recognizer
+%hook SBAwayLockBar 
+- (void)setShowsCameraGrabber:(BOOL)shouldShowGrabber
 {
-    if (!_enabled || _isCapturingImage) {
+    %orig();
+
+    if (!shouldShowGrabber) {
         return;
     }
 
-    if ((recognizer.numberOfTapsRequired == 2) && !_isCapturingVideo) {
-        _isCapturingImage = YES;
-        [[QSCameraController sharedInstance] takePhotoWithCompletionHandler:^(BOOL success) {
-            if (success) {
-                _isCapturingImage = NO;
-                if (_flashScreen) {
-                    [[%c(SBScreenFlash) sharedInstance] flash];
-                }
+    UIView *grabberView = MSHookIvar<UIView *>(self, "_cameraGrabber");
+    UITapGestureRecognizer *tapRecognizer = [[[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(qs_handleDoubleTap:)] autorelease];
+    tapRecognizer.numberOfTapsRequired = 2;
+
+    for (UIGestureRecognizer *recognizer in grabberView.gestureRecognizers) {
+        // Make sure it's recognised only after all the other shit.
+        [recognizer requireGestureRecognizerToFail:tapRecognizer];
+    }
+
+    [grabberView addGestureRecognizer:tapRecognizer];
+}
+
+%new 
+- (void)qs_handleDoubleTap:(UITapGestureRecognizer *)sender
+{
+    if (!_enabled || _isCapturingImage || _isCapturingVideo) {
+        return;
+    }
+
+    _isCapturingImage = YES;
+    [[QSCameraController sharedInstance] takePhotoWithCompletionHandler:^(BOOL success) {
+        _isCapturingImage = NO;
+        if (success) {
+            if (_flashScreen) {
+                [[%c(SBScreenFlash) sharedInstance] flash];
             }
-        }];
-    }
-    else {
-        %orig;
-    }
+        }
+    }];
 }
 %end
 
