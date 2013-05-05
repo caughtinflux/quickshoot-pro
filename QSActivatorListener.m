@@ -79,7 +79,7 @@
             _isCapturingVideo = NO;
             [(SpringBoard *)[UIApplication sharedApplication] removeStatusBarImageNamed:QSStatusBarImageName];
             if (!success) {
-                SHOW_USER_NOTIFICATION(@"QuickShoot", @"The video recording did not complete successfully.\nPlease try again.", @"Dismiss");
+                SHOW_USER_NOTIFICATION(@"QuickShoot", @"The video recording did not complete successfully. Please try again.", @"Dismiss");
             }
         };
 
