@@ -383,6 +383,8 @@
         }];
     }
     else {
+        [[NSFileManager defaultManager] removeItemAtURL:filePathURL error:NULL];
+        
         UIAlertView *videoFailAlert = [[UIAlertView alloc] initWithTitle:@"QuickShoot" message:[NSString stringWithFormat:@"An error occurred during the recording.\nError %i, %@", error.code, error.localizedDescription] delegate:nil cancelButtonTitle:@"Dismiss" otherButtonTitles:nil];
         [videoFailAlert show];
         [videoFailAlert release];
