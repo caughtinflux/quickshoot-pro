@@ -377,6 +377,7 @@
             }
             else {                
                 [self _cleanupVideoCaptureWithResult:NO];
+                [self _cleanupVideoCaptureWithResult:YES];
             }
             [[NSFileManager defaultManager] removeItemAtURL:filePathURL error:NULL];
             [library release];
