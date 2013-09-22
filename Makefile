@@ -1,3 +1,4 @@
+ARCHS = armv7 armv7s
 TARGET = iphone:clang:6.1:3.0
 # DEBUG = 1
 
@@ -13,6 +14,9 @@ QuickShootPro_LDFLAGS = -lactivator
 include $(THEOS_MAKE_PATH)/tweak.mk
 SUBPROJECTS += qsprefs
 include $(THEOS_MAKE_PATH)/aggregate.mk
+
+before-all::
+	$(ECHO_NOTHING)touch -t 2012310000 qsprefs/QSPrefs.mm$(ECHO_END)
 
 after-install::
 	@install.exec "killall -9 SpringBoard"

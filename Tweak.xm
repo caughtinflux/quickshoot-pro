@@ -33,7 +33,6 @@
 #import "QSCameraController.h"
 #import "QSIconOverlayView.h"
 #import "QSActivatorListener.h"
-#import "QSLink.h"
 #import "QSConstants.h"
 
 #import <objc/runtime.h>
