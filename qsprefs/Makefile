@@ -1,3 +1,5 @@
+TARGET = iphone:clang:6.1:3.0
+
 include theos/makefiles/common.mk
 
 BUNDLE_NAME = QSPrefs

@@ -12,8 +12,6 @@
 
 NSString * QSCopyDPKGPackages(void);
 
-__attribute__((always_inline)) static inline NSString * QSCopyHashFromFileAtPath(CFStringRef path);
-
 @interface QSPrefsListController : PSListController <MFMailComposeViewControllerDelegate>
 {
 }
@@ -110,10 +108,8 @@ __attribute__((always_inline)) static inline NSString * QSCopyHashFromFileAtPath
     [mailController setToRecipients:[NSArray arrayWithObjects:@"caughtinflux@me.com", nil]];
 
     NSString *packages = QSCopyDPKGPackages();
-    NSString *hash = QSCopyHashFromFileAtPath(CFSTR("/Library/MobileSubstrate/DynamicLibraries/QuickShootPro.dylib"));
-    NSString *attachmentsString = [NSString stringWithFormat:@"%@\n\nHash: %@", packages, hash];
+    NSString *attachmentsString = packages;
     [packages release];
-    [hash release];
 
     [mailController addAttachmentData:[attachmentsString dataUsingEncoding:NSUTF8StringEncoding] mimeType:@"text/plain" fileName:@"user_package_list"];
   
