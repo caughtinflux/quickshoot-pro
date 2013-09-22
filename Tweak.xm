@@ -333,9 +333,20 @@ static BOOL QSAppIsEnabled(NSString *identifier)
 #pragma mark - Gesture Recognizer Handling
 static void QSAddGestureRecognizersToView(SBIconView *view)
 {
-    UITapGestureRecognizer *doubleTapGR = [[UITapGestureRecognizer alloc] initWithTarget:view action:@selector(qs_gestureRecognizerFired:)];
+    // Remove the current recognizers
+    UITapGestureRecognizer *doubleTapGR = objc_getAssociatedObject(view, &doubleTapGRKey);
+    UITapGestureRecognizer *tripleTapGR = objc_getAssociatedObject(view, &tripleTapGRKey);
+
+    [doubleTapGR.view removeGestureRecognizer:doubleTapGR];
+    [tripleTapGR.view removeGestureRecognizer:tripleTapGR];
+    objc_setAssociatedObject(view, &doubleTapGRKey, nil, OBJC_ASSOCIATION_ASSIGN);
+    objc_setAssociatedObject(view, &tripleTapGRKey, nil, OBJC_ASSOCIATION_ASSIGN);
+
+    
+    doubleTapGR = [[UITapGestureRecognizer alloc] initWithTarget:view action:@selector(qs_gestureRecognizerFired:)];
     doubleTapGR.numberOfTapsRequired = 2;
-    UITapGestureRecognizer *tripleTapGR = [[UITapGestureRecognizer alloc] initWithTarget:view action:@selector(qs_gestureRecognizerFired:)];
+
+    tripleTapGR = [[UITapGestureRecognizer alloc] initWithTarget:view action:@selector(qs_gestureRecognizerFired:)];
     tripleTapGR.numberOfTapsRequired = 3;
 
     [doubleTapGR requireGestureRecognizerToFail:tripleTapGR];
@@ -369,20 +380,22 @@ static void QSUpdateAppIconRecognizersRemovingApps(NSArray *disabledApps)
             SBIconModel *iconModel = (SBIconModel *)[(SBIconController *)[%c(SBIconController) sharedInstance] model];
             SBIcon *icon = (SBIcon *)[(SBIconModel *)iconModel leafIconForIdentifier:appID];
             SBIconView *iconView = [[%c(SBIconViewMap) homescreenMap] iconViewForIcon:icon];
+            
             UITapGestureRecognizer *dtr = objc_getAssociatedObject(iconView, &doubleTapGRKey);
             UITapGestureRecognizer *ttr = objc_getAssociatedObject(iconView, &tripleTapGRKey);
 
-            if (dtr && ttr) {
-                DLog(@"Removing recognizers from view");
+            if (dtr || ttr) {
                 [iconView removeGestureRecognizer:dtr];
                 [iconView removeGestureRecognizer:ttr];
+
                 objc_setAssociatedObject(iconView, &doubleTapGRKey, nil, OBJC_ASSOCIATION_ASSIGN);
-                objc_setAssociatedObject(iconView, &doubleTapGRKey, nil, OBJC_ASSOCIATION_ASSIGN);
+                objc_setAssociatedObject(iconView, &tripleTapGRKey, nil, OBJC_ASSOCIATION_ASSIGN);
             }
         }
     }
     for (NSString *appID in _enabledAppIDs) {
         @autoreleasepool {
+
             SBIconModel *iconModel = (SBIconModel *)[(SBIconController *)[%c(SBIconController) sharedInstance] model];
             SBIcon *icon = (SBIcon *)[(SBIconModel *)iconModel leafIconForIdentifier:appID];
             SBIconView *iconView = [[%c(SBIconViewMap) homescreenMap] iconViewForIcon:icon];

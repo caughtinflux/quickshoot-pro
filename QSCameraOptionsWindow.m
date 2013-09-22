@@ -62,11 +62,10 @@
             [_settingsView setHdrIsOn:[self.delegate currentHDRModeForOptionsWindow:self]];
             _settingsView.delegate = self;
 
-            // _settingsView.autoresizingMask = (UIViewAutoresizingFlexibleHeight | UIViewAutoresizingFlexibleWidth);
             [self addSubview:_settingsView];
         }
         if (shouldShowFlash) {
-            _flashButton = [[PLCameraFlashButton alloc] initWithFrame:(CGRect){{kLeftSidePadding,  kSmallButtonYDistance}, {kFlashButtonWidth, 20}} isInButtonBar:NO];
+            _flashButton = [[PLCameraFlashButton alloc] initWithFrame:(CGRect){{kLeftSidePadding,  _settingsView.frame.size.height + 15}, {kFlashButtonWidth, 20}} isInButtonBar:NO];
             if ([[PLCameraController sharedInstance] hasFlash]) {
                 _flashButton.flashMode = [self.delegate currentFlashModeForOptionsWindow:self];
             }
@@ -76,14 +75,12 @@
             
             _flashButton.delegate = self;
 
-            // _flashButton.autoresizingMask = (UIViewAutoresizingFlexibleHeight | UIViewAutoresizingFlexibleWidth);
             [self addSubview:_flashButton];
         }
         if (shouldShowCameraToggle) {
-            _toggleButton = [[PLCameraToggleButton alloc] initWithFrame:(CGRect){{kFlashButtonWidth + 25, kSmallButtonYDistance}, {kCameraToggleWidth, 20}} isInButtonBar:NO];
+            _toggleButton = [[PLCameraToggleButton alloc] initWithFrame:(CGRect){{kFlashButtonWidth + 25, _settingsView.frame.size.height + 15}, {kCameraToggleWidth, 20}} isInButtonBar:NO];
             [_toggleButton addTarget:self action:@selector(cameraToggleButtonTapped:) forControlEvents:UIControlEventTouchUpInside];
 
-            // _toggleButton.autoresizingMask = (UIViewAutoresizingFlexibleHeight | UIViewAutoresizingFlexibleWidth);
             [self addSubview:_toggleButton];
         }
 
@@ -93,6 +90,8 @@
 
         self.autoresizingMask = (UIViewAutoresizingFlexibleHeight | UIViewAutoresizingFlexibleWidth);
         self.userInteractionEnabled = YES;
+
+        self.frame = (CGRect){{frame.origin.x, frame.origin.y}, {frame.size.width, (_settingsView.frame.size.height + _toggleButton.frame.size.height + 25)}};
 
         if (UI_USER_INTERFACE_IDIOM() == UIUserInterfaceIdiomPad) {
             UIPanGestureRecognizer *panGR = [[UIPanGestureRecognizer alloc] initWithTarget:self action:@selector(_pan:)];
