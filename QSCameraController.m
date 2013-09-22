@@ -358,10 +358,11 @@
 #pragma mark - Video Interface Delegate
 - (void)videoInterfaceStartedVideoCapture:(QSVideoInterface *)interface
 {
-    DLog(@"");
-    _videoStartHandler(YES);
-    [_videoStartHandler release];
-    _videoStartHandler = nil;
+    if (_videoStartHandler) {
+        _videoStartHandler(YES);
+        [_videoStartHandler release];
+        _videoStartHandler = nil;
+    }
 }
 
 - (void)videoInterface:(QSVideoInterface *)videoInterface didFinishRecordingToURL:(NSURL *)filePathURL withError:(NSError *)error
