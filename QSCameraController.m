@@ -161,7 +161,7 @@
 {
     DLog(@"");
     _flashMode = flashMode;
-    [[PLCameraController sharedInstance] setFlashMode:flashMode];
+    [PLCameraController sharedInstance].flashMode = (PLFlashMode)flashMode;
 }
 
 - (void)setVideoFlashMode:(QSFlashMode)flashMode
@@ -181,8 +181,7 @@
 - (void)setCurrentOrientation:(UIDeviceOrientation)orientation
 {
     _currentOrientation = orientation;
-    [[PLCameraController sharedInstance] _setCameraOrientation:_currentOrientation];
-    [[PLCameraController sharedInstance] setCaptureOrientation:_currentOrientation];
+    [PLCameraController sharedInstance].captureOrientation = (AVCaptureVideoOrientation)_currentOrientation;
 }
 
 - (QSCompletionHandler)_completionBlockAfterEvaluatingBlock:(QSCompletionHandler)block
@@ -260,7 +259,7 @@
 - (void)_setupCameraController
 {
     if (self.flashMode && [[PLCameraController sharedInstance] hasFlash]) {
-        [[PLCameraController sharedInstance] setFlashMode:self.flashMode];
+        [PLCameraController sharedInstance].flashMode = (PLFlashMode)self.flashMode;
     }
     if (self.enableHDR && [[PLCameraController sharedInstance] supportsHDR]) {
         [[PLCameraController sharedInstance] setHDREnabled:self.enableHDR];

@@ -10,9 +10,9 @@
 */
 
 #import "QSCameraOptionsWindow.h"
+#import <PhotoLibrary/CAMFlashButton.h>
 #import <PhotoLibrary/PLCameraSettingsView.h>
 #import <PhotoLibrary/PLCameraToggleButton.h>
-#import <PhotoLibrary/PLCameraFlashButton.h>
 #import <PhotoLibrary/PLCameraController.h>
 #import <QuartzCore/QuartzCore.h>
 #import <SpringBoard/SpringBoard.h>
@@ -30,7 +30,7 @@
 {
     PLCameraSettingsView *_settingsView;
     PLCameraToggleButton *_toggleButton;
-    PLCameraFlashButton  *_flashButton;
+    CAMFlashButton       *_flashButton;
     UILabel              *_cameraModeChangedLabel;
     NSTimer              *_hideTimer;
     NSTimer              *_labelHideTimer;
@@ -65,7 +65,7 @@
             [self addSubview:_settingsView];
         }
         if (shouldShowFlash) {
-            _flashButton = [[PLCameraFlashButton alloc] initWithFrame:(CGRect){{kLeftSidePadding,  _settingsView.frame.size.height + 15}, {kFlashButtonWidth, 20}} isInButtonBar:NO];
+            _flashButton = [[CAMFlashButton alloc] initWithFrame:(CGRect){{kLeftSidePadding,  _settingsView.frame.size.height + 15}, {kFlashButtonWidth, 20}}];
             if ([[PLCameraController sharedInstance] hasFlash]) {
                 _flashButton.flashMode = [self.delegate currentFlashModeForOptionsWindow:self];
             }
@@ -194,22 +194,22 @@
 }
 
 #pragma mark - Flash Button Delegate
-- (void)flashButtonDidCollapse:(PLCameraFlashButton *)button
+- (void)flashButtonDidCollapse:(CAMFlashButton *)button
 {
     [_toggleButton setHidden:NO animationDuration:0.8];
 }
 
-- (void)flashButtonWillExpand:(PLCameraFlashButton *)button
+- (void)flashButtonWillExpand:(CAMFlashButton *)button
 {
     [_toggleButton setHidden:YES animationDuration:0.5];
 }
 
-- (void)flashButtonWasPressed:(PLCameraFlashButton *)button
+- (void)flashButtonWasPressed:(CAMFlashButton *)button
 {
     [self _restartHideTimer];
 }
 
-- (void)flashButtonModeDidChange:(PLCameraFlashButton *)button
+- (void)flashButtonModeDidChange:(CAMFlashButton *)button
 {
     if ([self.delegate conformsToProtocol:@protocol(QSCameraOptionsWindowDelegate)]) {
         [self.delegate optionsWindow:self flashModeChanged:(QSFlashMode)button.flashMode];

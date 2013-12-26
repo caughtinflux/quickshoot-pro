@@ -54,11 +54,8 @@ typedef enum {
 	QSFlashModeOff  = -1,
 } QSFlashMode;
 
-struct qs_retval {bool a; int b; char c;};
-typedef struct qs_retval *qs_retval_t;
 
 typedef void (^QSCompletionHandler)(BOOL); // the BOOL argument is most probably pointless.
-
 
 #pragma mark - String Constants
 FOUNDATION_EXPORT NSString * const QSEnabledKey;

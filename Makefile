@@ -1,5 +1,6 @@
 TARGET = iphone:clang:latest:6.0
-# DEBUG = 1
+ARCHS = armv7 armv7s
+DEBUG = 1
 
 include theos/makefiles/common.mk
 
@@ -14,11 +15,6 @@ include $(THEOS_MAKE_PATH)/tweak.mk
 SUBPROJECTS += qsprefs
 include $(THEOS_MAKE_PATH)/aggregate.mk
 
-before-package::
-	$(ECHO_NOTHING)./updatebuild.py $(THEOS_PACKAGE_VERSION)$(ECHO_END)
 
-before-install::
-ifneq ($(DEBUG), 1)
-	-$(ECHO_NOTHING)./updatemd5.sh$(ECHO_END)
-endif
-
+after-install::
+	@install.exec "killall backboardd"
