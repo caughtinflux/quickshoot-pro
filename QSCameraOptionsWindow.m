@@ -38,6 +38,10 @@
     NSTimer *_hideTimer;
     NSTimer *_labelHideTimer;
     CGRect _originalFrame;
+
+    UIDynamicAnimator *_animator;
+    UIDynamicItemBehavior *_dynamicItemBehavior;
+    UICollisionBehavior *_collisionBehavior;
 }
 
 - (void)_flashCameraTypeLabelWithFadeIn:(BOOL)shouldFadeIn;
@@ -81,6 +85,7 @@
         _topBar.HDRButton = _hdrButton;
         [self addSubview:_topBar];
         _topBar.style = 2;
+        _topBar.backgroundStyle = 1;
         
         self.backgroundColor = [UIColor colorWithWhite:0.0f alpha:0.8f];
         self.layer.cornerRadius = 10.f;
@@ -89,11 +94,7 @@
         self.userInteractionEnabled = YES;
         self.frame = (CGRect){{frame.origin.x, frame.origin.y}, _topBar.frame.size};
 
-        if (UI_USER_INTERFACE_IDIOM() == UIUserInterfaceIdiomPad) {
-            UIPanGestureRecognizer *panGR = [[UIPanGestureRecognizer alloc] initWithTarget:self action:@selector(_pan:)];
-            [self addGestureRecognizer:panGR];
-            [panGR release];
-        }
+        [self _setupRecognizerAndDynamics];
         _originalFrame = self.frame;
     }
     return self;
@@ -111,6 +112,10 @@
     [_flashButton release];
     [_topBar removeFromSuperview];
     [_topBar release];
+
+    [_animator release];
+    [_dynamicItemBehavior release];
+    [_collisionBehavior release];
 
     _optionsDelegate = nil;
 
@@ -186,18 +191,12 @@
 #pragma mark - Flash Button Delegate
 - (void)flashButtonDidCollapse:(CAMFlashButton *)button
 {
-    [UIView animateWithDuration:0.3 animations:^{
-        _toggleButton.alpha = 1.f;
-        _hdrButton.alpha = 1.f;
-    }];
+    [UIView animateWithDuration:0.3 animations:^{ _hdrButton.alpha = 1.f; }];
 }
 
 - (void)flashButtonWillExpand:(CAMFlashButton *)button
 {
-    [UIView animateWithDuration:0.3 animations:^{
-        _toggleButton.alpha = 0.f;
-        _hdrButton.alpha = 0.f;
-    }];
+    [UIView animateWithDuration:0.3 animations:^{ _hdrButton.alpha = 0.f; }];
 }
 
 - (void)flashButtonWasPressed:(CAMFlashButton *)button
@@ -222,7 +221,8 @@
         return;
     }
 
-    _cameraModeChangedLabel = [[[CAMButtonLabel alloc] initWithFrame:(CGRect){{0, _topBar.frame.size.height}, {40, 20}}] autorelease];
+    CGRect topBarFrame = _topBar.frame;
+    _cameraModeChangedLabel = [[[CAMButtonLabel alloc] initWithFrame:(CGRect){{0, topBarFrame.size.height}, {100, 20}}] autorelease];
     _cameraModeChangedLabel.text = (([self.delegate currentCameraDeviceForOptionsWindow:self] == QSCameraDeviceRear) ? @"Rear Camera" : @"Front Camera");
     _cameraModeChangedLabel.alpha = 0.0;
     _cameraModeChangedLabel.center = (CGPoint){_topBar.center.x, _cameraModeChangedLabel.center.y};
@@ -280,59 +280,45 @@
     }];
 }
 
+- (void)_setupRecognizerAndDynamics
+{
+    UIPanGestureRecognizer *panGR = [[UIPanGestureRecognizer alloc] initWithTarget:self action:@selector(_pan:)];
+    [self addGestureRecognizer:panGR];
+    [panGR release];
+
+    _animator = [[UIDynamicAnimator alloc] initWithReferenceView:self];
+    
+    _dynamicItemBehavior = [[UIDynamicItemBehavior alloc] initWithItems:@[self]];
+    _dynamicItemBehavior.allowsRotation = NO;
+    _dynamicItemBehavior.density = 5.0;
+    _dynamicItemBehavior.resistance = 5.f;
+    _dynamicItemBehavior.elasticity = 0.5f;
+
+    _collisionBehavior = [[UICollisionBehavior alloc] initWithItems:@[self]];
+    [_collisionBehavior addBoundaryWithIdentifier:@"ScreenBounds" forPath:[UIBezierPath bezierPathWithRect:[UIScreen mainScreen].bounds]];
+    _collisionBehavior.collisionMode = UICollisionBehaviorModeBoundaries;
+    
+    [_animator addBehavior:_dynamicItemBehavior];
+    [_animator addBehavior:_collisionBehavior];
+}
+
 - (void)_pan:(UIPanGestureRecognizer *)panGR
 {
+    [self _restartHideTimer];
     if (panGR.state == UIGestureRecognizerStateChanged) {
         CGPoint center = self.center;
         CGPoint translation = [panGR translationInView:[[UIApplication sharedApplication] keyWindow]];
         center.x += translation.x;
         center.y += translation.y;
         self.center = center;
-        [panGR setTranslation:(CGPoint){0, 0} inView:[[UIApplication sharedApplication] keyWindow]];
+        _dynamicItemBehavior.resistance = CGFLOAT_MAX;
+        [panGR setTranslation:CGPointZero inView:[[UIApplication sharedApplication] keyWindow]];
     }
-    if (panGR.state == UIGestureRecognizerStateEnded) {
-        [self _restartHideTimer];
-
+    else if (panGR.state == UIGestureRecognizerStateEnded) {
         CGPoint velocity = [panGR velocityInView:self];
-        CGFloat magnitude = sqrtf((velocity.x * velocity.x) + (velocity.y * velocity.y));
-        CGFloat slideFactor = (0.03 * (magnitude / 300));                                         
-
-        CGFloat finalX = (self.center.x + (velocity.x * slideFactor));
-        CGFloat finalY = (self.center.y + (velocity.y * slideFactor));
-
-        // gotta make sure it stays on the screen, lol
-        CGFloat screenWidth = [[UIScreen mainScreen] bounds].size.width;
-        CGFloat screenHeight = [[UIScreen mainScreen] bounds].size.width;
-        if (UIDeviceOrientationIsPortrait([[UIDevice currentDevice] orientation])) {
-            if (finalX < 0) {
-                finalX = 0;
-            } else if (finalX > screenWidth) {
-                finalX = screenWidth;
-            }
-
-            if (finalY < 0) {
-                finalY = 0;
-            } else if (finalY > screenHeight) {
-                finalY = screenHeight;
-            }
-        }
-        else {
-            if (finalX < 0) {
-                finalX = 0;
-            } else if (finalX > screenHeight) {
-                finalX = screenWidth;
-            }
-
-            if (finalY < 0) {
-                finalY = 0;
-            } else if (finalY > screenWidth) {
-                finalY = screenHeight;
-            }
-        }
-        
-        [UIView animateWithDuration:(slideFactor * 2) delay:0 options:UIViewAnimationOptionCurveEaseOut animations:^{
-           panGR.view.center = (CGPoint){finalX, finalY};
-        } completion:nil];
+        _dynamicItemBehavior.resistance = 5.f;
+        [_animator updateItemUsingCurrentState:self];
+        [_dynamicItemBehavior addLinearVelocity:velocity forItem:self];
     }
 }
 
