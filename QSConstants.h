@@ -54,8 +54,6 @@ typedef enum {
 	QSFlashModeOff  = -1,
 } QSFlashMode;
 
-struct qs_retval {bool a; int b; char c;};
-typedef struct qs_retval *qs_retval_t;
 
 typedef void (^QSCompletionHandler)(BOOL); // the BOOL argument is most probably pointless.
 
@@ -91,7 +89,5 @@ FOUNDATION_EXPORT NSString *     QSVideoQualityFromString(NSString *string);
 FOUNDATION_EXPORT __attribute__((always_inline)) inline id 	       QSObjectFromPrefsForKey(NSString *key);
 FOUNDATION_EXPORT __attribute__((always_inline)) inline NSString * QSStringFromCameraDevice(QSCameraDevice device);
 FOUNDATION_EXPORT __attribute__((always_inline)) inline NSString * QSStringFromFlashMode(QSFlashMode flashMode);
-
-FOUNDATION_EXPORT __attribute__((always_inline)) inline NSString * QSGetMachineName(void);
 
 #endif // QS_CONSTANTS_H

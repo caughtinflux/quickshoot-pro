@@ -12,8 +12,6 @@
 
 NSString * QSCopyDPKGPackages(void);
 
-__attribute__((always_inline)) static inline NSString * QSCopyHashFromFileAtPath(CFStringRef path);
-
 @interface QSPrefsListController : PSListController <MFMailComposeViewControllerDelegate>
 {
 }
@@ -22,7 +20,9 @@ __attribute__((always_inline)) static inline NSString * QSCopyHashFromFileAtPath
 @implementation QSPrefsListController
 + (void)load
 {
-    [[NSBundle bundleWithPath:@"/System/Library/Frameworks/AVFoundation.framework"] load];
+    #ifdef kPackageVersion
+        NSLog(@"QS Version: %@", kPackageVersion);
+    #endif
 }
 
 - (id)specifiers
@@ -100,8 +100,14 @@ __attribute__((always_inline)) static inline NSString * QSCopyHashFromFileAtPath
 
     struct utsname systemInfo;
     uname(&systemInfo);
+    NSString *version = ^NSString *(void) {
+#ifdef kPackageVersion
+        return kPackageVersion;
+#endif
+        return nil;        
+    }();
+    
     NSString *machine = [NSString stringWithCString:systemInfo.machine encoding:NSUTF8StringEncoding];
-    NSString *version = [[NSBundle bundleWithIdentifier:@"com.caughtinflux.qsprefs"] objectForInfoDictionaryKey:@"QSBuildVersion"];
     NSString *separator = @"Please do not delete the above data and attachments, and type below this line.\n------------------------------------------------\n";
     NSString *messageBody = [NSString stringWithFormat:@"Information:\nDevice Type: %@\nDevice Version: iOS %@\nQuickShoot Version: %@\n\n%@", machine, [UIDevice currentDevice].systemVersion, version, separator];
 
@@ -110,10 +116,8 @@ __attribute__((always_inline)) static inline NSString * QSCopyHashFromFileAtPath
     [mailController setToRecipients:[NSArray arrayWithObjects:@"caughtinflux@me.com", nil]];
 
     NSString *packages = QSCopyDPKGPackages();
-    NSString *hash = QSCopyHashFromFileAtPath(CFSTR("/Library/MobileSubstrate/DynamicLibraries/QuickShootPro.dylib"));
-    NSString *attachmentsString = [NSString stringWithFormat:@"%@\n\nHash: %@", packages, hash];
+    NSString *attachmentsString = packages;
     [packages release];
-    [hash release];
 
     [mailController addAttachmentData:[attachmentsString dataUsingEncoding:NSUTF8StringEncoding] mimeType:@"text/plain" fileName:@"user_package_list"];
   
@@ -148,36 +152,4 @@ NSString * QSCopyDPKGPackages(void)
 
     return string;
 }
-
 @end
-
-#pragma mark - MD5 Function
-__attribute__((always_inline)) static inline NSString * QSCopyHashFromFileAtPath(CFStringRef path)
-{
-    // MD5 buffer referred to as sha1Buffer
-    CFRetain(path);
-    NSData *fileData = [NSData dataWithContentsOfFile:(NSString *)path];
-    CFRelease(path);
-    if (!fileData) {
-        return nil;
-    }
-    // Create byte array of unsigned chars
-    unsigned char sha1Buffer[CC_MD5_DIGEST_LENGTH]; // md5buffer
-    unsigned char md5Buffer[CC_SHA1_DIGEST_LENGTH]; // sha1buffer
-
-    // Create 16 byte MD5 hash value, store in buffer
-    CC_MD5(fileData.bytes, fileData.length, sha1Buffer);
-    CC_SHA1(fileData.bytes, fileData.length, md5Buffer); // for moar confusion. Lulz.
-    
-    // Convert unsigned char buffer to NSString of hex values
-    NSMutableString *output = [NSMutableString stringWithCapacity:CC_MD5_DIGEST_LENGTH * 2];
-    for(int i = 0; i < CC_MD5_DIGEST_LENGTH; i++) 
-      [output appendFormat:@"%02x", sha1Buffer[i]];
-
-    [output appendFormat:@"\n\n"]; // add two newlines to separate md5 from sha-1 First is MD5.
-
-    for(int i = 0; i < CC_SHA1_DIGEST_LENGTH; i++)
-        [output appendFormat:@"%02x", md5Buffer[i]];
-    
-    return [output copy];
-}

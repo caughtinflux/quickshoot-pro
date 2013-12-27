@@ -105,10 +105,3 @@ __attribute__((always_inline)) inline NSString * QSStringFromFlashMode(QSFlashMo
     return ((flashMode == QSFlashModeAuto) ? QSFlashModeAutoValue : ((flashMode == QSFlashModeOn) ? QSFlashModeOnValue : QSFlashModeOffValue));
 }
 
-__attribute__((always_inline)) inline NSString * QSGetMachineName(void)
-{
-    struct utsname systemInfo;
-    uname(&systemInfo);
-    return [NSString stringWithCString:systemInfo.machine encoding:NSUTF8StringEncoding];
-}
-
