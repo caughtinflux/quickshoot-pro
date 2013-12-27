@@ -182,13 +182,13 @@
 - (void)_HDRSettingDidChange:(CAMHDRButton *)button
 {
     [self _restartHideTimer];
-    button.on = !(button.on);
-    if (button.on) {
+    if (!button.on) {
         _flashButton.flashMode = PLFlashModeOff;
     }
+    button.on = !(button.on);
     if ([self.delegate conformsToProtocol:@protocol(QSCameraOptionsWindowDelegate)]) {
         [self.delegate optionsWindow:self hdrModeChanged:button.on];
-        [self.delegate optionsWindow:self flashModeChanged:(QSFlashMode)QSFlashModeOff];
+        [self.delegate optionsWindow:self flashModeChanged:QSFlashModeOff];
     }
 }
 
