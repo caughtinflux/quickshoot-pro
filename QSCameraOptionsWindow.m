@@ -188,7 +188,7 @@
     }
     if ([self.delegate conformsToProtocol:@protocol(QSCameraOptionsWindowDelegate)]) {
         [self.delegate optionsWindow:self hdrModeChanged:button.on];
-        [self.delegate optionsWindow:self flashModeChanged:(QSFlashMode)_flashButton.flashMode];
+        [self.delegate optionsWindow:self flashModeChanged:(QSFlashMode)QSFlashModeOff];
     }
 }
 
@@ -210,8 +210,13 @@
 
 - (void)flashButtonModeDidChange:(CAMFlashButton *)button
 {
+    if (_hdrButton.on && (button.flashMode != PLFlashModeOff)) {
+        // HDR doesn't work with flash on
+        _hdrButton.on = NO;
+    }
     if ([self.delegate conformsToProtocol:@protocol(QSCameraOptionsWindowDelegate)]) {
         [self.delegate optionsWindow:self flashModeChanged:(QSFlashMode)button.flashMode];
+        [self.delegate optionsWindow:self hdrModeChanged:NO];
     }
 }
 
