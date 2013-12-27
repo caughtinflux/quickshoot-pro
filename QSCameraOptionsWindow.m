@@ -210,7 +210,7 @@
 
 - (void)flashButtonModeDidChange:(CAMFlashButton *)button
 {
-    if (_hdrButton.on && (button.flashMode != PLFlashModeOff)) {
+    if (button.flashMode != PLFlashModeOff) {
         // HDR doesn't work with flash on
         _hdrButton.on = NO;
     }
