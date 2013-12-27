@@ -28,8 +28,8 @@
 @interface QSActivatorListener ()
 {
     QSCameraOptionsWindow *_optionsWindow;
-    BOOL                   _isCapturingVideo;
-    BOOL                   _shouldBlinkVideoIcon;
+    BOOL _isCapturingVideo;
+    BOOL _shouldBlinkVideoIcon;
 }
 
 - (void)_startBlinkingVideoIcon;
@@ -120,7 +120,7 @@
     else if ([[[LAActivator sharedInstance] assignedListenerNameForEvent:event] isEqualToString:QSOptionsWindowListenerName]) {
         if (!_optionsWindow) {
             _optionsWindow = [[QSCameraOptionsWindow alloc] initWithFrame:(CGRect){{0, 20}, {200, 102}} showFlash:YES showHDR:YES showCameraToggle:YES]; 
-            _optionsWindow.windowLevel = 1200;
+            _optionsWindow.windowLevel = 2000;
             _optionsWindow.delegate = self;
             [self _preferencesChanged:nil]; // make sure the delay times 'n' shit are set.
         }
