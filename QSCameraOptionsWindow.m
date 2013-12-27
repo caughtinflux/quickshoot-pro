@@ -183,8 +183,12 @@
 {
     [self _restartHideTimer];
     button.on = !(button.on);
+    if (button.on) {
+        _flashButton.flashMode = PLFlashModeOff;
+    }
     if ([self.delegate conformsToProtocol:@protocol(QSCameraOptionsWindowDelegate)]) {
         [self.delegate optionsWindow:self hdrModeChanged:button.on];
+        [self.delegate optionsWindow:self flashModeChanged:(QSFlashMode)_flashButton.flashMode];
     }
 }
 
@@ -290,9 +294,9 @@
     
     _dynamicItemBehavior = [[UIDynamicItemBehavior alloc] initWithItems:@[self]];
     _dynamicItemBehavior.allowsRotation = NO;
-    _dynamicItemBehavior.density = 5.0;
-    _dynamicItemBehavior.resistance = 5.f;
-    _dynamicItemBehavior.elasticity = 0.5f;
+    _dynamicItemBehavior.density = 25.f;
+    _dynamicItemBehavior.resistance = 2.f;
+    _dynamicItemBehavior.elasticity = 0.6f;
 
     _collisionBehavior = [[UICollisionBehavior alloc] initWithItems:@[self]];
     [_collisionBehavior addBoundaryWithIdentifier:@"ScreenBounds" forPath:[UIBezierPath bezierPathWithRect:[UIScreen mainScreen].bounds]];
@@ -306,17 +310,18 @@
 {
     [self _restartHideTimer];
     if (panGR.state == UIGestureRecognizerStateChanged) {
+        CGPoint velocity = [_dynamicItemBehavior linearVelocityForItem:self];
+        [_dynamicItemBehavior addLinearVelocity:(CGPoint){-velocity.x, -velocity.y} forItem:self];
         CGPoint center = self.center;
         CGPoint translation = [panGR translationInView:[[UIApplication sharedApplication] keyWindow]];
         center.x += translation.x;
         center.y += translation.y;
         self.center = center;
-        _dynamicItemBehavior.resistance = CGFLOAT_MAX;
         [panGR setTranslation:CGPointZero inView:[[UIApplication sharedApplication] keyWindow]];
+        [_animator updateItemUsingCurrentState:self];
     }
     else if (panGR.state == UIGestureRecognizerStateEnded) {
         CGPoint velocity = [panGR velocityInView:self];
-        _dynamicItemBehavior.resistance = 5.f;
         [_animator updateItemUsingCurrentState:self];
         [_dynamicItemBehavior addLinearVelocity:velocity forItem:self];
     }

@@ -319,7 +319,7 @@
             <key>action</key>
             <string>showAboutController</string>
             <key>alignment</key>
-            <integer>2</integer>
+            <integer>1</integer>
         </dict>
         <dict>
             <key>cell</key>

@@ -5,7 +5,3 @@ _
 build/
 
 *.sublime*
-
-reference.txt
-
-.theos/
