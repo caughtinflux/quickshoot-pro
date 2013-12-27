@@ -6,8 +6,8 @@
 #import <AVFoundation/AVFoundation.h>
 #import <CommonCrypto/CommonDigest.h>
 
+#import "../QSVersion.h"
 #import "QSAboutTableViewController.h"
-
 #import "NSTask.h"
 
 NSString * QSCopyDPKGPackages(void);
@@ -99,9 +99,8 @@ NSString * QSCopyDPKGPackages(void);
     struct utsname systemInfo;
     uname(&systemInfo);
     NSString *machine = [NSString stringWithCString:systemInfo.machine encoding:NSUTF8StringEncoding];
-    NSString *version = [[NSBundle bundleWithIdentifier:@"com.caughtinflux.qsprefs"] objectForInfoDictionaryKey:@"QSBuildVersion"];
     NSString *separator = @"Please do not delete the above data and attachments, and type below this line.\n------------------------------------------------\n";
-    NSString *messageBody = [NSString stringWithFormat:@"Information:\nDevice Type: %@\nDevice Version: iOS %@\nQuickShoot Version: %@\n\n%@", machine, [UIDevice currentDevice].systemVersion, version, separator];
+    NSString *messageBody = [NSString stringWithFormat:@"Information:\nDevice Type: %@\nDevice Version: iOS %@\nQuickShoot Version: %@\n\n%@", machine, [UIDevice currentDevice].systemVersion, kPackageVersion, separator];
 
     [mailController setSubject:@"QuickShoot Pro Support"];
     [mailController setMessageBody:messageBody isHTML:NO]; 
