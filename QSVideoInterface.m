@@ -245,7 +245,7 @@ error:
     [_captureSession commitConfiguration];
     return YES;
 
-    notifyDelegateOfError:
+notifyDelegateOfError:
         [_captureSession commitConfiguration];
         if ([self.delegate respondsToSelector:@selector(videoInterfaceCaptureDeviceErrorOccurred:)]) {
             [self.delegate videoInterfaceCaptureDeviceErrorOccurred:self];
