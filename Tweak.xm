@@ -263,9 +263,7 @@ static void QSUserNotificationCallBack(CFUserNotificationRef userNotification, C
 {
     %orig;
     // called on unlock.
-#ifndef DEBUG    
-    if (!_shownWelcomeAlert) {
-#endif // DEBUG     
+    if (!_shownWelcomeAlert) { 
         NSDictionary *fields = @{(id)kCFUserNotificationAlertHeaderKey          : @"Welcome to QuickShoot",
                                  (id)kCFUserNotificationAlertMessageKey         : @"Thank you for your purchase. Open settings for more options and help, or get started right away. Try double tapping the camera icon.\n",
                                  (id)kCFUserNotificationDefaultButtonTitleKey   : @"Dismiss",
@@ -286,9 +284,7 @@ static void QSUserNotificationCallBack(CFUserNotificationRef userNotification, C
             [prefs writeToFile:kPrefPath atomically:YES];
             [prefs release];
         }
-#ifndef DEBUG        
     }
-#endif // DEBUG
 }
 
 %end
@@ -394,23 +390,6 @@ static void QSUpdateAppIconRecognizersRemovingApps(NSArray *disabledApps)
     [disabledApps release];
 }
 
-
-#pragma mark - Prefs Functions
-static inline NSInteger QSDaysBetweenDates(NSDate *fromDateTime, NSDate *toDateTime)
-{
-    NSDate *fromDate;
-    NSDate *toDate;
-
-    NSCalendar *calendar = [NSCalendar currentCalendar];
-
-    [calendar rangeOfUnit:NSDayCalendarUnit startDate:&fromDate interval:NULL forDate:fromDateTime];
-    [calendar rangeOfUnit:NSDayCalendarUnit startDate:&toDate interval:NULL forDate:toDateTime];
-
-    NSDateComponents *difference = [calendar components:NSDayCalendarUnit fromDate:fromDate toDate:toDate options:0];
-
-    return [difference day];
-}
-
 static void QSUpdatePrefs(CFNotificationCenterRef center, void *observer, CFStringRef name, const void *object, CFDictionaryRef userInfo)
 {
     NSDictionary *prefs = [[NSDictionary alloc] initWithContentsOfFile:kPrefPath];
@@ -442,7 +421,6 @@ static void QSUpdatePrefs(CFNotificationCenterRef center, void *observer, CFStri
 
         [[NSNotificationCenter defaultCenter] postNotificationName:QSPrefsChangedNotificationName object:nil];
     }
-
     else if ([(NSString *)name isEqualToString:@"com.caughtinflux.quickshootpro.prefschanged.appicons"]) {
         NSMutableArray *disabledApps = [[NSMutableArray new] autorelease];
         
@@ -465,7 +443,6 @@ static void QSUpdatePrefs(CFNotificationCenterRef center, void *observer, CFStri
             QSUpdateAppIconRecognizersRemovingApps(disabledApps);
         }
     }
-
     [prefs release];
 }
 
