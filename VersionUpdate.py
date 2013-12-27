@@ -8,7 +8,7 @@ if not len(sys.argv) > 1:
 
 try:
 	with open("QSVersion.h", "w") as fd:
-		fd.write("#define kPackageVersion @\"{0}\"".format(sys.argv[1]))
+		fd.write("#define kPackageVersion @\"{0}\"\n".format(sys.argv[1]))
 
 except IOError as e:
 	print e
