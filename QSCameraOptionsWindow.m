@@ -299,8 +299,8 @@
     
     _dynamicItemBehavior = [[UIDynamicItemBehavior alloc] initWithItems:@[self]];
     _dynamicItemBehavior.allowsRotation = NO;
-    _dynamicItemBehavior.density = 25.f;
-    _dynamicItemBehavior.resistance = 2.f;
+    _dynamicItemBehavior.density = 5.f;
+    _dynamicItemBehavior.resistance = 5.f;
     _dynamicItemBehavior.elasticity = 0.6f;
 
     _collisionBehavior = [[UICollisionBehavior alloc] initWithItems:@[self]];
