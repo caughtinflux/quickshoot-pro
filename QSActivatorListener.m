@@ -66,7 +66,6 @@
     }
     // video capture
     else if ([[[LAActivator sharedInstance] assignedListenerNameForEvent:event] isEqualToString:QSVideoCaptureListenerName]) {
-
         static BOOL isStartingRecording;
 
         QSCompletionHandler videoStopHandler = ^(BOOL success) {
@@ -94,7 +93,6 @@
                     _isCapturingVideo = NO;
                     isStartingRecording = NO;
                 }
-
                 else {
                     DLog(@"Video recording started");
                     if (self.shouldShowRecordingIcon) {
@@ -102,7 +100,6 @@
                     }
                     isStartingRecording = NO;
                 }
-
             } interruptionHandler:videoStopHandler];
         }
         else if (_isCapturingVideo == YES && !isStartingRecording) {
@@ -115,7 +112,6 @@
             [[QSCameraController sharedInstance] stopVideoCaptureWithHandler:videoStopHandler];
         }
     }
-
     // options window
     else if ([[[LAActivator sharedInstance] assignedListenerNameForEvent:event] isEqualToString:QSOptionsWindowListenerName]) {
         if (!_optionsWindow) {
