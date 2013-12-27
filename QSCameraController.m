@@ -241,7 +241,7 @@
 
     if (photoDict == nil || error) {
         UIAlertView *alert = [[UIAlertView alloc] initWithTitle:@"QuickShoot"
-                                                        message:[NSString stringWithFormat:@"An error occurred while capturing the image.\n Error %i: %@", error.code, error.localizedDescription]
+                                                        message:[NSString stringWithFormat:@"An error occurred while capturing the image.\n Error %zd: %@", error.code, error.localizedDescription]
                                                        delegate:nil
                                               cancelButtonTitle:@"Dismiss"
                                               otherButtonTitles:nil];
@@ -368,11 +368,11 @@
         ALAssetsLibrary *library = [[ALAssetsLibrary alloc] init];
         [library writeVideoAtPathToSavedPhotosAlbum:filePathURL completionBlock:^(NSURL *assetURL, NSError *error) {
             if (error) {
-                UIAlertView *alert = [[UIAlertView alloc] initWithTitle:@"QuickShoot" message:[NSString stringWithFormat:@"An error occurred when saving the video.\nError %i, %@", error.code, error.localizedDescription] delegate:nil cancelButtonTitle:@"Dismiss" otherButtonTitles:nil];
+                UIAlertView *alert = [[UIAlertView alloc] initWithTitle:@"QuickShoot" message:[NSString stringWithFormat:@"An error occurred when saving the video.\nError %zd, %@", error.code, error.localizedDescription] delegate:nil cancelButtonTitle:@"Dismiss" otherButtonTitles:nil];
                 [alert show];
                 [alert release];
 
-                NSLog(@"An error occurred when saving the video. %i: %@", error.code, error.localizedDescription);
+                NSLog(@"An error occurred when saving the video. %zd: %@", error.code, error.localizedDescription);
             }
             else {                
                 [self _cleanupVideoCaptureWithResult:YES];
@@ -385,7 +385,7 @@
         // Remove the file anyway. Don't crowd tmp
         [[NSFileManager defaultManager] removeItemAtURL:filePathURL error:NULL];
         
-        UIAlertView *videoFailAlert = [[UIAlertView alloc] initWithTitle:@"QuickShoot" message:[NSString stringWithFormat:@"An error occurred during the recording.\nError %i, %@", error.code, error.localizedDescription] delegate:nil cancelButtonTitle:@"Dismiss" otherButtonTitles:nil];
+        UIAlertView *videoFailAlert = [[UIAlertView alloc] initWithTitle:@"QuickShoot" message:[NSString stringWithFormat:@"An error occurred during the recording.\nError %zd, %@", error.code, error.localizedDescription] delegate:nil cancelButtonTitle:@"Dismiss" otherButtonTitles:nil];
         [videoFailAlert show];
         [videoFailAlert release];
         [self _cleanupVideoCaptureWithResult:NO];

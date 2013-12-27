@@ -172,7 +172,7 @@
 
     NSError *lockError = nil;
     if ([_videoCaptureDevice lockForConfiguration:&lockError]) {
-        NSLog(@"Setting torch mode: %i", self.torchMode);
+        NSLog(@"Setting torch mode: %zd", self.torchMode);
         if ([_videoCaptureDevice isFocusModeSupported:AVCaptureFocusModeContinuousAutoFocus]) {
             _videoCaptureDevice.focusMode = AVCaptureFocusModeContinuousAutoFocus;
         }
@@ -191,7 +191,7 @@
         success = YES;
     }
     else {
-        NSLog(@"QS: An error occurred while trying to acquire a lock for video configuration: %i %@ with device: %@", lockError.code, lockError.localizedDescription, _videoCaptureDevice);
+        NSLog(@"QS: An error occurred while trying to acquire a lock for video configuration: %zd %@ with device: %@", lockError.code, lockError.localizedDescription, _videoCaptureDevice);
         success = NO;
         goto error;
     }
@@ -221,11 +221,11 @@ error:
 
     [_captureSession beginConfiguration];
     if (!videoInput || videoError) {
-        NSLog(@"QS: Couldn't obtain video input! Error %i %@", videoError.code, videoError.localizedDescription);
+        NSLog(@"QS: Couldn't obtain video input! Error %zd %@", videoError.code, videoError.localizedDescription);
         goto notifyDelegateOfError;
     }
     if (!audioInput || audioError) {
-        NSLog(@"QS: Couldn't obtain audio input! Error %i %@", audioError.code, audioError.localizedDescription);
+        NSLog(@"QS: Couldn't obtain audio input! Error %zd %@", audioError.code, audioError.localizedDescription);
         goto notifyDelegateOfError;
     }
     if ([_captureSession canAddInput:videoInput]) { // video
@@ -320,7 +320,7 @@ notifyDelegateOfError:
         }
     }
     if (!recordedSuccessfully) {
-        NSLog(@"QS: An error occurred when recording to file: %@ Error: %i, %@", [fileURL absoluteString], error.code, error.localizedDescription);
+        NSLog(@"QS: An error occurred when recording to file: %@ Error: %zd, %@", [fileURL absoluteString], error.code, error.localizedDescription);
     }
     else {
         error = nil; // don't let the delegate know that an error occurred if it recorded successfully
