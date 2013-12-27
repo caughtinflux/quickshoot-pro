@@ -1,9 +1,13 @@
 .DS_Store
+
 _
+
 debs/
+
 *.deb
 
 *.sublime*
+
 reference.txt
 
 .theos/
@@ -15,3 +19,5 @@ QSLink.h
 qsprefs/Resources/Info.plist
 
 .theos/packages/com.caughtinflux.quickshootpro-0.1
+
+build/
