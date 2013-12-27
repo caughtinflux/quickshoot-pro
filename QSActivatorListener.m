@@ -45,7 +45,6 @@
     static QSActivatorListener *sharedInstance;
     dispatch_once(&predicate, ^{
         sharedInstance = [[self alloc] init];
-        [sharedInstance setAbilitiesChecked:YES];
         [[NSNotificationCenter defaultCenter] addObserver:sharedInstance selector:@selector(_preferencesChanged:) name:QSPrefsChangedNotificationName object:nil];
     });
     return sharedInstance;
@@ -54,9 +53,6 @@
 #pragma mark - Activator Listener Protocol Implementation
 - (void)activator:(LAActivator *)activator receiveEvent:(LAEvent *)event
 {
-    if (!self.abilitiesChecked) {
-        return;
-    }
     // image capture
     if ([[[LAActivator sharedInstance] assignedListenerNameForEvent:event] isEqualToString:QSImageCaptureListenerName]) {
         if ([QSCameraController sharedInstance].isCapturingImage) {
