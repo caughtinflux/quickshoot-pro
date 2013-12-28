@@ -1,10 +1,10 @@
-Package: com.caughtinflux.quickshootpro
-Name: QuickShoot Pro
+Package: com.caughtinflux.quickshootpro7
+Name: QuickShoot Pro 7
 Depends: mobilesubstrate, firmware (>= 7.0), applist, libactivator
 Conflicts: com.caughtinflux.quickshoot
-Version: 1.4
+Version: 1.0
 Architecture: iphoneos-arm
-Description: Capture photos or video quickly with awesome animations, and more control! 
+Description: Capture photos or video quickly with awesome animations and more control! 
 Maintainer: flux
 Author: flux
 Section: Tweaks
