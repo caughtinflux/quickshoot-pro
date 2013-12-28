@@ -18,8 +18,10 @@
 #import <Foundation/Foundation.h>
 #import <CoreFoundation/CFUserNotification.h>
 
+#import <SpringBoard/SBBacklightController.h>
 #import <SpringBoard/SBScreenFlash.h>
-#import <objc/runtime.h>
+
+#define objc_getClass(_cls) NSClassFromString(@_cls)
 
 #import "LibstatusBar.h"
 
@@ -121,13 +123,7 @@
             [self _preferencesChanged:nil]; // make sure the delay times 'n' shit are set.
         }
         if (_optionsWindow.hidden) {
-            // SBAwayController is DEAD on iOS 7. DEAD.
-            /*
-            Class SBAwayController = objc_getClass("SBAwayController");
-            if ([[SBAwayController sharedAwayController] isLocked]) {
-                [[SBAwayController sharedAwayController] attemptUnlock]; // turn screen on.
-            }
-            */
+            [[NSClassFromString(@"SBBacklightController") sharedInstance] turnOnScreenFullyWithBacklightSource:1];
             _optionsWindow.hidden = NO; 
         }
         else {
