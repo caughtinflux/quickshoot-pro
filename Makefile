@@ -1,4 +1,4 @@
-TARGET = iphone:clang:latest:6.0
+TARGET = iphone:clang:latest:7.0
 ARCHS = armv7 armv7s arm64
 DEBUG = 1
 
@@ -16,7 +16,7 @@ SUBPROJECTS += qsprefs
 include $(THEOS_MAKE_PATH)/aggregate.mk
 
 before-all::
-	$(ECHO_NOTHING)python ./VersionUpdate.py $(THEOS_PACKAGE_BASE_VERSION)$(ECHO_END)
+	$(ECHO_NOTHING)echo "#define kPackageVersion @\"$(THEOS_PACKAGE_BASE_VERSION)\"\n" > QSVersion.h$(ECHO_END)
 	$(ECHO_NOTHING)touch -t 2012310000 qsprefs/QSPrefs.mm$(ECHO_END)
 
 after-install::

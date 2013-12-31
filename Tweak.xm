@@ -114,10 +114,10 @@ static void QSUserNotificationCallBack(CFUserNotificationRef userNotification, C
             // create a failsafe, which runs after 10 seconds
             [self setUserInteractionEnabled:YES];
         });
-
         overlayView.animationCompletionHandler = ^{
             [overlayView removeFromSuperview];
             [self setUserInteractionEnabled:YES];
+            overlayView.animationCompletionHandler = nil;
         };
         [imageView addSubview:overlayView];
         [overlayView captureBegan];
@@ -142,13 +142,13 @@ static void QSUserNotificationCallBack(CFUserNotificationRef userNotification, C
 
             SBIconImageView *imageView = [self _iconImageView];
             overlayView = [[QSIconOverlayView alloc] initWithFrame:imageView.frame captureMode:QSCaptureModeVideo];
-
             overlayView.animationCompletionHandler = ^{
                 [overlayView removeFromSuperview];
                 if (!wasInterrupted) {
                     [overlayView release];
                 }
                 wasInterrupted = YES;
+                overlayView.animationCompletionHandler = nil;
             };
 
             [imageView addSubview:overlayView];
@@ -178,8 +178,8 @@ static void QSUserNotificationCallBack(CFUserNotificationRef userNotification, C
 
 
 #pragma mark - App Launch Hook
-%hook SBApplicationIcon
-- (void)launch
+%hook SBIcon
+- (void)launchFromLocation:(SBIconLocation)location
 {
     if (_isCapturingVideo && ([[(SBApplicationIcon *)self leafIdentifier] isEqualToString:_currentlyOverlayedAppID])) {
         // the app should not launch if it has an overlay.
@@ -204,25 +204,28 @@ static void QSUserNotificationCallBack(CFUserNotificationRef userNotification, C
 
 #pragma mark - Camera Grabber Hooks
 
-%hook SBAwayLockBar 
-- (void)setShowsCameraGrabber:(BOOL)shouldShowGrabber
+%hook SBLockScreenView
+- (void)setCameraGrabberHidden:(BOOL)hidden forRequester:(id)requester
 {
-    %orig();
-
-    if (!shouldShowGrabber) {
+    %orig(hidden, requester);
+    if (hidden) {
         return;
     }
-
-    UIView *grabberView = MSHookIvar<UIView *>(self, "_cameraGrabber");
-    UITapGestureRecognizer *tapRecognizer = [[[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(qs_handleDoubleTap:)] autorelease];
-    tapRecognizer.numberOfTapsRequired = 2;
-
-    for (UIGestureRecognizer *recognizer in grabberView.gestureRecognizers) {
-        // Make sure it's recognised only after all the other shit.
-        [recognizer requireGestureRecognizerToFail:tapRecognizer];
+    UIView *grabberView = MSHookIvar<UIView *>(self, "_cameraGrabberView");
+    static UITapGestureRecognizer *tapRecognizer = nil;
+    if (!tapRecognizer) {
+        CLog(@"Creating recognizer");
+        tapRecognizer = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(qs_handleDoubleTap:)];
+        tapRecognizer.numberOfTapsRequired = 2;
     }
-
-    [grabberView addGestureRecognizer:tapRecognizer];
+    if (![grabberView.gestureRecognizers containsObject:tapRecognizer]) {
+        CLog(@"Adding it to %@", [grabberView class]);
+        for (UIGestureRecognizer *recognizer in grabberView.gestureRecognizers) {
+            // Ensure all other gesture recognisers wait for this one to fail
+            [recognizer requireGestureRecognizerToFail:tapRecognizer];
+        }
+        [grabberView addGestureRecognizer:tapRecognizer];
+    }
 }
 
 %new 
@@ -231,7 +234,6 @@ static void QSUserNotificationCallBack(CFUserNotificationRef userNotification, C
     if (!_enabled || _isCapturingImage || _isCapturingVideo) {
         return;
     }
-
     _isCapturingImage = YES;
     [[QSCameraController sharedInstance] takePhotoWithCompletionHandler:^(BOOL success) {
         _isCapturingImage = NO;
@@ -264,12 +266,12 @@ static void QSUserNotificationCallBack(CFUserNotificationRef userNotification, C
     %orig;
     // called on unlock.
     if (!_shownWelcomeAlert) { 
-        NSDictionary *fields = @{(id)kCFUserNotificationAlertHeaderKey          : @"Welcome to QuickShoot",
-                                 (id)kCFUserNotificationAlertMessageKey         : @"Thank you for your purchase. Open settings for more options and help, or get started right away. Try double tapping the camera icon.\n",
-                                 (id)kCFUserNotificationDefaultButtonTitleKey   : @"Dismiss",
-                                 (id)kCFUserNotificationAlternateButtonTitleKey : @"Settings"};
+        NSDictionary *fields = @{(id)kCFUserNotificationAlertHeaderKey: @"Welcome to QuickShoot",
+                                 (id)kCFUserNotificationAlertMessageKey: @"Thank you for your purchase. Open settings for more options and help, or get started right away. Try double tapping the camera icon.\n",
+                                 (id)kCFUserNotificationDefaultButtonTitleKey: @"Dismiss",
+                                 (id)kCFUserNotificationAlternateButtonTitleKey: @"Settings"};
 
-        SInt32 error;
+        SInt32 error = 0;
         CFUserNotificationRef notificationRef = CFUserNotificationCreate(kCFAllocatorDefault, 0, kCFUserNotificationNoteAlertLevel, &error, (CFDictionaryRef)fields);
         // Get and add a run loop source to the current run loop to get notified when the alert is dismissed
         CFRunLoopSourceRef runLoopSource = CFUserNotificationCreateRunLoopSource(kCFAllocatorDefault, notificationRef, QSUserNotificationCallBack, 0);

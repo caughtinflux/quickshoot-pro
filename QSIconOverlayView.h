@@ -20,7 +20,8 @@ typedef enum {
 
 @interface QSIconOverlayView : UIView
 
-// The completion handler is destroyed when this view is dealloc'd. It is called _after_ all the animations are done, and the iris is animated out.
+// The completion handler is destroyed when this view is deallocated. It is called _after_ all the animations are done, and the iris is animated out.
+// Use only weak references to the view, or nil out the block when you're done using it
 @property (nonatomic, copy) QSAnimationCompletionHandler animationCompletionHandler;
 
 // Default capture mode is photo.

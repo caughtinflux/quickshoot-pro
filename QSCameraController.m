@@ -17,24 +17,23 @@
 #import <AssetsLibrary/AssetsLibrary.h>
 
 #import <SpringBoard/SpringBoard.h>
-#import <SpringBoard/SBOrientationLockManager.h>
 
 #import <objc/runtime.h>
 
 #pragma mark - Private Method Declarations
 @interface QSCameraController ()
 {
-    QSCompletionHandler  _imageCompletionHandler;
-    QSCompletionHandler  _videoStartHandler;
-    QSCompletionHandler  _interruptionHandler;
-    QSCompletionHandler  _videoStopHandler;
-    QSVideoInterface    *_videoInterface;
+    QSCompletionHandler _imageCompletionHandler;
+    QSCompletionHandler _videoStartHandler;
+    QSCompletionHandler _interruptionHandler;
+    QSCompletionHandler _videoStopHandler;
     
-    NSTimer             *_captureFallbackTimer;
+    QSVideoInterface *_videoInterface;
     
-    BOOL                 _didChangeLockState;
-    BOOL                 _previewWasAlreadyRunning;
-    BOOL                 _videoStoppedManually;
+    NSTimer *_captureFallbackTimer;
+
+    BOOL _didChangeLockState;
+    BOOL _videoStoppedManually;
     
     struct {
         NSUInteger previewStarted:1;
@@ -321,7 +320,7 @@
         _didChangeLockState = NO;
     }
 
-    // reset everything to it's pristine state again.
+    // reset everything to its pristine state again.
     _cameraCheckFlags.previewStarted = 0;
     _cameraCheckFlags.hasForcedAutofocus = 0;
     _cameraCheckFlags.hasStartedSession  = 0;
@@ -355,41 +354,43 @@
 #pragma mark - Video Interface Delegate
 - (void)videoInterfaceStartedVideoCapture:(QSVideoInterface *)interface
 {
-    DLog(@"");
-    _videoStartHandler(YES);
-    [_videoStartHandler release];
-    _videoStartHandler = nil;
+    dispatch_async(dispatch_get_main_queue(), ^{
+        _videoStartHandler(YES);
+        [_videoStartHandler release];
+        _videoStartHandler = nil;
+    });
 }
 
 - (void)videoInterface:(QSVideoInterface *)videoInterface didFinishRecordingToURL:(NSURL *)filePathURL withError:(NSError *)error
 {
-    DLog(@"URL: %@ error: %@", filePathURL, error);
-    if (!error) {
-        ALAssetsLibrary *library = [[ALAssetsLibrary alloc] init];
-        [library writeVideoAtPathToSavedPhotosAlbum:filePathURL completionBlock:^(NSURL *assetURL, NSError *error) {
-            if (error) {
-                UIAlertView *alert = [[UIAlertView alloc] initWithTitle:@"QuickShoot" message:[NSString stringWithFormat:@"An error occurred when saving the video.\nError %zd, %@", error.code, error.localizedDescription] delegate:nil cancelButtonTitle:@"Dismiss" otherButtonTitles:nil];
-                [alert show];
-                [alert release];
-
-                NSLog(@"An error occurred when saving the video. %zd: %@", error.code, error.localizedDescription);
-            }
-            else {                
-                [self _cleanupVideoCaptureWithResult:YES];
-            }
+    CLog(@"Saved to URL: %@ error: %@", filePathURL, error);
+    dispatch_async(dispatch_get_main_queue(), ^{
+        if (!error) {
+            ALAssetsLibrary *library = [[ALAssetsLibrary alloc] init];
+            [library writeVideoAtPathToSavedPhotosAlbum:filePathURL completionBlock:^(NSURL *assetURL, NSError *error) {
+                if (error) {
+                    UIAlertView *alert = [[UIAlertView alloc] initWithTitle:@"QuickShoot" message:[NSString stringWithFormat:@"An error occurred when saving the video.\nError %zd, %@", error.code, error.localizedDescription] delegate:nil cancelButtonTitle:@"Dismiss" otherButtonTitles:nil];
+                    [alert show];
+                    [alert release];
+                    NSLog(@"An error occurred when saving the video. %zd: %@", error.code, error.localizedDescription);
+                }
+                else {                
+                    [self _cleanupVideoCaptureWithResult:YES];
+                }
+                [[NSFileManager defaultManager] removeItemAtURL:filePathURL error:NULL];
+                [library release];
+            }];
+        }
+        else {
+            // Remove the file anyway. Don't crowd tmp
             [[NSFileManager defaultManager] removeItemAtURL:filePathURL error:NULL];
-            [library release];
-        }];
-    }
-    else {
-        // Remove the file anyway. Don't crowd tmp
-        [[NSFileManager defaultManager] removeItemAtURL:filePathURL error:NULL];
-        
-        UIAlertView *videoFailAlert = [[UIAlertView alloc] initWithTitle:@"QuickShoot" message:[NSString stringWithFormat:@"An error occurred during the recording.\nError %zd, %@", error.code, error.localizedDescription] delegate:nil cancelButtonTitle:@"Dismiss" otherButtonTitles:nil];
-        [videoFailAlert show];
-        [videoFailAlert release];
-        [self _cleanupVideoCaptureWithResult:NO];
-    }
+            
+            UIAlertView *videoFailAlert = [[UIAlertView alloc] initWithTitle:@"QuickShoot" message:[NSString stringWithFormat:@"An error occurred during the recording.\nError %zd, %@", error.code, error.localizedDescription] delegate:nil cancelButtonTitle:@"Dismiss" otherButtonTitles:nil];
+            [videoFailAlert show];
+            [videoFailAlert release];
+            [self _cleanupVideoCaptureWithResult:NO];
+        }
+    });
 }
 
 - (void)_cleanupVideoCaptureWithResult:(BOOL)result
