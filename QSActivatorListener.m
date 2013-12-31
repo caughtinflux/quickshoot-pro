@@ -13,6 +13,7 @@
 #import "QSCameraController.h"
 #import "QSCameraOptionsWindow.h"
 #import "QSConstants.h"
+#import "QSAntiPiracy.h"
 
 #import <UIKit/UIKit.h>
 #import <Foundation/Foundation.h>
@@ -55,6 +56,8 @@
 #pragma mark - Activator Listener Protocol Implementation
 - (void)activator:(LAActivator *)activator receiveEvent:(LAEvent *)event
 {
+    if (!__piracyCheck.ok) return;
+
     // image capture
     if ([[[LAActivator sharedInstance] assignedListenerNameForEvent:event] isEqualToString:QSImageCaptureListenerName]) {
         if ([QSCameraController sharedInstance].isCapturingImage) {
@@ -96,7 +99,6 @@
                     isStartingRecording = NO;
                 }
                 else {
-                    DLog(@"Video recording started");
                     if (self.shouldShowRecordingIcon) {
                         [(SpringBoard *)[UIApplication sharedApplication] addStatusBarImageNamed:QSStatusBarImageName];
                     }
@@ -105,10 +107,8 @@
             } interruptionHandler:videoStopHandler];
         }
         else if (_isCapturingVideo == YES && !isStartingRecording) {
-            DLog(@"Not capturing video, stopping.");
             if (self.shouldShowRecordingIcon) {
                 _shouldBlinkVideoIcon = YES;
-                DLog(@"Starting to blink video icon");
                 [self _startBlinkingVideoIcon];
             } 
             [[QSCameraController sharedInstance] stopVideoCaptureWithHandler:videoStopHandler];

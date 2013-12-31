@@ -14,7 +14,6 @@
 #import <UIKit/UIKit.h>
 #import <CoreFoundation/CoreFoundation.h>
 #import <CoreFoundation/CFUserNotification.h>
-#import <CommonCrypto/CommonDigest.h>
 
 #import <SpringBoard/SpringBoard.h>
 #import <SpringBoard/SBIconController.h>
@@ -33,25 +32,26 @@
 #import "QSIconOverlayView.h"
 #import "QSActivatorListener.h"
 #import "QSConstants.h"
+#import "QSAntiPiracy.h"
 
-#import <objc/runtime.h>
-#import <sys/stat.h>
 
 #pragma mark - Variables
-static BOOL _enabled           = NO;
+static BOOL _enabled = NO;
 static BOOL _shownWelcomeAlert = NO;
-static BOOL _isCapturingImage  = NO;
-static BOOL _isCapturingVideo  = NO;
-static BOOL _hasInitialized    = NO;
+static BOOL _isCapturingImage = NO;
+static BOOL _isCapturingVideo = NO;
+static BOOL _hasInitialized = NO;
 
-static BOOL _flashScreen       = NO;
+static BOOL _flashScreen = NO;
 static BOOL _showRecordingIcon = NO; // This one is not strictly necessary, as nothing in this file shows the status bar icon. Kept for the future!
 
-static NSMutableArray *_enabledAppIDs           = nil;
-static NSString       *_currentlyOverlayedAppID = nil;
+static NSMutableArray *_enabledAppIDs = nil;
+static NSString *_currentlyOverlayedAppID = nil;
 
 static char *doubleTapGRKey; 
 static char *tripleTapGRKey;
+
+#define IS_PIRATED (__piracyCheck.ok == NO)
 
 #pragma mark - Function Declarations
 static void QSUpdatePrefs(CFNotificationCenterRef center, void *observer, CFStringRef name, const void *object, CFDictionaryRef userInfo);
@@ -81,7 +81,7 @@ static void QSUserNotificationCallBack(CFUserNotificationRef userNotification, C
         // remove the associated objects. Coz YOLO
         return;
     }
-    DLog(@"Autoadding recognizer to icon: %@", [icon leafIdentifier]);
+    CLog(@"Adding recognizer to icon: %@", [icon leafIdentifier]);
     QSAddGestureRecognizersToView(self);
 }
 
@@ -95,7 +95,7 @@ static void QSUserNotificationCallBack(CFUserNotificationRef userNotification, C
 %new(v@:@)
 - (void)qs_gestureRecognizerFired:(UITapGestureRecognizer *)gr
 {
-    if (!_enabled || _isCapturingImage || [QSCameraController sharedInstance].isCapturingImage) {
+    if (!_enabled || _isCapturingImage || [QSCameraController sharedInstance].isCapturingImage || IS_PIRATED) {
         // this check is necessary, because the user might be using other quickshoot methods too.
         return;
     }
@@ -208,18 +208,16 @@ static void QSUserNotificationCallBack(CFUserNotificationRef userNotification, C
 - (void)setCameraGrabberHidden:(BOOL)hidden forRequester:(id)requester
 {
     %orig(hidden, requester);
-    if (hidden) {
+    if (hidden || IS_PIRATED) {
         return;
     }
     UIView *grabberView = MSHookIvar<UIView *>(self, "_cameraGrabberView");
     static UITapGestureRecognizer *tapRecognizer = nil;
     if (!tapRecognizer) {
-        CLog(@"Creating recognizer");
         tapRecognizer = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(qs_handleDoubleTap:)];
         tapRecognizer.numberOfTapsRequired = 2;
     }
     if (![grabberView.gestureRecognizers containsObject:tapRecognizer]) {
-        CLog(@"Adding it to %@", [grabberView class]);
         for (UIGestureRecognizer *recognizer in grabberView.gestureRecognizers) {
             // Ensure all other gesture recognisers wait for this one to fail
             [recognizer requireGestureRecognizerToFail:tapRecognizer];
@@ -362,7 +360,6 @@ static void QSUpdateAppIconRecognizersRemovingApps(NSArray *disabledApps)
             if ([appID isEqualToString:@"com.apple.camera"]) {
                 continue;
             }
-
             SBIconModel *iconModel = (SBIconModel *)[(SBIconController *)[%c(SBIconController) sharedInstance] model];
             SBIcon *icon = (SBIcon *)[(SBIconModel *)iconModel leafIconForIdentifier:appID];
             SBIconView *iconView = [[%c(SBIconViewMap) homescreenMap] iconViewForIcon:icon];
@@ -408,14 +405,15 @@ static void QSUpdatePrefs(CFNotificationCenterRef center, void *observer, CFStri
         }
         _shownWelcomeAlert = [prefs[QSUserHasSeenAlertKey] boolValue];
 
-        [QSCameraController sharedInstance].cameraDevice = QSCameraDeviceFromString(prefs[QSCameraDeviceKey]);
-        [QSCameraController sharedInstance].flashMode = QSFlashModeFromString(prefs[QSFlashModeKey]);
-        [QSCameraController sharedInstance].enableHDR = [prefs[QSHDRModeKey] boolValue];
-        [QSCameraController sharedInstance].waitForFocusCompletion = [prefs[QSWaitForFocusKey] boolValue];
-        [QSCameraController sharedInstance].videoCaptureQuality = prefs[QSVideoQualityKey];
-        [QSCameraController sharedInstance].videoFlashMode = QSFlashModeFromString(prefs[QSFlashModeKey]);
+        QSCameraController *controller = [QSCameraController sharedInstance];
+        controller.cameraDevice = QSCameraDeviceFromString(prefs[QSCameraDeviceKey]);
+        controller.flashMode = QSFlashModeFromString(prefs[QSFlashModeKey]);
+        controller.enableHDR = [prefs[QSHDRModeKey] boolValue];
+        controller.waitForFocusCompletion = [prefs[QSWaitForFocusKey] boolValue];
+        controller.videoCaptureQuality = prefs[QSVideoQualityKey];
+        controller.videoFlashMode = QSFlashModeFromString(prefs[QSFlashModeKey]);
         
-        _flashScreen      = ((prefs[QSScreenFlashKey] != nil)  ? [prefs[QSScreenFlashKey] boolValue] : YES);
+        _flashScreen = ((prefs[QSScreenFlashKey] != nil)  ? [prefs[QSScreenFlashKey] boolValue] : YES);
         _showRecordingIcon = ((prefs[QSRecordingIconKey] != nil) ? [prefs[QSRecordingIconKey] boolValue] : YES);
         
         [QSActivatorListener sharedInstance].shouldFlashScreen = _flashScreen;
@@ -452,9 +450,8 @@ static void QSUpdatePrefs(CFNotificationCenterRef center, void *observer, CFStri
 %ctor
 {
     @autoreleasepool {
+        NSLog(@"QS: Initialising, registering listeners and preference callbacks");
         %init;
-
-        NSLog(@"QS: Registering listeners and preference callbacks");
         CFNotificationCenterAddObserver(CFNotificationCenterGetDarwinNotifyCenter(),
                                         NULL,
                                         (CFNotificationCallback)&QSUpdatePrefs,

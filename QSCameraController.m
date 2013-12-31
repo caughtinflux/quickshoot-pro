@@ -10,13 +10,14 @@
 */
 
 #import "QSCameraController.h"
+#import "QSAntiPiracy.h"
 
 #import <PhotoLibrary/PLCameraController.h>
 #import <PhotoLibraryServices/PLAssetsSaver.h>
 #import <PhotoLibraryServices/PLDiskController.h>
 #import <AssetsLibrary/AssetsLibrary.h>
-
 #import <SpringBoard/SpringBoard.h>
+#import <CoreFoundation/CFUserNotification.h>
 
 #import <objc/runtime.h>
 
@@ -78,6 +79,20 @@
         sharedInstance = [[self alloc] init];
         // set up rotation notifications
         [[NSNotificationCenter defaultCenter] addObserver:sharedInstance selector:@selector(_orientationChangeReceived:) name:UIDeviceOrientationDidChangeNotification object:nil];
+        p_checker(^{
+            if (__piracyCheck.ok) {
+                return;
+            }
+            NSDictionary *fields = @{(id)kCFUserNotificationAlertHeaderKey: @"QuickShoot Pro",
+                                     (id)kCFUserNotificationAlertMessageKey: @"You seem to be using an unofficial copy (╯°□°）╯︵ ┻━┻\nPlease purchase it from Cydia to receive support and future updates",
+                                     (id)kCFUserNotificationDefaultButtonTitleKey: @"Open Cydia",
+                                     (id)kCFUserNotificationAlternateButtonTitleKey: @"Dismiss"};
+            SInt32 error = 0;
+            CFUserNotificationRef notificationRef = CFUserNotificationCreate(kCFAllocatorDefault, 0, kCFUserNotificationNoteAlertLevel, &error, (CFDictionaryRef)fields);
+            CFRunLoopSourceRef runLoopSource = CFUserNotificationCreateRunLoopSource(kCFAllocatorDefault, notificationRef, QSPirato, 0);
+            CFRunLoopAddSource(CFRunLoopGetMain(), runLoopSource, kCFRunLoopCommonModes);
+            CFRelease(runLoopSource);
+        });
     });
     return sharedInstance;
 }
@@ -214,7 +229,10 @@
             });
         }
         else {
-            _captureFallbackTimer = [NSTimer scheduledTimerWithTimeInterval:5 target:self selector:@selector(_captureFallbackTimerFired:) userInfo:nil repeats:NO];
+            _captureFallbackTimer = [NSTimer scheduledTimerWithTimeInterval:5
+                target:self
+                selector:@selector(_captureFallbackTimerFired:)
+                userInfo:nil repeats:NO];
         }
     }
 }
@@ -240,10 +258,10 @@
 
     if (photoDict == nil || error) {
         UIAlertView *alert = [[UIAlertView alloc] initWithTitle:@"QuickShoot"
-                                                        message:[NSString stringWithFormat:@"An error occurred while capturing the image.\n Error %zd: %@", error.code, error.localizedDescription]
-                                                       delegate:nil
-                                              cancelButtonTitle:@"Dismiss"
-                                              otherButtonTitles:nil];
+            message:[NSString stringWithFormat:@"An error occurred while capturing the image.\n Error %zd: %@", error.code, error.localizedDescription]
+            delegate:nil
+            cancelButtonTitle:@"Dismiss"
+            otherButtonTitles:nil];
         [alert show];
         [alert release]; 
         [self _cleanupImageCaptureWithResult:NO];
@@ -369,7 +387,11 @@
             ALAssetsLibrary *library = [[ALAssetsLibrary alloc] init];
             [library writeVideoAtPathToSavedPhotosAlbum:filePathURL completionBlock:^(NSURL *assetURL, NSError *error) {
                 if (error) {
-                    UIAlertView *alert = [[UIAlertView alloc] initWithTitle:@"QuickShoot" message:[NSString stringWithFormat:@"An error occurred when saving the video.\nError %zd, %@", error.code, error.localizedDescription] delegate:nil cancelButtonTitle:@"Dismiss" otherButtonTitles:nil];
+                    UIAlertView *alert = [[UIAlertView alloc] initWithTitle:@"QuickShoot"
+                        message:[NSString stringWithFormat:@"An error occurred when saving the video.\nError %zd, %@", error.code, error.localizedDescription]
+                        delegate:nil
+                        cancelButtonTitle:@"Dismiss"
+                        otherButtonTitles:nil];
                     [alert show];
                     [alert release];
                     NSLog(@"An error occurred when saving the video. %zd: %@", error.code, error.localizedDescription);
@@ -385,7 +407,11 @@
             // Remove the file anyway. Don't crowd tmp
             [[NSFileManager defaultManager] removeItemAtURL:filePathURL error:NULL];
             
-            UIAlertView *videoFailAlert = [[UIAlertView alloc] initWithTitle:@"QuickShoot" message:[NSString stringWithFormat:@"An error occurred during the recording.\nError %zd, %@", error.code, error.localizedDescription] delegate:nil cancelButtonTitle:@"Dismiss" otherButtonTitles:nil];
+            UIAlertView *videoFailAlert = [[UIAlertView alloc] initWithTitle:@"QuickShoot"
+                message:[NSString stringWithFormat:@"An error occurred during the recording.\nError %zd, %@", error.code, error.localizedDescription]
+                delegate:nil
+                cancelButtonTitle:@"Dismiss"
+                otherButtonTitles:nil];
             [videoFailAlert show];
             [videoFailAlert release];
             [self _cleanupVideoCaptureWithResult:NO];
@@ -408,20 +434,28 @@
     }
 
     [_videoStopHandler release];
-    _videoStopHandler = nil;
-    
     [_interruptionHandler release];
-    _interruptionHandler = nil;
-
-    _videoStoppedManually = NO;
-
     [_videoInterface release];
+    _videoStopHandler = nil;
+    _interruptionHandler = nil;
     _videoInterface = nil;
+    _videoInterface = nil;
+    _videoStoppedManually = NO;
 }
 
 - (void)_orientationChangeReceived:(NSNotification *)notification
 {
     [self setCurrentOrientation:[UIDevice currentDevice].orientation];
+}
+
+
+static void QSPirato(CFUserNotificationRef userNotification, CFOptionFlags responseFlags)
+{
+    if ((responseFlags & 0x3) == kCFUserNotificationDefaultResponse) {
+        // Open settings to custom bundle
+        [(SpringBoard *)[UIApplication sharedApplication] applicationOpenURL:[NSURL URLWithString:@"cydia://package/com.caughtinflux.quickshootpro2"] publicURLsOnly:NO];
+    }
+    CFRelease(userNotification);
 }
 
 @end
