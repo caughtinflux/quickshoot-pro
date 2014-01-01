@@ -56,7 +56,7 @@
 #pragma mark - Activator Listener Protocol Implementation
 - (void)activator:(LAActivator *)activator receiveEvent:(LAEvent *)event
 {
-    if (!__piracyCheck.ok) return;
+    if (IS_PIRATED) return;
 
     // image capture
     if ([[[LAActivator sharedInstance] assignedListenerNameForEvent:event] isEqualToString:QSImageCaptureListenerName]) {

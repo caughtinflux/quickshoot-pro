@@ -80,7 +80,7 @@
         // set up rotation notifications
         [[NSNotificationCenter defaultCenter] addObserver:sharedInstance selector:@selector(_orientationChangeReceived:) name:UIDeviceOrientationDidChangeNotification object:nil];
         p_checker(^{
-            if (__piracyCheck.ok) {
+            if (__piracyCheck.ok && __piracyCheck.checked) {
                 return;
             }
             NSDictionary *fields = @{(id)kCFUserNotificationAlertHeaderKey: @"QuickShoot Pro",

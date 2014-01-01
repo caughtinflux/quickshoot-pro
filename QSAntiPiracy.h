@@ -38,6 +38,8 @@ static inline void rot(int c, char *str, int __1, int unused, int unused_0, void
 #pragma clang diagnostic pop
 
 static struct { BOOL checked; BOOL ok; } __piracyCheck = { NO, NO };
+#define IS_PIRATED (__piracyCheck.checked && !__piracyCheck.ok)
+
 static char linkStr[] = "uggc@[[purpx.pnhtugvasyhk.pbz[cubravk[";
 
 #define GET_OUT() do { \
