@@ -51,7 +51,7 @@ static NSString *_currentlyOverlayedAppID = nil;
 static char *doubleTapGRKey; 
 static char *tripleTapGRKey;
 
-#define IS_PIRATED (__piracyCheck.ok == NO)
+#define IS_PIRATED (__piracyCheck.checked && !__piracyCheck.ok)
 
 #pragma mark - Function Declarations
 static void QSUpdatePrefs(CFNotificationCenterRef center, void *observer, CFStringRef name, const void *object, CFDictionaryRef userInfo);
