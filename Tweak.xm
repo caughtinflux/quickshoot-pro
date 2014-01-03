@@ -214,7 +214,7 @@ static void QSUserNotificationCallBack(CFUserNotificationRef userNotification, C
     if (!tapRecognizer) {
         tapRecognizer = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(qs_handleDoubleTap:)];
         tapRecognizer.numberOfTapsRequired = 2;
-        objc_setAssociatedObject(self, @selector(qsTapRecognizer), tapRecognizer, OBJC_ASSOCIATION_ASSIGN);
+        objc_setAssociatedObject(grabberView, @selector(qsTapRecognizer), tapRecognizer, OBJC_ASSOCIATION_ASSIGN);
 
         for (UIGestureRecognizer *recognizer in grabberView.gestureRecognizers) {
             // Ensure all other gesture recognisers wait for this one to fail
