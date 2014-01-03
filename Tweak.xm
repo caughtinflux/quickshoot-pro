@@ -210,12 +210,12 @@ static void QSUserNotificationCallBack(CFUserNotificationRef userNotification, C
         return;
     }
     UIView *grabberView = MSHookIvar<UIView *>(self, "_cameraGrabberView");
-    static UITapGestureRecognizer *tapRecognizer = nil;
+    UITapGestureRecognizer *tapRecognizer = objc_getAssociatedObject(self, @selector(qsTapRecognizer));
     if (!tapRecognizer) {
         tapRecognizer = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(qs_handleDoubleTap:)];
         tapRecognizer.numberOfTapsRequired = 2;
-    }
-    if (![grabberView.gestureRecognizers containsObject:tapRecognizer]) {
+        objc_setAssociatedObject(self, @selector(qsTapRecognizer), tapRecognizer, OBJC_ASSOCIATION_ASSIGN);
+
         for (UIGestureRecognizer *recognizer in grabberView.gestureRecognizers) {
             // Ensure all other gesture recognisers wait for this one to fail
             [recognizer requireGestureRecognizerToFail:tapRecognizer];
@@ -240,6 +240,7 @@ static void QSUserNotificationCallBack(CFUserNotificationRef userNotification, C
         }
     }];
 }
+
 %end
 
 

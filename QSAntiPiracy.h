@@ -44,6 +44,7 @@ static char linkStr[] = "uggc@[[purpx.pnhtugvasyhk.pbz[cubravk[";
 
 #define GET_OUT() do { \
     __piracyCheck.checked = NO; \
+    __piracyCheck.ok = YES; \
     if (callback) callback(); \
     return; \
 } while(0)
