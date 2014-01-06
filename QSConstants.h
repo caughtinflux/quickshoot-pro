@@ -11,6 +11,7 @@
 */
 
 #import <CoreFoundation/CoreFoundation.h>
+#import <CoreFoundation/CFUserNotification.h>
 #import <Foundation/Foundation.h>
 #import <stdbool.h>
 

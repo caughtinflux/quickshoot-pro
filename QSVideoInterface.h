@@ -28,7 +28,6 @@
 
 @property(nonatomic, readonly) BOOL videoCaptureSessionRunning;
 
-@property(nonatomic, readonly) AVCaptureVideoPreviewLayer *previewLayer;
 
 - (void)startVideoCapture;
 - (void)stopVideoCapture;

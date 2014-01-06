@@ -299,6 +299,21 @@
         _didChangeLockState = YES;
         [[SBOrientationLockManager sharedInstance] unlock];
     }
+
+    [[UIDevice currentDevice] beginGeneratingDeviceOrientationNotifications];
+    [(SpringBoard *)[UIApplication sharedApplication] setWantsOrientationEvents:YES];
+    [(SpringBoard *)[UIApplication sharedApplication] updateOrientationAndAccelerometerSettings];
+}
+
+- (void)_cleanupOrientationShit
+{
+    if (_didChangeLockState) {
+        [[objc_getClass("SBOrientationLockManager") sharedInstance] lock];
+        _didChangeLockState = NO;
+    }
+    [[UIDevice currentDevice] endGeneratingDeviceOrientationNotifications];
+    [(SpringBoard *)[UIApplication sharedApplication] setWantsOrientationEvents:NO];
+    [(SpringBoard *)[UIApplication sharedApplication] updateOrientationAndAccelerometerSettings];   
 }
 
 - (void)_setOrientationAndCaptureImage
@@ -333,11 +348,6 @@
 
 - (void)_cleanupImageCaptureWithResult:(BOOL)result
 {
-    if (_didChangeLockState) {
-        [[objc_getClass("SBOrientationLockManager") sharedInstance] lock];
-        _didChangeLockState = NO;
-    }
-
     // reset everything to its pristine state again.
     _cameraCheckFlags.previewStarted = 0;
     _cameraCheckFlags.hasForcedAutofocus = 0;
@@ -350,6 +360,8 @@
     
     [[PLCameraController sharedInstance] setDelegate:nil];
     _isCapturingImage = NO;
+
+    [self _cleanupOrientationShit];
 }
 
 - (void)_showCaptureFailedAlert
@@ -421,11 +433,8 @@
 
 - (void)_cleanupVideoCaptureWithResult:(BOOL)result
 {
+    [self _cleanupOrientationShit];
     _isCapturingVideo = NO;
-    if (_didChangeLockState) {
-        [[objc_getClass("SBOrientationLockManager") sharedInstance] lock];
-        _didChangeLockState = NO;
-    }
     if (_videoStoppedManually) {    
         _videoStopHandler(result);
     }
