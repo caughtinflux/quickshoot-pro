@@ -1,18 +1,6 @@
 .DS_Store
 _
-debs/
-*.deb
+
+build/
 
 *.sublime*
-reference.txt
-
-.theos/
-
-QSVersion.h
-
-QSLink.h
-
-qsprefs/Resources/Info.plist
-
-.theos/packages/com.caughtinflux.quickshootpro-0.1
-build/

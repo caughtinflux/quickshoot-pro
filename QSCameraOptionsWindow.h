@@ -10,8 +10,8 @@
 */
 
 #import <UIKit/UIKit.h>
-#import <PhotoLibrary/PLCameraFlashButtonDelegate-Protocol.h>
-#import <PhotoLibrary/PLCameraSettingsViewDelegate-Protocol.h>
+#import <PhotoLibrary/CAMFlashButtonDelegate-Protocol.h>
+#import <PhotoLibrary/PLCameraSettingsView.h>
 #import "QSConstants.h"
 
 @class QSCameraOptionsWindow;
@@ -26,7 +26,7 @@
 - (BOOL)currentHDRModeForOptionsWindow:(QSCameraOptionsWindow *)optionsWindow;
 @end
 
-@interface QSCameraOptionsWindow : UIWindow <PLCameraFlashButtonDelegate, PLCameraSettingsViewDelegate>
+@interface QSCameraOptionsWindow : UIWindow <CAMFlashButtonDelegate, PLCameraSettingsViewDelegate>
 
 @property(nonatomic, assign) id<QSCameraOptionsWindowDelegate> delegate;
 @property(nonatomic, assign) NSTimeInterval automaticHideDelay; // in seconds

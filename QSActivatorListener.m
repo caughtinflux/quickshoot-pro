@@ -13,14 +13,16 @@
 #import "QSCameraController.h"
 #import "QSCameraOptionsWindow.h"
 #import "QSConstants.h"
+#import "QSAntiPiracy.h"
 
 #import <UIKit/UIKit.h>
 #import <Foundation/Foundation.h>
 #import <CoreFoundation/CFUserNotification.h>
 
+#import <SpringBoard/SBBacklightController.h>
 #import <SpringBoard/SBScreenFlash.h>
-#import <SpringBoard/SBAwayController.h>
-#import <objc/runtime.h>
+
+#define objc_getClass(_cls) NSClassFromString(@_cls)
 
 #import "LibstatusBar.h"
 
@@ -29,8 +31,8 @@
 @interface QSActivatorListener ()
 {
     QSCameraOptionsWindow *_optionsWindow;
-    BOOL                   _isCapturingVideo;
-    BOOL                   _shouldBlinkVideoIcon;
+    BOOL _isCapturingVideo;
+    BOOL _shouldBlinkVideoIcon;
 }
 
 - (void)_startBlinkingVideoIcon;
@@ -46,7 +48,6 @@
     static QSActivatorListener *sharedInstance;
     dispatch_once(&predicate, ^{
         sharedInstance = [[self alloc] init];
-        [sharedInstance setAbilitiesChecked:YES];
         [[NSNotificationCenter defaultCenter] addObserver:sharedInstance selector:@selector(_preferencesChanged:) name:QSPrefsChangedNotificationName object:nil];
     });
     return sharedInstance;
@@ -55,6 +56,8 @@
 #pragma mark - Activator Listener Protocol Implementation
 - (void)activator:(LAActivator *)activator receiveEvent:(LAEvent *)event
 {
+    if (IS_PIRATED) return;
+
     // image capture
     if ([[[LAActivator sharedInstance] assignedListenerNameForEvent:event] isEqualToString:QSImageCaptureListenerName]) {
         if ([QSCameraController sharedInstance].isCapturingImage) {
@@ -68,7 +71,6 @@
     }
     // video capture
     else if ([[[LAActivator sharedInstance] assignedListenerNameForEvent:event] isEqualToString:QSVideoCaptureListenerName]) {
-
         static BOOL isStartingRecording;
 
         QSCompletionHandler videoStopHandler = ^(BOOL success) {
@@ -96,41 +98,32 @@
                     _isCapturingVideo = NO;
                     isStartingRecording = NO;
                 }
-
                 else {
-                    DLog(@"Video recording started");
                     if (self.shouldShowRecordingIcon) {
                         [(SpringBoard *)[UIApplication sharedApplication] addStatusBarImageNamed:QSStatusBarImageName];
                     }
                     isStartingRecording = NO;
                 }
-
             } interruptionHandler:videoStopHandler];
         }
         else if (_isCapturingVideo == YES && !isStartingRecording) {
-            DLog(@"Not capturing video, stopping.");
             if (self.shouldShowRecordingIcon) {
                 _shouldBlinkVideoIcon = YES;
-                DLog(@"Starting to blink video icon");
                 [self _startBlinkingVideoIcon];
             } 
             [[QSCameraController sharedInstance] stopVideoCaptureWithHandler:videoStopHandler];
         }
     }
-
     // options window
     else if ([[[LAActivator sharedInstance] assignedListenerNameForEvent:event] isEqualToString:QSOptionsWindowListenerName]) {
         if (!_optionsWindow) {
             _optionsWindow = [[QSCameraOptionsWindow alloc] initWithFrame:(CGRect){{0, 20}, {200, 102}} showFlash:YES showHDR:YES showCameraToggle:YES]; 
-            _optionsWindow.windowLevel = 1200;
+            _optionsWindow.windowLevel = 2000;
             _optionsWindow.delegate = self;
             [self _preferencesChanged:nil]; // make sure the delay times 'n' shit are set.
         }
         if (_optionsWindow.hidden) {
-            Class SBAwayController = objc_getClass("SBAwayController");
-            if ([[SBAwayController sharedAwayController] isLocked]) {
-                [[SBAwayController sharedAwayController] attemptUnlock]; // turn screen on.
-            }
+            [[NSClassFromString(@"SBBacklightController") sharedInstance] turnOnScreenFullyWithBacklightSource:1];
             _optionsWindow.hidden = NO; 
         }
         else {

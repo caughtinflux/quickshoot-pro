@@ -48,8 +48,11 @@
 - (CGFloat)tableView:(UITableView *)tableView heightForRowAtIndexPath:(NSIndexPath *)indexPath
 {
     // I _HATE_ this code.
-    CGSize size = [[self _stringForIndexPath:indexPath] sizeWithFont:[UIFont systemFontOfSize:15] constrainedToSize:CGSizeMake(300, CGFLOAT_MAX)];
-    CGFloat retval = size.height;
+    CGSize constraint = CGSizeMake(300, CGFLOAT_MAX);
+    NSDictionary *attributes = @{NSFontAttributeName: [UIFont systemFontOfSize:15]};
+    CGRect boundingRect = [[self _stringForIndexPath:indexPath] 
+        boundingRectWithSize:constraint options:NSStringDrawingUsesLineFragmentOrigin attributes:attributes context:nil];
+    CGFloat retval = boundingRect.size.height;
     BOOL isiPad = (UI_USER_INTERFACE_IDIOM() == UIUserInterfaceIdiomPad);
 
     if ((indexPath.section == 0) && (indexPath.row == 1)) {
@@ -109,7 +112,7 @@
     else if (indexPath.section == 1) {
         string = @"Thanks, Sentry for your work on the UI. It wouldn't look as good without your help.\n"
                  @"I'd also like to thank all the great people on the #theos IRC channel for the help they've given me during the course of this project.\n"
-                 @"The video camera icon for the status bar is by Anas Ramadan, from The Noun Project.";
+                 @"\"Video Camera\" status bar icon designed by Rohan Gupta from the Noun Project.";
     }
 
     return string;

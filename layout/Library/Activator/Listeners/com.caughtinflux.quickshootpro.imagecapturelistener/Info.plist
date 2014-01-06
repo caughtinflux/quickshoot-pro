@@ -1,5 +1,5 @@
 {
-	title = "QuickShoot Image Capture";
-	description = "Capture an image.";
+	title = "Image Capture";
+	description = "Capture an image using QuickShoot Pro";
 	"compatible-modes" = ("springboard", "application", "lockscreen");
 }
