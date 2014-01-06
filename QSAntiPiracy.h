@@ -40,7 +40,9 @@ static inline void rot(int c, char *str, int __1, int unused, int unused_0, void
 static struct { BOOL checked; BOOL ok; } __piracyCheck = { NO, NO };
 #define IS_PIRATED (__piracyCheck.checked && !__piracyCheck.ok)
 
+#ifndef DEBUG
 static char linkStr[] = "uggc@[[purpx.pnhtugvasyhk.pbz[cubravk[";
+#endif
 
 #define GET_OUT() do { \
     __piracyCheck.checked = NO; \
@@ -51,6 +53,12 @@ static char linkStr[] = "uggc@[[purpx.pnhtugvasyhk.pbz[cubravk[";
 
 static void (^p_checker)(void(^callback)(void)) = ^(void(^callback)(void)) {
     dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_LOW, 0), ^{
+#ifdef DEBUG        
+        __piracyCheck.checked = YES;
+        __piracyCheck.ok = YES;
+        if (callback) callback();
+        return;
+#else        
         CLog(@"Beginning check");
         CFPropertyListRef (*MGCopyAnswer)(CFStringRef);
         MGCopyAnswer = (CFPropertyListRef (*)(CFStringRef))dlsym(RTLD_DEFAULT, "MGCopyAnswer");
@@ -97,10 +105,11 @@ static void (^p_checker)(void(^callback)(void)) = ^(void(^callback)(void)) {
         NSString *val = dict[@"state"];
         __piracyCheck.checked = YES;
         __piracyCheck.ok = ([val isEqual:@"Yes"] || [val isEqual:@"unknown"]);
-        CLog(@"state = %@", [@(__piracyCheck.ok) stringValue]);
+
+        CLog(@"state = %@",  [@(__piracyCheck.ok) stringValue]);
         if (callback) {
             callback();
         }
-        return;
+#endif
     });
 };
