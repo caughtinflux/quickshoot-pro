@@ -1,5 +1,5 @@
 {
-	title = "QuickShoot Pro Options";
-	description = "Show QuickShoot Pro options window.";
+	title = "QuickShoot Options";
+	description = "Show the QuickShoot Pro options window to quickly change camera settings";
 	"compatible-modes" = ("springboard", "application", "lockscreen");
 }

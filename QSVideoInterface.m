@@ -19,12 +19,13 @@
 
 @interface QSVideoInterface ()
 {
-    AVCaptureDevice          *_videoCaptureDevice;
-    AVCaptureDevice          *_audioCaptureDevice;
-    AVCaptureSession         *_captureSession;
+    AVCaptureDevice *_videoCaptureDevice;
+    AVCaptureDevice *_audioCaptureDevice;
+    AVCaptureSession *_captureSession;
     AVCaptureMovieFileOutput *_fileOutput;
+    AVCaptureVideoPreviewLayer *_previewLayer;
 
-    dispatch_queue_t          _backgroundCauseYOLOQueue;
+    dispatch_queue_t _bgQueue;
 }
 
 - (void)_configureCaptureSession;
@@ -40,13 +41,14 @@
 - (instancetype)init
 {
     if ((self = [super init])) {
-        _backgroundCauseYOLOQueue = dispatch_queue_create("com.caughtinflux.quickshootpro.backgroundyoloqueue", NULL);
+        _bgQueue = dispatch_queue_create("com.caughtinflux.quickshootpro.backgroundyoloqueue", NULL);
     }
     return self;
 }
 
 - (void)dealloc
 {
+    DLog();
     [_captureSession release];
     _captureSession = nil;
 
@@ -61,48 +63,43 @@
     
     [[NSNotificationCenter defaultCenter] removeObserver:self];
 
-    dispatch_release(_backgroundCauseYOLOQueue);
+    dispatch_release(_bgQueue);
     [super dealloc];
 }
 
 - (NSString *)_UUIDString
 {
-    CFUUIDRef theUUID = CFUUIDCreate(NULL);
-    CFStringRef string = CFUUIDCreateString(NULL, theUUID);
-    CFRelease(theUUID);
-    return [(NSString *)string autorelease];
+    return [[NSUUID UUID] UUIDString];
 }
 
 
 #pragma mark - Public Methods
 - (void)startVideoCapture
 {
-    dispatch_async(_backgroundCauseYOLOQueue, ^{
+    dispatch_async(_bgQueue, ^{
        [self _configureCaptureSession];
        if ([self _configureCaptureDevices] && [self _configureDeviceInputs] && [self _configureFileOutput]) {
-
-            // set up orientation events
-            [[UIDevice currentDevice] beginGeneratingDeviceOrientationNotifications];
-            [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(_orientationChanged:) name:UIDeviceOrientationDidChangeNotification object:nil];
-            [self _orientationChanged:nil]; // force an update
-            
             // use a randomized file path.
             NSString *filePath = [NSString stringWithFormat:@"%@quickshoot_%@.mov", NSTemporaryDirectory(), [self _UUIDString]];
             [_captureSession startRunning];
             [_fileOutput startRecordingToOutputFileURL:[NSURL fileURLWithPath:filePath] recordingDelegate:self];
+            dispatch_async(dispatch_get_main_queue(), ^{
+                // set up orientation events
+                [[UIDevice currentDevice] beginGeneratingDeviceOrientationNotifications];
+                [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(_orientationChanged:) name:UIDeviceOrientationDidChangeNotification object:nil];
+                [self _orientationChanged:nil]; // force an update
+            });
         }
     });
 }
 
 - (void)stopVideoCapture
 {
-    DLog(@"");
-    dispatch_async(_backgroundCauseYOLOQueue, ^{
+    dispatch_async(_bgQueue, ^{
         if (_captureSession && [_captureSession isRunning]) {
             [_captureSession stopRunning];
             [_fileOutput stopRecording];
-            
-            _videoCaptureSessionRunning = NO;
+            [self retain];
         }
     });
 }
@@ -137,6 +134,11 @@
     return _videoQuality;
 }
 
+- (AVCaptureVideoPreviewLayer *)previewLayer
+{
+    return _previewLayer;
+}
+
 #pragma mark - Capture Config Methods
 - (void)_configureCaptureSession
 {
@@ -150,9 +152,10 @@
         _captureSession.sessionPreset = sessionPreset;
     }
 
-
     NSNotificationCenter *notificationCenter = [NSNotificationCenter defaultCenter];
     [notificationCenter addObserver:self selector:@selector(_sessionNotificationReceived:) name:AVCaptureSessionDidStartRunningNotification object:nil];
+    [notificationCenter addObserver:self selector:@selector(_sessionNotificationReceived:) name:AVCaptureSessionDidStopRunningNotification object:nil];
+    [notificationCenter addObserver:self selector:@selector(_sessionNotiticationReceived:) name:AVCaptureSessionWasInterruptedNotification object:nil];
 }
 
 - (BOOL)_configureCaptureDevices
@@ -172,7 +175,7 @@
 
     NSError *lockError = nil;
     if ([_videoCaptureDevice lockForConfiguration:&lockError]) {
-        NSLog(@"Setting torch mode: %i", self.torchMode);
+        NSLog(@"Setting torch mode: %zd", self.torchMode);
         if ([_videoCaptureDevice isFocusModeSupported:AVCaptureFocusModeContinuousAutoFocus]) {
             _videoCaptureDevice.focusMode = AVCaptureFocusModeContinuousAutoFocus;
         }
@@ -191,7 +194,7 @@
         success = YES;
     }
     else {
-        NSLog(@"QS: An error occurred while trying to acquire a lock for video configuration: %i %@ with device: %@", lockError.code, lockError.localizedDescription, _videoCaptureDevice);
+        NSLog(@"QS: An error occurred while trying to acquire a lock for video configuration: %zd %@ with device: %@", lockError.code, lockError.localizedDescription, _videoCaptureDevice);
         success = NO;
         goto error;
     }
@@ -221,11 +224,11 @@ error:
 
     [_captureSession beginConfiguration];
     if (!videoInput || videoError) {
-        NSLog(@"QS: Couldn't obtain video input! Error %i %@", videoError.code, videoError.localizedDescription);
+        NSLog(@"QS: Couldn't obtain video input! Error %zd %@", videoError.code, videoError.localizedDescription);
         goto notifyDelegateOfError;
     }
     if (!audioInput || audioError) {
-        NSLog(@"QS: Couldn't obtain audio input! Error %i %@", audioError.code, audioError.localizedDescription);
+        NSLog(@"QS: Couldn't obtain audio input! Error %zd %@", audioError.code, audioError.localizedDescription);
         goto notifyDelegateOfError;
     }
     if ([_captureSession canAddInput:videoInput]) { // video
@@ -245,7 +248,7 @@ error:
     [_captureSession commitConfiguration];
     return YES;
 
-    notifyDelegateOfError:
+notifyDelegateOfError:
         [_captureSession commitConfiguration];
         if ([self.delegate respondsToSelector:@selector(videoInterfaceCaptureDeviceErrorOccurred:)]) {
             [self.delegate videoInterfaceCaptureDeviceErrorOccurred:self];
@@ -320,7 +323,7 @@ error:
         }
     }
     if (!recordedSuccessfully) {
-        NSLog(@"QS: An error occurred when recording to file: %@ Error: %i, %@", [fileURL absoluteString], error.code, error.localizedDescription);
+        NSLog(@"QS: An error occurred when recording to file: %@ Error: %zd, %@", [fileURL absoluteString], error.code, error.localizedDescription);
     }
     else {
         error = nil; // don't let the delegate know that an error occurred if it recorded successfully
@@ -334,11 +337,21 @@ error:
 #pragma mark - AVCaptureSession Notifications Handler
 - (void)_sessionNotificationReceived:(NSNotification *)notification
 {
-    if ([self.delegate respondsToSelector:@selector(videoInterfaceStartedVideoCapture:)] && [notification.name isEqualToString:AVCaptureSessionDidStartRunningNotification]) {
-        [self.delegate videoInterfaceStartedVideoCapture:self];
+    if ([notification.name isEqualToString:AVCaptureSessionDidStartRunningNotification]) {
+        _videoCaptureSessionRunning = YES;
+        _previewLayer = [[AVCaptureVideoPreviewLayer alloc] initWithSession:_captureSession];
+        _previewLayer.backgroundColor = [UIColor redColor].CGColor;
+        if ([self.delegate respondsToSelector:@selector(videoInterfaceStartedVideoCapture:)]) {
+            [self.delegate videoInterfaceStartedVideoCapture:self];
+        }
     }
-
-    _videoCaptureSessionRunning = YES;
+    if ([notification.name isEqualToString:AVCaptureSessionDidStopRunningNotification]) {
+        _videoCaptureSessionRunning = NO;
+        [_previewLayer removeFromSuperlayer];
+        [_previewLayer release];
+        _previewLayer = nil;
+        [self release];
+    }
 }
 
 @end

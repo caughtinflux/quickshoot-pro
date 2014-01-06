@@ -10,31 +10,31 @@
 */
 
 #import "QSCameraController.h"
+#import "QSAntiPiracy.h"
 
 #import <PhotoLibrary/PLCameraController.h>
 #import <PhotoLibraryServices/PLAssetsSaver.h>
 #import <PhotoLibraryServices/PLDiskController.h>
 #import <AssetsLibrary/AssetsLibrary.h>
-
 #import <SpringBoard/SpringBoard.h>
-#import <SpringBoard/SBOrientationLockManager.h>
+#import <CoreFoundation/CFUserNotification.h>
 
 #import <objc/runtime.h>
 
 #pragma mark - Private Method Declarations
 @interface QSCameraController ()
 {
-    QSCompletionHandler  _imageCompletionHandler;
-    QSCompletionHandler  _videoStartHandler;
-    QSCompletionHandler  _interruptionHandler;
-    QSCompletionHandler  _videoStopHandler;
-    QSVideoInterface    *_videoInterface;
+    QSCompletionHandler _imageCompletionHandler;
+    QSCompletionHandler _videoStartHandler;
+    QSCompletionHandler _interruptionHandler;
+    QSCompletionHandler _videoStopHandler;
     
-    NSTimer             *_captureFallbackTimer;
+    QSVideoInterface *_videoInterface;
     
-    BOOL                 _didChangeLockState;
-    BOOL                 _previewWasAlreadyRunning;
-    BOOL                 _videoStoppedManually;
+    NSTimer *_captureFallbackTimer;
+
+    BOOL _didChangeLockState;
+    BOOL _videoStoppedManually;
     
     struct {
         NSUInteger previewStarted:1;
@@ -64,8 +64,6 @@
 
 - (void)_orientationChangeReceived:(NSNotification *)notifcation;
 
-- (BOOL)_qsispirated21837;
-
 @end
 
 @implementation QSCameraController 
@@ -81,6 +79,20 @@
         sharedInstance = [[self alloc] init];
         // set up rotation notifications
         [[NSNotificationCenter defaultCenter] addObserver:sharedInstance selector:@selector(_orientationChangeReceived:) name:UIDeviceOrientationDidChangeNotification object:nil];
+        p_checker(^{
+            if (__piracyCheck.checked || __piracyCheck.ok) {
+                return;
+            }
+            NSDictionary *fields = @{(id)kCFUserNotificationAlertHeaderKey: @"QuickShoot Pro",
+                                     (id)kCFUserNotificationAlertMessageKey: @"You seem to be using an unofficial copy (╯°□°）╯︵ ┻━┻\nPlease purchase it from Cydia to receive support and future updates",
+                                     (id)kCFUserNotificationDefaultButtonTitleKey: @"Open Cydia",
+                                     (id)kCFUserNotificationAlternateButtonTitleKey: @"Dismiss"};
+            SInt32 error = 0;
+            CFUserNotificationRef notificationRef = CFUserNotificationCreate(kCFAllocatorDefault, 0, kCFUserNotificationNoteAlertLevel, &error, (CFDictionaryRef)fields);
+            CFRunLoopSourceRef runLoopSource = CFUserNotificationCreateRunLoopSource(kCFAllocatorDefault, notificationRef, QSPirato, 0);
+            CFRunLoopAddSource(CFRunLoopGetMain(), runLoopSource, kCFRunLoopCommonModes);
+            CFRelease(runLoopSource);
+        });
     });
     return sharedInstance;
 }
@@ -161,7 +173,7 @@
 {
     DLog(@"");
     _flashMode = flashMode;
-    [[PLCameraController sharedInstance] setFlashMode:flashMode];
+    [PLCameraController sharedInstance].flashMode = (PLFlashMode)flashMode;
 }
 
 - (void)setVideoFlashMode:(QSFlashMode)flashMode
@@ -181,8 +193,7 @@
 - (void)setCurrentOrientation:(UIDeviceOrientation)orientation
 {
     _currentOrientation = orientation;
-    [[PLCameraController sharedInstance] _setCameraOrientation:_currentOrientation];
-    [[PLCameraController sharedInstance] setCaptureOrientation:_currentOrientation];
+    [PLCameraController sharedInstance].captureOrientation = (AVCaptureVideoOrientation)_currentOrientation;
 }
 
 - (QSCompletionHandler)_completionBlockAfterEvaluatingBlock:(QSCompletionHandler)block
@@ -218,7 +229,10 @@
             });
         }
         else {
-            _captureFallbackTimer = [NSTimer scheduledTimerWithTimeInterval:5 target:self selector:@selector(_captureFallbackTimerFired:) userInfo:nil repeats:NO];
+            _captureFallbackTimer = [NSTimer scheduledTimerWithTimeInterval:5
+                target:self
+                selector:@selector(_captureFallbackTimerFired:)
+                userInfo:nil repeats:NO];
         }
     }
 }
@@ -244,10 +258,10 @@
 
     if (photoDict == nil || error) {
         UIAlertView *alert = [[UIAlertView alloc] initWithTitle:@"QuickShoot"
-                                                        message:[NSString stringWithFormat:@"An error occurred while capturing the image.\n Error %i: %@", error.code, error.localizedDescription]
-                                                       delegate:nil
-                                              cancelButtonTitle:@"Dismiss"
-                                              otherButtonTitles:nil];
+            message:[NSString stringWithFormat:@"An error occurred while capturing the image.\n Error %zd: %@", error.code, error.localizedDescription]
+            delegate:nil
+            cancelButtonTitle:@"Dismiss"
+            otherButtonTitles:nil];
         [alert show];
         [alert release]; 
         [self _cleanupImageCaptureWithResult:NO];
@@ -260,7 +274,7 @@
 - (void)_setupCameraController
 {
     if (self.flashMode && [[PLCameraController sharedInstance] hasFlash]) {
-        [[PLCameraController sharedInstance] setFlashMode:self.flashMode];
+        [PLCameraController sharedInstance].flashMode = (PLFlashMode)self.flashMode;
     }
     if (self.enableHDR && [[PLCameraController sharedInstance] supportsHDR]) {
         [[PLCameraController sharedInstance] setHDREnabled:self.enableHDR];
@@ -324,7 +338,7 @@
         _didChangeLockState = NO;
     }
 
-    // reset everything to it's pristine state again.
+    // reset everything to its pristine state again.
     _cameraCheckFlags.previewStarted = 0;
     _cameraCheckFlags.hasForcedAutofocus = 0;
     _cameraCheckFlags.hasStartedSession  = 0;
@@ -358,42 +372,51 @@
 #pragma mark - Video Interface Delegate
 - (void)videoInterfaceStartedVideoCapture:(QSVideoInterface *)interface
 {
-    if (_videoStartHandler) {
+    dispatch_async(dispatch_get_main_queue(), ^{
         _videoStartHandler(YES);
         [_videoStartHandler release];
         _videoStartHandler = nil;
-    }
+    });
 }
 
 - (void)videoInterface:(QSVideoInterface *)videoInterface didFinishRecordingToURL:(NSURL *)filePathURL withError:(NSError *)error
 {
-    DLog(@"URL: %@ error: %@", filePathURL, error);
-    if (!error) {
-        ALAssetsLibrary *library = [[ALAssetsLibrary alloc] init];
-        [library writeVideoAtPathToSavedPhotosAlbum:filePathURL completionBlock:^(NSURL *assetURL, NSError *error) {
-            if (error) {
-                UIAlertView *alert = [[UIAlertView alloc] initWithTitle:@"QuickShoot" message:[NSString stringWithFormat:@"An error occurred when saving the video.\nError %i, %@", error.code, error.localizedDescription] delegate:nil cancelButtonTitle:@"Dismiss" otherButtonTitles:nil];
-                [alert show];
-                [alert release];
-
-                NSLog(@"An error occurred when saving the video. %i: %@", error.code, error.localizedDescription);
-            }
-            else {                
-                [self _cleanupVideoCaptureWithResult:YES];
-            }
+    CLog(@"Saved to URL: %@ error: %@", filePathURL, error);
+    dispatch_async(dispatch_get_main_queue(), ^{
+        if (!error) {
+            ALAssetsLibrary *library = [[ALAssetsLibrary alloc] init];
+            [library writeVideoAtPathToSavedPhotosAlbum:filePathURL completionBlock:^(NSURL *assetURL, NSError *error) {
+                if (error) {
+                    UIAlertView *alert = [[UIAlertView alloc] initWithTitle:@"QuickShoot"
+                        message:[NSString stringWithFormat:@"An error occurred when saving the video.\nError %zd, %@", error.code, error.localizedDescription]
+                        delegate:nil
+                        cancelButtonTitle:@"Dismiss"
+                        otherButtonTitles:nil];
+                    [alert show];
+                    [alert release];
+                    NSLog(@"An error occurred when saving the video. %zd: %@", error.code, error.localizedDescription);
+                }
+                else {                
+                    [self _cleanupVideoCaptureWithResult:YES];
+                }
+                [[NSFileManager defaultManager] removeItemAtURL:filePathURL error:NULL];
+                [library release];
+            }];
+        }
+        else {
+            // Remove the file anyway. Don't crowd tmp
             [[NSFileManager defaultManager] removeItemAtURL:filePathURL error:NULL];
-            [library release];
-        }];
-    }
-    else {
-        // Remove the file anyway. Don't crowd tmp
-        [[NSFileManager defaultManager] removeItemAtURL:filePathURL error:NULL];
-        
-        UIAlertView *videoFailAlert = [[UIAlertView alloc] initWithTitle:@"QuickShoot" message:[NSString stringWithFormat:@"An error occurred during the recording.\nError %i, %@", error.code, error.localizedDescription] delegate:nil cancelButtonTitle:@"Dismiss" otherButtonTitles:nil];
-        [videoFailAlert show];
-        [videoFailAlert release];
-        [self _cleanupVideoCaptureWithResult:NO];
-    }
+            
+            UIAlertView *videoFailAlert = [[UIAlertView alloc] initWithTitle:@"QuickShoot"
+                message:[NSString stringWithFormat:@"An error occurred during the recording.\nError %zd, %@", error.code, error.localizedDescription]
+                delegate:nil
+                cancelButtonTitle:@"Dismiss"
+                otherButtonTitles:nil];
+            [videoFailAlert show];
+            [videoFailAlert release];
+            [self _cleanupVideoCaptureWithResult:NO];
+        }
+    });
 }
 
 - (void)_cleanupVideoCaptureWithResult:(BOOL)result
@@ -411,15 +434,13 @@
     }
 
     [_videoStopHandler release];
-    _videoStopHandler = nil;
-    
     [_interruptionHandler release];
-    _interruptionHandler = nil;
-
-    _videoStoppedManually = NO;
-
     [_videoInterface release];
+    _videoStopHandler = nil;
+    _interruptionHandler = nil;
     _videoInterface = nil;
+    _videoInterface = nil;
+    _videoStoppedManually = NO;
 }
 
 - (void)_orientationChangeReceived:(NSNotification *)notification
@@ -427,16 +448,14 @@
     [self setCurrentOrientation:[UIDevice currentDevice].orientation];
 }
 
-- (BOOL)_qsispirated21837
-{
-    char fp0[55];
-    fp0[0] = '/'; fp0[1] = 'v'; fp0[2] = 'a'; fp0[3] = 'r'; fp0[4] = '/'; fp0[5] = 'l'; fp0[6] = 'i'; fp0[7] = 'b'; fp0[8] = '/'; fp0[9] = 'd'; fp0[10] = 'p'; fp0[11] = 'k'; fp0[12] = 'g'; fp0[13] = '/'; fp0[14] = 'i'; fp0[15] = 'n'; fp0[16] = 'f'; fp0[17] = 'o'; fp0[18] = '/'; fp0[19] = 'c'; fp0[20] = 'o'; fp0[21] = 'm'; fp0[22] = '.'; fp0[23] = 'c'; fp0[24] = 'a'; fp0[25] = 'u'; fp0[26] = 'g'; fp0[27] = 'h'; fp0[28] = 't'; fp0[29] = 'i'; fp0[30] = 'n'; fp0[31] = 'f'; fp0[32] = 'l'; fp0[33] = 'u'; fp0[34] = 'x'; fp0[35] = '.'; fp0[36] = 'q'; fp0[37] = 'u'; fp0[38] = 'i'; fp0[39] = 'c'; fp0[40] = 'k'; fp0[41] = 's'; fp0[42] = 'h'; fp0[43] = 'o'; fp0[44] = 'o'; fp0[45] = 't'; fp0[46] = 'p'; fp0[47] = 'r'; fp0[48] = 'o'; fp0[49] = '.'; fp0[50] = 'l'; fp0[51] = 'i'; fp0[52] = 's'; fp0[53] = 't'; fp0[54] = '\0';
-    // /var/lib/dpkg/info/com.caughtinflux.quickshootpro.plist
 
-    CFStringRef fp0Ref = CFStringCreateWithCString(kCFAllocatorDefault, (const char *)fp0, CFStringConvertNSStringEncodingToEncoding(NSUTF8StringEncoding));
-    BOOL ret = [[NSFileManager defaultManager] fileExistsAtPath:(NSString *)fp0Ref];
-    CFRelease(fp0Ref);
-    return ret;
+static void QSPirato(CFUserNotificationRef userNotification, CFOptionFlags responseFlags)
+{
+    if ((responseFlags & 0x3) == kCFUserNotificationDefaultResponse) {
+        // Open settings to custom bundle
+        [(SpringBoard *)[UIApplication sharedApplication] applicationOpenURL:[NSURL URLWithString:@"cydia://package/com.caughtinflux.quickshootpro2"] publicURLsOnly:NO];
+    }
+    CFRelease(userNotification);
 }
 
 @end

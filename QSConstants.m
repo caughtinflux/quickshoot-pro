@@ -15,7 +15,6 @@
 #import <AVFoundation/AVFoundation.h>
 #import <sys/utsname.h>
 
-
 NSString * const QSEnabledKey                    = @"kQSEnabled";
 NSString * const QSUserHasSeenAlertKey           = @"kQSUserHasSeenAlert";
 NSString * const QSFlashModeKey                  = @"kQSFlashMode";

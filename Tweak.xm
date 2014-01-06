@@ -14,7 +14,6 @@
 #import <UIKit/UIKit.h>
 #import <CoreFoundation/CoreFoundation.h>
 #import <CoreFoundation/CFUserNotification.h>
-#import <CommonCrypto/CommonDigest.h>
 
 #import <SpringBoard/SpringBoard.h>
 #import <SpringBoard/SBIconController.h>
@@ -24,7 +23,6 @@
 #import <SpringBoard/SBIconImageView.h>
 #import <SpringBoard/SBIcon.h>
 #import <SpringBoard/SBApplicationIcon.h>
-#import <SpringBoard/SBAwayController.h>
 #import <SpringBoard/SBScreenFlash.h>
 
 #import <UIKit/UIGestureRecognizerTarget.h>
@@ -34,21 +32,22 @@
 #import "QSIconOverlayView.h"
 #import "QSActivatorListener.h"
 #import "QSConstants.h"
+#import "QSAntiPiracy.h"
 
 #import <objc/runtime.h>
 
 #pragma mark - Variables
-static BOOL _enabled           = NO;
+static BOOL _enabled = NO;
 static BOOL _shownWelcomeAlert = NO;
-static BOOL _isCapturingImage  = NO;
-static BOOL _isCapturingVideo  = NO;
-static BOOL _hasInitialized    = NO;
+static BOOL _isCapturingImage = NO;
+static BOOL _isCapturingVideo = NO;
+static BOOL _hasInitialized = NO;
 
-static BOOL _flashScreen       = NO;
+static BOOL _flashScreen = NO;
 static BOOL _showRecordingIcon = NO; // This one is not strictly necessary, as nothing in this file shows the status bar icon. Kept for the future!
 
-static NSMutableArray *_enabledAppIDs           = nil;
-static NSString       *_currentlyOverlayedAppID = nil;
+static NSMutableArray *_enabledAppIDs = nil;
+static NSString *_currentlyOverlayedAppID = nil;
 
 static char *doubleTapGRKey; 
 static char *tripleTapGRKey;
@@ -58,14 +57,6 @@ static void QSUpdatePrefs(CFNotificationCenterRef center, void *observer, CFStri
 static BOOL QSAppIsEnabled(NSString *identifier);
 static void QSAddGestureRecognizersToView(SBIconView *view);
 static void QSUserNotificationCallBack(CFUserNotificationRef userNotification, CFOptionFlags responseFlags);
-
-#pragma mark - Defines For Piracy Checks
-#define kQSRetval_bool           true
-#define kQSRetval_int            2309 << 2
-#define kQSRetval_char           'k'
-#define kQSPackageListFileExists 23 << 3
-#define kQSMD5CheckedOut         23 << 2
-
 
 #pragma mark - Application Icon Hook
 %hook SBIconView
@@ -89,7 +80,7 @@ static void QSUserNotificationCallBack(CFUserNotificationRef userNotification, C
         // remove the associated objects. Coz YOLO
         return;
     }
-    DLog(@"Autoadding recognizer to icon: %@", [icon leafIdentifier]);
+    CLog(@"Adding recognizer to icon: %@", [icon leafIdentifier]);
     QSAddGestureRecognizersToView(self);
 }
 
@@ -103,7 +94,7 @@ static void QSUserNotificationCallBack(CFUserNotificationRef userNotification, C
 %new(v@:@)
 - (void)qs_gestureRecognizerFired:(UITapGestureRecognizer *)gr
 {
-    if (!_enabled || _isCapturingImage || [QSCameraController sharedInstance].isCapturingImage) {
+    if (!_enabled || _isCapturingImage || [QSCameraController sharedInstance].isCapturingImage || IS_PIRATED) {
         // this check is necessary, because the user might be using other quickshoot methods too.
         return;
     }
@@ -114,7 +105,7 @@ static void QSUserNotificationCallBack(CFUserNotificationRef userNotification, C
     if (gr.state == UIGestureRecognizerStateEnded && gr.numberOfTapsRequired == 2 && !_isCapturingVideo) {
         _isCapturingImage = YES;
 
-        SBIconImageView *imageView = [self iconImageView];
+        SBIconImageView *imageView = [self _iconImageView];
         QSIconOverlayView *overlayView = [[[QSIconOverlayView alloc] initWithFrame:imageView.frame captureMode:QSCaptureModePhoto] autorelease];
         [self setUserInteractionEnabled:NO];
 
@@ -122,10 +113,10 @@ static void QSUserNotificationCallBack(CFUserNotificationRef userNotification, C
             // create a failsafe, which runs after 10 seconds
             [self setUserInteractionEnabled:YES];
         });
-
         overlayView.animationCompletionHandler = ^{
             [overlayView removeFromSuperview];
             [self setUserInteractionEnabled:YES];
+            overlayView.animationCompletionHandler = nil;
         };
         [imageView addSubview:overlayView];
         [overlayView captureBegan];
@@ -148,15 +139,15 @@ static void QSUserNotificationCallBack(CFUserNotificationRef userNotification, C
             }
             _isCapturingVideo = YES;
 
-            SBIconImageView *imageView = [self iconImageView];
+            SBIconImageView *imageView = [self _iconImageView];
             overlayView = [[QSIconOverlayView alloc] initWithFrame:imageView.frame captureMode:QSCaptureModeVideo];
-
             overlayView.animationCompletionHandler = ^{
                 [overlayView removeFromSuperview];
                 if (!wasInterrupted) {
                     [overlayView release];
                 }
                 wasInterrupted = YES;
+                overlayView.animationCompletionHandler = nil;
             };
 
             [imageView addSubview:overlayView];
@@ -186,8 +177,8 @@ static void QSUserNotificationCallBack(CFUserNotificationRef userNotification, C
 
 
 #pragma mark - App Launch Hook
-%hook SBApplicationIcon
-- (void)launch
+%hook SBIcon
+- (void)launchFromLocation:(SBIconLocation)location
 {
     if (_isCapturingVideo && ([[(SBApplicationIcon *)self leafIdentifier] isEqualToString:_currentlyOverlayedAppID])) {
         // the app should not launch if it has an overlay.
@@ -212,25 +203,26 @@ static void QSUserNotificationCallBack(CFUserNotificationRef userNotification, C
 
 #pragma mark - Camera Grabber Hooks
 
-%hook SBAwayLockBar 
-- (void)setShowsCameraGrabber:(BOOL)shouldShowGrabber
+%hook SBLockScreenView
+- (void)setCameraGrabberHidden:(BOOL)hidden forRequester:(id)requester
 {
-    %orig();
-
-    if (!shouldShowGrabber) {
+    %orig(hidden, requester);
+    if (hidden || IS_PIRATED) {
         return;
     }
+    UIView *grabberView = MSHookIvar<UIView *>(self, "_cameraGrabberView");
+    UITapGestureRecognizer *tapRecognizer = objc_getAssociatedObject(self, @selector(qsTapRecognizer));
+    if (!tapRecognizer) {
+        tapRecognizer = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(qs_handleDoubleTap:)];
+        tapRecognizer.numberOfTapsRequired = 2;
+        objc_setAssociatedObject(grabberView, @selector(qsTapRecognizer), tapRecognizer, OBJC_ASSOCIATION_ASSIGN);
 
-    UIView *grabberView = MSHookIvar<UIView *>(self, "_cameraGrabber");
-    UITapGestureRecognizer *tapRecognizer = [[[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(qs_handleDoubleTap:)] autorelease];
-    tapRecognizer.numberOfTapsRequired = 2;
-
-    for (UIGestureRecognizer *recognizer in grabberView.gestureRecognizers) {
-        // Make sure it's recognised only after all the other shit.
-        [recognizer requireGestureRecognizerToFail:tapRecognizer];
+        for (UIGestureRecognizer *recognizer in grabberView.gestureRecognizers) {
+            // Ensure all other gesture recognisers wait for this one to fail
+            [recognizer requireGestureRecognizerToFail:tapRecognizer];
+        }
+        [grabberView addGestureRecognizer:tapRecognizer];
     }
-
-    [grabberView addGestureRecognizer:tapRecognizer];
 }
 
 %new 
@@ -239,7 +231,6 @@ static void QSUserNotificationCallBack(CFUserNotificationRef userNotification, C
     if (!_enabled || _isCapturingImage || _isCapturingVideo) {
         return;
     }
-
     _isCapturingImage = YES;
     [[QSCameraController sharedInstance] takePhotoWithCompletionHandler:^(BOOL success) {
         _isCapturingImage = NO;
@@ -250,6 +241,7 @@ static void QSUserNotificationCallBack(CFUserNotificationRef userNotification, C
         }
     }];
 }
+
 %end
 
 
@@ -267,20 +259,17 @@ static void QSUserNotificationCallBack(CFUserNotificationRef userNotification, C
     [QSCameraController sharedInstance]; // make sure the object is created, hence setting it up to receive orientation notifs.
 }
 
-
 - (void)_reportAppLaunchFinished
 {
     %orig;
     // called on unlock.
-#ifndef DEBUG    
-    if (!_shownWelcomeAlert) {
-#endif // DEBUG     
-        NSDictionary *fields = @{(id)kCFUserNotificationAlertHeaderKey          : @"Welcome to QuickShoot",
-                                 (id)kCFUserNotificationAlertMessageKey         : @"Thank you for your purchase. Open settings for more options and help, or get started right away. Try double tapping the camera icon.\n",
-                                 (id)kCFUserNotificationDefaultButtonTitleKey   : @"Dismiss",
-                                 (id)kCFUserNotificationAlternateButtonTitleKey : @"Settings"};
+    if (!_shownWelcomeAlert) { 
+        NSDictionary *fields = @{(id)kCFUserNotificationAlertHeaderKey: @"Welcome to QuickShoot",
+                                 (id)kCFUserNotificationAlertMessageKey: @"Thank you for your purchase. Open settings for more options and help, or get started right away. Try double tapping the camera icon.\n",
+                                 (id)kCFUserNotificationDefaultButtonTitleKey: @"Dismiss",
+                                 (id)kCFUserNotificationAlternateButtonTitleKey: @"Settings"};
 
-        SInt32 error;
+        SInt32 error = 0;
         CFUserNotificationRef notificationRef = CFUserNotificationCreate(kCFAllocatorDefault, 0, kCFUserNotificationNoteAlertLevel, &error, (CFDictionaryRef)fields);
         // Get and add a run loop source to the current run loop to get notified when the alert is dismissed
         CFRunLoopSourceRef runLoopSource = CFUserNotificationCreateRunLoopSource(kCFAllocatorDefault, notificationRef, QSUserNotificationCallBack, 0);
@@ -295,9 +284,7 @@ static void QSUserNotificationCallBack(CFUserNotificationRef userNotification, C
             [prefs writeToFile:kPrefPath atomically:YES];
             [prefs release];
         }
-#ifndef DEBUG        
     }
-#endif // DEBUG
 }
 
 %end
@@ -362,6 +349,7 @@ static void QSAddGestureRecognizersToView(SBIconView *view)
 
     [(SBIconView *)view setUserInteractionEnabled:YES];
 }
+
 /*
 *   This method is most probably useless, because the icon views don't exist when the user is an another application
 *   But it makes up for when and if SpringBoard feels like keeping the icon views around.
@@ -376,7 +364,6 @@ static void QSUpdateAppIconRecognizersRemovingApps(NSArray *disabledApps)
             if ([appID isEqualToString:@"com.apple.camera"]) {
                 continue;
             }
-
             SBIconModel *iconModel = (SBIconModel *)[(SBIconController *)[%c(SBIconController) sharedInstance] model];
             SBIcon *icon = (SBIcon *)[(SBIconModel *)iconModel leafIconForIdentifier:appID];
             SBIconView *iconView = [[%c(SBIconViewMap) homescreenMap] iconViewForIcon:icon];
@@ -406,8 +393,6 @@ static void QSUpdateAppIconRecognizersRemovingApps(NSArray *disabledApps)
     [disabledApps release];
 }
 
-
-#pragma mark - Prefs Functions
 static void QSUpdatePrefs(CFNotificationCenterRef center, void *observer, CFStringRef name, const void *object, CFDictionaryRef userInfo)
 {
     NSDictionary *prefs = [[NSDictionary alloc] initWithContentsOfFile:kPrefPath];
@@ -422,17 +407,17 @@ static void QSUpdatePrefs(CFNotificationCenterRef center, void *observer, CFStri
         else {
             _enabled = [prefs[QSEnabledKey] boolValue];
         }
-        
         _shownWelcomeAlert = [prefs[QSUserHasSeenAlertKey] boolValue];
 
-        [QSCameraController sharedInstance].cameraDevice = QSCameraDeviceFromString(prefs[QSCameraDeviceKey]);
-        [QSCameraController sharedInstance].flashMode = QSFlashModeFromString(prefs[QSFlashModeKey]);
-        [QSCameraController sharedInstance].enableHDR = [prefs[QSHDRModeKey] boolValue];
-        [QSCameraController sharedInstance].waitForFocusCompletion = [prefs[QSWaitForFocusKey] boolValue];
-        [QSCameraController sharedInstance].videoCaptureQuality = prefs[QSVideoQualityKey];
-        [QSCameraController sharedInstance].videoFlashMode = QSFlashModeFromString(prefs[QSFlashModeKey]);
+        QSCameraController *controller = [QSCameraController sharedInstance];
+        controller.cameraDevice = QSCameraDeviceFromString(prefs[QSCameraDeviceKey]);
+        controller.flashMode = QSFlashModeFromString(prefs[QSFlashModeKey]);
+        controller.enableHDR = [prefs[QSHDRModeKey] boolValue];
+        controller.waitForFocusCompletion = [prefs[QSWaitForFocusKey] boolValue];
+        controller.videoCaptureQuality = prefs[QSVideoQualityKey];
+        controller.videoFlashMode = QSFlashModeFromString(prefs[QSFlashModeKey]);
         
-        _flashScreen      = ((prefs[QSScreenFlashKey] != nil)  ? [prefs[QSScreenFlashKey] boolValue] : YES);
+        _flashScreen = ((prefs[QSScreenFlashKey] != nil)  ? [prefs[QSScreenFlashKey] boolValue] : YES);
         _showRecordingIcon = ((prefs[QSRecordingIconKey] != nil) ? [prefs[QSRecordingIconKey] boolValue] : YES);
         
         [QSActivatorListener sharedInstance].shouldFlashScreen = _flashScreen;
@@ -440,7 +425,6 @@ static void QSUpdatePrefs(CFNotificationCenterRef center, void *observer, CFStri
 
         [[NSNotificationCenter defaultCenter] postNotificationName:QSPrefsChangedNotificationName object:nil];
     }
-
     else if ([(NSString *)name isEqualToString:@"com.caughtinflux.quickshootpro.prefschanged.appicons"]) {
         NSMutableArray *disabledApps = [[NSMutableArray new] autorelease];
         
@@ -463,7 +447,6 @@ static void QSUpdatePrefs(CFNotificationCenterRef center, void *observer, CFStri
             QSUpdateAppIconRecognizersRemovingApps(disabledApps);
         }
     }
-
     [prefs release];
 }
 
@@ -471,9 +454,8 @@ static void QSUpdatePrefs(CFNotificationCenterRef center, void *observer, CFStri
 %ctor
 {
     @autoreleasepool {
+        NSLog(@"QS: Initialising, registering listeners and preference callbacks");
         %init;
-
-        NSLog(@"QS: Registering listeners and preference callbacks");
         CFNotificationCenterAddObserver(CFNotificationCenterGetDarwinNotifyCenter(),
                                         NULL,
                                         (CFNotificationCallback)&QSUpdatePrefs,

@@ -17,7 +17,6 @@
 
 + (instancetype)sharedInstance;
 
-@property(nonatomic, assign) BOOL abilitiesChecked; // aka _isLegitCopy. This is used as a confusion tactic, but mostly won't confuse anyone other than you.
 @property(nonatomic, assign) BOOL shouldFlashScreen;
 @property(nonatomic, assign) BOOL shouldShowRecordingIcon;
 

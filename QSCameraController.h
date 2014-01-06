@@ -16,7 +16,7 @@
 #import "QSVideoInterface.h"
 #import "QSConstants.h"
 
-@interface QSCameraController : NSObject <PLCameraControllerDelegate, QSVideoInterfaceDelegate>
+@interface QSCameraController : NSObject <PLCameraControllerDelegate, QSVideoInterfaceDelegate, UIAlertViewDelegate>
 
 @property(nonatomic, assign) QSCameraDevice cameraDevice;
 @property(nonatomic, assign) QSFlashMode flashMode;

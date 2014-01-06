@@ -1,5 +1,5 @@
 {
-	title = "QuickShoot Video Capture";
-	description = "Toggle video recording.";
+	title = "Video Capture";
+	description = "Toggle video recording via QuickShoot Pro.";
 	"compatible-modes" = ("springboard", "application", "lockscreen");
 }

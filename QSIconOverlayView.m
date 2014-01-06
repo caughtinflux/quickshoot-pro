@@ -83,13 +83,12 @@
 
 - (void)captureBegan
 {
-    DLog(@"");
     _irisImageView = [[UIImageView alloc] initWithImage:[self _bundleImageNamed:kIrisImageName]];
     // CGPoint center = self.center;
     // center.y += 2;
-    _irisImageView.autoresizingMask = (UIViewAutoresizingFlexibleLeftMargin | UIViewAutoresizingFlexibleRightMargin | UIViewAutoresizingFlexibleTopMargin | UIViewAutoresizingFlexibleBottomMargin);
-    _irisImageView.center = (CGPoint){(self.bounds.size.width * 0.5), (self.bounds.size.height * 0.5)};
-
+    _irisImageView.autoresizingMask = (UIViewAutoresizingFlexibleLeftMargin | UIViewAutoresizingFlexibleRightMargin |
+                                       UIViewAutoresizingFlexibleTopMargin | UIViewAutoresizingFlexibleBottomMargin);
+    _irisImageView.center = (CGPoint){(self.bounds.size.width * 0.5)+1, (self.bounds.size.height * 0.5)};
     _irisImageView.alpha = 0;
     
     [self addSubview:_irisImageView];
@@ -98,13 +97,11 @@
 
 - (void)captureIsStopping
 {
-    DLog(@"");
     _shouldBlinkRecordLight = NO;
 }
 
 - (void)captureCompletedWithResult:(BOOL)result
 {
-    DLog(@"");
     NSString *completedImageName = ((result == YES) ? kDoneImageName : kCaptureFailedImageName);
     UIImageView *doneImageView = [[[UIImageView alloc] initWithImage:[self _bundleImageNamed:completedImageName]] autorelease];
     
@@ -118,12 +115,10 @@
 
     [_irisImageView addSubview:doneImageView];
     
-    QSIconOverlayView __block *wSelf = self;
     // keep the done image on the icon for 1.5 seconds
-    double delayInSeconds = 1.5;
-    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(delayInSeconds * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+    EXECUTE_BLOCK_AFTER_DELAY(1.5, ^{
         [doneImageView removeFromSuperview];
-        [wSelf _animateIrisViewOut];
+        [self _animateIrisViewOut];
     });
 
 }
@@ -137,7 +132,6 @@
 
 - (void)_animateIrisViewIn
 {
-    DLog(@"");
     CGFloat imageHeight = _irisImageView.image.size.height;
     CGFloat imageWidth  = _irisImageView.image.size.width;
     
@@ -175,19 +169,17 @@
 
 - (void)_animateIrisViewOut
 {
-    DLog(@"");
     CGFloat imageHeight = _irisImageView.image.size.height;
     CGFloat imageWidth = _irisImageView.image.size.width;
 
-    QSIconOverlayView __block *wSelf = self;
     [UIView animateWithDuration:0.4 animations:^{
-        CGRect zeroFrame = wSelf->_irisImageView.frame;
+        CGRect zeroFrame = _irisImageView.frame;
         zeroFrame.origin.x += (imageWidth * 0.5);
         zeroFrame.origin.y += (imageHeight * 0.5);
         zeroFrame.size.height = 0;
         zeroFrame.size.width  = 0;
 
-        wSelf->_irisImageView.frame = zeroFrame;
+        _irisImageView.frame = zeroFrame;
     } completion:^(BOOL finished){
         if (finished && self.animationCompletionHandler) {
             self.animationCompletionHandler();
@@ -197,7 +189,6 @@
 
 - (void)_showBlinkingFocus
 {
-    DLog(@"");
     if (!_focusRectImageView) {
         _focusRectImageView = [[UIImageView alloc] initWithImage:[self _bundleImageNamed:kFocusRectImageName]];
     }
@@ -208,31 +199,28 @@
 
 - (void)_stopBlinkingFocus
 {
-    DLog(@"");
     [_focusRectImageView setAlpha:0.0f];
     [_focusRectImageView removeFromSuperview];
 }
 
 - (void)_animateFocusRect
 {
-    DLog(@"");
     // this method is somewhat wonky
-    QSIconOverlayView __block *wSelf = self;
     [UIView animateWithDuration:0.07 delay:0.0 options:(UIViewAnimationOptionCurveEaseInOut) animations:^{
-        [wSelf->_focusRectImageView setAlpha:1.0f]; 
+        [_focusRectImageView setAlpha:1.0f]; 
     } completion:^(BOOL finished) {
         if (finished) {
-            dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (0.4 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+            EXECUTE_BLOCK_AFTER_DELAY(0.4, ^{
                 // dispatch_after 0.4 seconds, so that the focus rect remains on screen until then.
                 // gives it a nice animation, like the focus rect in the camera app
                 // Using UIView animation options to auto reverse makes it look like shit.
                 // So...dispatch_after FTW!
                 [UIView animateWithDuration:0.07 animations:^{
-                    [wSelf->_focusRectImageView setAlpha:0.0f];
+                    [_focusRectImageView setAlpha:0.0f];
                 } completion:^(BOOL finished){
                     if (finished) {
-                        dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.2 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
-                            [wSelf _animateFocusRect];
+                        EXECUTE_BLOCK_AFTER_DELAY(0.2, ^{
+                            [self _animateFocusRect];
                         });
                     }
                 }];
@@ -243,7 +231,6 @@
 
 - (void)_showBlinkingRecordLight
 {
-    DLog(@"");
     _recordingLightImageView = [[UIImageView alloc] initWithImage:[self _bundleImageNamed:kRecordOnImageName]];
     _currentRecordingImageName = kRecordOffImageName; // setting this to off, even though it is on, so that -[QSIconOverlayView _blinkRecordLight] doesn't immediately switch it to the off image.
     
@@ -256,7 +243,8 @@
     else {
        _recordingLightImageView.center = (CGPoint){_irisImageView.bounds.size.width * 0.5, _irisImageView.bounds.size.height * 0.5};
     }
-    _recordingLightImageView.autoresizingMask = (UIViewAutoresizingFlexibleLeftMargin | UIViewAutoresizingFlexibleRightMargin | UIViewAutoresizingFlexibleTopMargin | UIViewAutoresizingFlexibleBottomMargin);
+    _recordingLightImageView.autoresizingMask = (UIViewAutoresizingFlexibleLeftMargin | UIViewAutoresizingFlexibleRightMargin |
+                                                 UIViewAutoresizingFlexibleTopMargin | UIViewAutoresizingFlexibleBottomMargin);
 
     [_irisImageView addSubview:_recordingLightImageView];
     _shouldBlinkRecordLight = YES;
@@ -265,22 +253,19 @@
 
 - (void)_stopBlinkingRecordLight
 {
-    DLog(@"");
     [_recordingLightImageView removeFromSuperview];
 }
 
 - (void)_blinkRecordLight
 {
-    DLog(@"");
     if (!_shouldBlinkRecordLight) {
         _recordingLightImageView.image = [self _bundleImageNamed:kRecordOffImageName];
         return;
     }
-    QSIconOverlayView __block *wSelf = self;
-    _currentRecordingImageName = (([wSelf->_currentRecordingImageName isEqualToString:kRecordOnImageName]) ? kRecordOffImageName : kRecordOnImageName);
-    wSelf->_recordingLightImageView.image = [wSelf _bundleImageNamed:wSelf->_currentRecordingImageName];
+    _currentRecordingImageName = (([_currentRecordingImageName isEqualToString:kRecordOnImageName]) ? kRecordOffImageName : kRecordOnImageName);
+    _recordingLightImageView.image = [self _bundleImageNamed:_currentRecordingImageName];
     EXECUTE_BLOCK_AFTER_DELAY(0.5, ^{
-        [wSelf _blinkRecordLight];
+        [self _blinkRecordLight];
     });
 }
 
