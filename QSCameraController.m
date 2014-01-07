@@ -441,13 +441,11 @@
     else {
         _interruptionHandler(result);   
     }
-
     [_videoStopHandler release];
     [_interruptionHandler release];
     [_videoInterface release];
     _videoStopHandler = nil;
     _interruptionHandler = nil;
-    _videoInterface = nil;
     _videoInterface = nil;
     _videoStoppedManually = NO;
 }
