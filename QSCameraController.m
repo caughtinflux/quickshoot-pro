@@ -35,6 +35,7 @@
 
     BOOL _didChangeLockState;
     BOOL _videoStoppedManually;
+    BOOL _videoCaptureResult;
     
     struct {
         NSUInteger previewStarted:1;
@@ -407,9 +408,10 @@
                     [alert show];
                     [alert release];
                     NSLog(@"An error occurred when saving the video. %zd: %@", error.code, error.localizedDescription);
+                    _videoCaptureResult = NO;
                 }
                 else {                
-                    [self _cleanupVideoCaptureWithResult:YES];
+                    _videoCaptureResult = YES;
                 }
                 [[NSFileManager defaultManager] removeItemAtURL:filePathURL error:NULL];
                 [library release];
@@ -418,7 +420,6 @@
         else {
             // Remove the file anyway. Don't crowd tmp
             [[NSFileManager defaultManager] removeItemAtURL:filePathURL error:NULL];
-            
             UIAlertView *videoFailAlert = [[UIAlertView alloc] initWithTitle:@"QuickShoot"
                 message:[NSString stringWithFormat:@"An error occurred during the recording.\nError %zd, %@", error.code, error.localizedDescription]
                 delegate:nil
@@ -426,8 +427,15 @@
                 otherButtonTitles:nil];
             [videoFailAlert show];
             [videoFailAlert release];
-            [self _cleanupVideoCaptureWithResult:NO];
+            _videoCaptureResult = NO;
         }
+    });
+}
+
+- (void)videoInterfaceStoppedVideoCapture:(QSVideoInterface *)interface
+{
+    dispatch_async(dispatch_get_main_queue(), ^{
+        [self _cleanupVideoCaptureWithResult:_videoCaptureResult];
     });
 }
 

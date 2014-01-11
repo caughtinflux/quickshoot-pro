@@ -26,7 +26,6 @@
     AVCaptureMovieFileOutput *_fileOutput;
 
     dispatch_queue_t _bgQueue;
-    BOOL _releaseSelfThisIsSoBad;
 }
 
 - (void)_configureCaptureSession;
@@ -99,8 +98,6 @@
         if (_captureSession && [_captureSession isRunning]) {
             [_captureSession stopRunning];
             [_fileOutput stopRecording];
-            [self retain];
-            _releaseSelfThisIsSoBad = YES;
         }
     });
 }
@@ -339,8 +336,8 @@ notifyDelegateOfError:
     }
     else if ([notification.name isEqualToString:AVCaptureSessionDidStopRunningNotification]) {
         _videoCaptureSessionRunning = NO;
-        if (_releaseSelfThisIsSoBad) {
-            [self release];
+        if ([self.delegate respondsToSelector:@selector(videoInterfaceStoppedVideoCapture:)]) {
+            [self.delegate videoInterfaceStoppedVideoCapture:self];
         }
     }
     else if ([notification.name isEqualToString:AVCaptureSessionWasInterruptedNotification]) {
