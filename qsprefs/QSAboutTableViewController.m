@@ -41,7 +41,6 @@
 
 - (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section
 {
-    DLog(@"Section: %i", section);
     return ((section == 0) ? 2 : 1);
 }
 

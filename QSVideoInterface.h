@@ -28,7 +28,6 @@
 
 @property(nonatomic, readonly) BOOL videoCaptureSessionRunning;
 
-@property(nonatomic, readonly) AVCaptureVideoPreviewLayer *previewLayer;
 
 - (void)startVideoCapture;
 - (void)stopVideoCapture;
@@ -44,6 +43,7 @@
 *	If UI shit is done, make sure it is on the main thread.
 */
 - (void)videoInterfaceStartedVideoCapture:(QSVideoInterface *)interface;
+- (void)videoInterfaceStoppedVideoCapture:(QSVideoInterface *)interface;
 - (void)videoInterface:(QSVideoInterface *)videoInterface didFinishRecordingToURL:(NSURL *)filePathURL withError:(NSError *)error;
 - (void)videoInterfaceCaptureDeviceErrorOccurred:(QSVideoInterface *)interface;
 - (void)videoInterfaceCaptureInputErrorOccurred:(QSVideoInterface *)interface;

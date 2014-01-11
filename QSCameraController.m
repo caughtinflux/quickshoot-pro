@@ -35,6 +35,7 @@
 
     BOOL _didChangeLockState;
     BOOL _videoStoppedManually;
+    BOOL _videoCaptureResult;
     
     struct {
         NSUInteger previewStarted:1;
@@ -299,6 +300,21 @@
         _didChangeLockState = YES;
         [[SBOrientationLockManager sharedInstance] unlock];
     }
+
+    [[UIDevice currentDevice] beginGeneratingDeviceOrientationNotifications];
+    [(SpringBoard *)[UIApplication sharedApplication] setWantsOrientationEvents:YES];
+    [(SpringBoard *)[UIApplication sharedApplication] updateOrientationAndAccelerometerSettings];
+}
+
+- (void)_cleanupOrientationShit
+{
+    if (_didChangeLockState) {
+        [[objc_getClass("SBOrientationLockManager") sharedInstance] lock];
+        _didChangeLockState = NO;
+    }
+    [[UIDevice currentDevice] endGeneratingDeviceOrientationNotifications];
+    [(SpringBoard *)[UIApplication sharedApplication] setWantsOrientationEvents:NO];
+    [(SpringBoard *)[UIApplication sharedApplication] updateOrientationAndAccelerometerSettings];   
 }
 
 - (void)_setOrientationAndCaptureImage
@@ -333,11 +349,6 @@
 
 - (void)_cleanupImageCaptureWithResult:(BOOL)result
 {
-    if (_didChangeLockState) {
-        [[objc_getClass("SBOrientationLockManager") sharedInstance] lock];
-        _didChangeLockState = NO;
-    }
-
     // reset everything to its pristine state again.
     _cameraCheckFlags.previewStarted = 0;
     _cameraCheckFlags.hasForcedAutofocus = 0;
@@ -350,6 +361,8 @@
     
     [[PLCameraController sharedInstance] setDelegate:nil];
     _isCapturingImage = NO;
+
+    [self _cleanupOrientationShit];
 }
 
 - (void)_showCaptureFailedAlert
@@ -395,9 +408,10 @@
                     [alert show];
                     [alert release];
                     NSLog(@"An error occurred when saving the video. %zd: %@", error.code, error.localizedDescription);
+                    _videoCaptureResult = NO;
                 }
                 else {                
-                    [self _cleanupVideoCaptureWithResult:YES];
+                    _videoCaptureResult = YES;
                 }
                 [[NSFileManager defaultManager] removeItemAtURL:filePathURL error:NULL];
                 [library release];
@@ -406,7 +420,6 @@
         else {
             // Remove the file anyway. Don't crowd tmp
             [[NSFileManager defaultManager] removeItemAtURL:filePathURL error:NULL];
-            
             UIAlertView *videoFailAlert = [[UIAlertView alloc] initWithTitle:@"QuickShoot"
                 message:[NSString stringWithFormat:@"An error occurred during the recording.\nError %zd, %@", error.code, error.localizedDescription]
                 delegate:nil
@@ -414,31 +427,33 @@
                 otherButtonTitles:nil];
             [videoFailAlert show];
             [videoFailAlert release];
-            [self _cleanupVideoCaptureWithResult:NO];
+            _videoCaptureResult = NO;
         }
+    });
+}
+
+- (void)videoInterfaceStoppedVideoCapture:(QSVideoInterface *)interface
+{
+    dispatch_async(dispatch_get_main_queue(), ^{
+        [self _cleanupVideoCaptureWithResult:_videoCaptureResult];
     });
 }
 
 - (void)_cleanupVideoCaptureWithResult:(BOOL)result
 {
+    [self _cleanupOrientationShit];
     _isCapturingVideo = NO;
-    if (_didChangeLockState) {
-        [[objc_getClass("SBOrientationLockManager") sharedInstance] lock];
-        _didChangeLockState = NO;
-    }
     if (_videoStoppedManually) {    
         _videoStopHandler(result);
     }
     else {
         _interruptionHandler(result);   
     }
-
     [_videoStopHandler release];
     [_interruptionHandler release];
     [_videoInterface release];
     _videoStopHandler = nil;
     _interruptionHandler = nil;
-    _videoInterface = nil;
     _videoInterface = nil;
     _videoStoppedManually = NO;
 }

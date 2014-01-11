@@ -16,6 +16,7 @@
 #import <AssetsLibrary/AssetsLibrary.h>
 #import <CommonCrypto/CommonDigest.h>
 #import <CoreFoundation/CoreFoundation.h>
+#import <SpringBoard/SpringBoard.h>
 
 @interface QSVideoInterface ()
 {
@@ -23,7 +24,6 @@
     AVCaptureDevice *_audioCaptureDevice;
     AVCaptureSession *_captureSession;
     AVCaptureMovieFileOutput *_fileOutput;
-    AVCaptureVideoPreviewLayer *_previewLayer;
 
     dispatch_queue_t _bgQueue;
 }
@@ -33,7 +33,6 @@
 - (BOOL)_configureDeviceInputs;
 - (BOOL)_configureFileOutput;
 - (void)_orientationChanged:(NSNotification *)notification;
-- (void)_setVideoOrientation:(AVCaptureVideoOrientation)orientation;
 
 @end
 
@@ -79,15 +78,15 @@
     dispatch_async(_bgQueue, ^{
        [self _configureCaptureSession];
        if ([self _configureCaptureDevices] && [self _configureDeviceInputs] && [self _configureFileOutput]) {
-            // use a randomized file path.
-            NSString *filePath = [NSString stringWithFormat:@"%@quickshoot_%@.mov", NSTemporaryDirectory(), [self _UUIDString]];
-            [_captureSession startRunning];
-            [_fileOutput startRecordingToOutputFileURL:[NSURL fileURLWithPath:filePath] recordingDelegate:self];
             dispatch_async(dispatch_get_main_queue(), ^{
                 // set up orientation events
-                [[UIDevice currentDevice] beginGeneratingDeviceOrientationNotifications];
                 [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(_orientationChanged:) name:UIDeviceOrientationDidChangeNotification object:nil];
                 [self _orientationChanged:nil]; // force an update
+                dispatch_async(_bgQueue, ^(void){
+                    NSString *filePath = [NSString stringWithFormat:@"%@quickshoot_%@.mov", NSTemporaryDirectory(), [self _UUIDString]];
+                    [_captureSession startRunning];
+                    [_fileOutput startRecordingToOutputFileURL:[NSURL fileURLWithPath:filePath] recordingDelegate:self];    
+                });
             });
         }
     });
@@ -99,7 +98,6 @@
         if (_captureSession && [_captureSession isRunning]) {
             [_captureSession stopRunning];
             [_fileOutput stopRecording];
-            [self retain];
         }
     });
 }
@@ -108,12 +106,15 @@
 {
     if (flashMode == QSFlashModeAuto) {
         self.torchMode = AVCaptureTorchModeAuto;
+        CLog(@"Setting AVCaptureTorchModeAuto");
     }
     if (flashMode == QSFlashModeOn) {
         self.torchMode = AVCaptureTorchModeOn;
+        CLog(@"Setting AVCaptureTorchModeOn");
     }
     if (flashMode == QSFlashModeOff) {
         self.torchMode = AVCaptureTorchModeOff;
+        CLog(@"Setting AVCaptureTorchModeOff");
     }
 }
 
@@ -134,10 +135,6 @@
     return _videoQuality;
 }
 
-- (AVCaptureVideoPreviewLayer *)previewLayer
-{
-    return _previewLayer;
-}
 
 #pragma mark - Capture Config Methods
 - (void)_configureCaptureSession
@@ -155,7 +152,7 @@
     NSNotificationCenter *notificationCenter = [NSNotificationCenter defaultCenter];
     [notificationCenter addObserver:self selector:@selector(_sessionNotificationReceived:) name:AVCaptureSessionDidStartRunningNotification object:nil];
     [notificationCenter addObserver:self selector:@selector(_sessionNotificationReceived:) name:AVCaptureSessionDidStopRunningNotification object:nil];
-    [notificationCenter addObserver:self selector:@selector(_sessionNotiticationReceived:) name:AVCaptureSessionWasInterruptedNotification object:nil];
+    [notificationCenter addObserver:self selector:@selector(_sessionNotificationReceived:) name:AVCaptureSessionWasInterruptedNotification object:nil];
 }
 
 - (BOOL)_configureCaptureDevices
@@ -175,15 +172,16 @@
 
     NSError *lockError = nil;
     if ([_videoCaptureDevice lockForConfiguration:&lockError]) {
-        NSLog(@"Setting torch mode: %zd", self.torchMode);
+        NSLog(@"Locked video capture device for configuration");
+        if ([_videoCaptureDevice hasTorch] && [_videoCaptureDevice isTorchModeSupported:self.torchMode]) {
+            NSLog(@"Setting torch mode: %zd", self.torchMode);
+            _videoCaptureDevice.torchMode = self.torchMode;
+        }
         if ([_videoCaptureDevice isFocusModeSupported:AVCaptureFocusModeContinuousAutoFocus]) {
             _videoCaptureDevice.focusMode = AVCaptureFocusModeContinuousAutoFocus;
         }
         if ([_videoCaptureDevice isExposureModeSupported:AVCaptureExposureModeContinuousAutoExposure]) {
             _videoCaptureDevice.exposureMode = AVCaptureExposureModeContinuousAutoExposure;
-        }
-        if ([_videoCaptureDevice hasTorch] && [_videoCaptureDevice isTorchModeSupported:self.torchMode]) {
-            _videoCaptureDevice.torchMode = self.torchMode;
         }
         if (!([_videoCaptureDevice supportsAVCaptureSessionPreset:self.videoQuality])) {
             [_captureSession setSessionPreset:AVCaptureSessionPresetMedium];
@@ -283,7 +281,6 @@ notifyDelegateOfError:
         DLog(@"deviceOrientationDidChange - UpsideDown");
         newOrientation = AVCaptureVideoOrientationPortraitUpsideDown;
     }
-
     // AVCapture and UIDevice have opposite meanings for landscape left and right (AVCapture orientation is the same as UIInterfaceOrientation)
     else if (deviceOrientation == UIDeviceOrientationLandscapeLeft) {
         DLog(@"deviceOrientationDidChange - LandscapeLeft");
@@ -293,23 +290,16 @@ notifyDelegateOfError:
         DLog(@"deviceOrientationDidChange - LandscapeRight");
         newOrientation = AVCaptureVideoOrientationLandscapeLeft;
     }
-
     else if (deviceOrientation == UIDeviceOrientationUnknown) {
         DLog(@"deviceOrientationDidChange - Unknown ");
         newOrientation = AVCaptureVideoOrientationPortrait;
     }
-
     else {
         DLog(@"deviceOrientationDidChange - Face Up or Down");
         newOrientation = AVCaptureVideoOrientationPortrait;
     }
 
-    [self _setVideoOrientation:newOrientation];
-}
-
-- (void)_setVideoOrientation:(AVCaptureVideoOrientation)orientation
-{
-    [[_fileOutput connectionWithMediaType:AVMediaTypeVideo] setVideoOrientation:orientation];   
+    [[_fileOutput connectionWithMediaType:AVMediaTypeVideo] setVideoOrientation:newOrientation];
 }
 
 #pragma mark - AVCaptureFileOutput Delegate
@@ -337,20 +327,22 @@ notifyDelegateOfError:
 #pragma mark - AVCaptureSession Notifications Handler
 - (void)_sessionNotificationReceived:(NSNotification *)notification
 {
+    CLog(@"%@", notification.name);
     if ([notification.name isEqualToString:AVCaptureSessionDidStartRunningNotification]) {
         _videoCaptureSessionRunning = YES;
-        _previewLayer = [[AVCaptureVideoPreviewLayer alloc] initWithSession:_captureSession];
-        _previewLayer.backgroundColor = [UIColor redColor].CGColor;
         if ([self.delegate respondsToSelector:@selector(videoInterfaceStartedVideoCapture:)]) {
             [self.delegate videoInterfaceStartedVideoCapture:self];
         }
     }
-    if ([notification.name isEqualToString:AVCaptureSessionDidStopRunningNotification]) {
+    else if ([notification.name isEqualToString:AVCaptureSessionDidStopRunningNotification]) {
         _videoCaptureSessionRunning = NO;
-        [_previewLayer removeFromSuperlayer];
-        [_previewLayer release];
-        _previewLayer = nil;
-        [self release];
+        if ([self.delegate respondsToSelector:@selector(videoInterfaceStoppedVideoCapture:)]) {
+            [self.delegate videoInterfaceStoppedVideoCapture:self];
+        }
+    }
+    else if ([notification.name isEqualToString:AVCaptureSessionWasInterruptedNotification]) {
+        _videoCaptureSessionRunning = NO;
+        SHOW_USER_NOTIFICATION(@"QuickShoot Pro", @"Video recording interrupted", @"Dismiss");
     }
 }
 
