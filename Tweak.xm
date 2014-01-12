@@ -212,7 +212,7 @@ static void QSUserNotificationCallBack(CFUserNotificationRef userNotification, C
     }
     UIView *grabberView = MSHookIvar<UIView *>(self, "_cameraGrabberView");
     UITapGestureRecognizer *tapRecognizer = objc_getAssociatedObject(self, @selector(qsTapRecognizer));
-    if (!tapRecognizer) {
+    if (grabberView && !tapRecognizer) {
         tapRecognizer = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(qs_handleDoubleTap:)];
         tapRecognizer.numberOfTapsRequired = 2;
         objc_setAssociatedObject(grabberView, @selector(qsTapRecognizer), tapRecognizer, OBJC_ASSOCIATION_ASSIGN);
