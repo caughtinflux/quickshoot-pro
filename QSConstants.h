@@ -21,9 +21,13 @@
 #ifdef DEBUG
 	#define DLog(fmt, ...) NSLog((@"QS: %s [Line %d] " fmt), __PRETTY_FUNCTION__, __LINE__, ##__VA_ARGS__)
 	#define CLog(fmt, ...) NSLog((@"QS: " fmt), ##__VA_ARGS__)
+	#define ParamLog(_formatString, _param, ...) DLog(@"%s = "_formatString, #_param, _param, ##__VA_ARGS__)
+	#define ParamLogC(_formatString, _param, ...) CLog(@"%s = "_formatString, #_param, _param, ##__VA_ARGS__)
 #else
 	#define DLog(...)
 	#define CLog(...)
+	#define ParamLog(...)
+	#define ParamLogC(...)
 #endif
 
 #define ALog(fmt, ...) NSLog((@"QS: " fmt), ##__VA_ARGS__)	
