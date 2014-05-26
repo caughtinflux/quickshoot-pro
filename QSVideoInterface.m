@@ -257,6 +257,7 @@ notifyDelegateOfError:
 - (BOOL)_configureFileOutput
 {
     _fileOutput = [[AVCaptureMovieFileOutput alloc] init];
+    [_fileOutput connectionWithMediaType:AVMediaTypeVideo].enablesVideoStabilizationWhenAvailable = YES;
     if ([_captureSession canAddOutput:_fileOutput]) {
         [_captureSession addOutput:_fileOutput];
         return YES;
@@ -298,7 +299,6 @@ notifyDelegateOfError:
         DLog(@"deviceOrientationDidChange - Face Up or Down");
         newOrientation = AVCaptureVideoOrientationPortrait;
     }
-
     [[_fileOutput connectionWithMediaType:AVMediaTypeVideo] setVideoOrientation:newOrientation];
 }
 

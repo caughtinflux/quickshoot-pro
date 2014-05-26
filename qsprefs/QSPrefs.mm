@@ -1,6 +1,6 @@
 #import <Foundation/Foundation.h>
 #import <UIKit/UIKit.h>
-#import <Preferences/Preferences.h>
+#import <Preferences/PSListController.h>
 #import <MessageUI/MessageUI.h>
 #import <sys/utsname.h>
 #import <AVFoundation/AVFoundation.h>
