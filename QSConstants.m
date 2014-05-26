@@ -89,17 +89,17 @@ NSString * QSVideoQualityFromString(NSString *string)
     return AVCaptureSessionPresetMedium;
 }
 
-__attribute__((always_inline)) inline id QSObjectFromPrefsForKey(NSString *key)
+inline id QSObjectFromPrefsForKey(NSString *key)
 {
     return [[NSDictionary dictionaryWithContentsOfFile:kPrefPath] objectForKey:key];
 }
 
-__attribute__((always_inline)) inline NSString * QSStringFromCameraDevice(QSCameraDevice device)
+inline NSString * QSStringFromCameraDevice(QSCameraDevice device)
 {
     return ((device == QSCameraDeviceRear) ? QSCameraDeviceRearValue : QSCameraDeviceFrontValue);
 }
 
-__attribute__((always_inline)) inline NSString * QSStringFromFlashMode(QSFlashMode flashMode)
+inline NSString * QSStringFromFlashMode(QSFlashMode flashMode)
 {
     return ((flashMode == QSFlashModeAuto) ? QSFlashModeAutoValue : ((flashMode == QSFlashModeOn) ? QSFlashModeOnValue : QSFlashModeOffValue));
 }

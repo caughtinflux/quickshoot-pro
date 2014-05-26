@@ -66,7 +66,7 @@
         if (shouldShowFlash) {
             _flashButton = [[CAMFlashButton alloc] initWithFrame:(CGRect){CGPointZero, {20, 20}}];
             if ([[PLCameraController sharedInstance] hasFlash]) {
-                _flashButton.flashMode = [self.delegate currentFlashModeForOptionsWindow:self];
+                _flashButton.flashMode = (PLFlashMode)[self.delegate currentFlashModeForOptionsWindow:self];
             }
             else {
                 _flashButton.showWarningIndicator = YES;
@@ -125,7 +125,7 @@
 
 - (void)setFlashMode:(QSFlashMode)flashMode
 {
-    _flashButton.flashMode = flashMode;
+    _flashButton.flashMode = (PLFlashMode)flashMode;
 }
 
 - (void)setHDRMode:(BOOL)hdrMode
