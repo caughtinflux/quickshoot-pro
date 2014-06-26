@@ -188,7 +188,9 @@
 {
     DLog(@"");
     _enableHDR = enableHDR;
-    [[PLCameraController sharedInstance] setHDREnabled:enableHDR];
+    if ([PLCameraController sharedInstance].supportsHDR) {
+        [[PLCameraController sharedInstance] setHDREnabled:enableHDR];
+    }
 }
 
 - (void)setCurrentOrientation:(UIDeviceOrientation)orientation
@@ -240,15 +242,16 @@
    
 - (void)cameraControllerFocusDidEnd:(PLCameraController *)camController
 {
-    DLog(@"");
     if (_isCapturingImage && self.waitForFocusCompletion) {
         if (_cameraCheckFlags.hasForcedAutofocus && _cameraCheckFlags.hasStartedSession && _captureFallbackTimer) {
-            // only if should wait for focus completion should the image be captured. Else, just leave it.
-            // make sure that the fallback timer exists too, and then invalidate it.
-            // don't want to end up with duplicates
-            [self _setOrientationAndCaptureImage];
-            [_captureFallbackTimer invalidate];
-            _captureFallbackTimer = nil;
+            dispatch_async(dispatch_get_main_queue(), ^{
+                // only if should wait for focus completion should the image be captured. Else, just leave it.
+                // make sure that the fallback timer exists too, and then invalidate it.
+                // don't want to end up with duplicates
+                [self _setOrientationAndCaptureImage];
+                [_captureFallbackTimer invalidate];
+                _captureFallbackTimer = nil;
+            });
         }
     }
 }
@@ -349,6 +352,7 @@
 
 - (void)_cleanupImageCaptureWithResult:(BOOL)result
 {
+    DLog();
     // reset everything to its pristine state again.
     _cameraCheckFlags.previewStarted = 0;
     _cameraCheckFlags.hasForcedAutofocus = 0;
@@ -367,6 +371,7 @@
 
 - (void)_showCaptureFailedAlert
 {
+    DLog();
     BOOL writerQueueAvailable = [[PLCameraController sharedInstance] imageWriterQueueIsAvailable];
     BOOL isReady = [[PLCameraController sharedInstance] isReady];
     BOOL hasDiskSpace = [[PLDiskController sharedInstance] hasEnoughDiskToTakePicture];

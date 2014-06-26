@@ -19,18 +19,18 @@
 #define QS_CONSTANTS_H
 
 #ifdef DEBUG
-	#define DLog(fmt, ...) NSLog((@"QS: %s [Line %d] " fmt), __PRETTY_FUNCTION__, __LINE__, ##__VA_ARGS__)
-	#define CLog(fmt, ...) NSLog((@"QS: " fmt), ##__VA_ARGS__)
-	#define ParamLog(_formatString, _param, ...) DLog(@"%s = "_formatString, #_param, _param, ##__VA_ARGS__)
-	#define ParamLogC(_formatString, _param, ...) CLog(@"%s = "_formatString, #_param, _param, ##__VA_ARGS__)
+    #define DLog(fmt, ...) NSLog((@"QS: %s [Line %d] " fmt), __PRETTY_FUNCTION__, __LINE__, ##__VA_ARGS__)
+    #define CLog(fmt, ...) NSLog((@"QS: " fmt), ##__VA_ARGS__)
+    #define ParamLog(_formatString, _param, ...) DLog(@"%s = "_formatString, #_param, _param, ##__VA_ARGS__)
+    #define ParamLogC(_formatString, _param, ...) CLog(@"%s = "_formatString, #_param, _param, ##__VA_ARGS__)
 #else
-	#define DLog(...)
-	#define CLog(...)
-	#define ParamLog(...)
-	#define ParamLogC(...)
+    #define DLog(...)
+    #define CLog(...)
+    #define ParamLog(...)
+    #define ParamLogC(...)
 #endif
 
-#define ALog(fmt, ...) NSLog((@"QS: " fmt), ##__VA_ARGS__)	
+#define ALog(fmt, ...) NSLog((@"QS: " fmt), ##__VA_ARGS__)  
 
 #define kPiratedCopyNotification @"QSUpdatedCapabilities"
 #define kPLCameraModePhoto 0 // yes, PL. PhotoLibrary, yeah? :D
@@ -41,22 +41,25 @@
 #define EXECUTE_BLOCK_AFTER_DELAY(delayInSeconds, block) (dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(delayInSeconds * NSEC_PER_SEC)), dispatch_get_main_queue(), block))
 
 #define SHOW_USER_NOTIFICATION(title, message, dismissButtonTitle) \
-							   NSDictionary *fields = @{(id)kCFUserNotificationAlertHeaderKey        : title, \
-                                 						(id)kCFUserNotificationAlertMessageKey       : message, \
+                               NSDictionary *fields = @{(id)kCFUserNotificationAlertHeaderKey        : title, \
+                                                        (id)kCFUserNotificationAlertMessageKey       : message, \
                                                         (id)kCFUserNotificationDefaultButtonTitleKey : dismissButtonTitle}; \
-        					   CFUserNotificationRef notificationRef = CFUserNotificationCreate(kCFAllocatorDefault, 0, kCFUserNotificationNoteAlertLevel, NULL, (CFDictionaryRef)fields); \
-        					   CFRelease(notificationRef)
+                               CFUserNotificationRef notificationRef = CFUserNotificationCreate(kCFAllocatorDefault, 0, kCFUserNotificationNoteAlertLevel, NULL, (CFDictionaryRef)fields); \
+                               CFRelease(notificationRef)
+
+#define SYSTEM_VERSION_GREATER_THAN_OR_EQUAL_TO(v)  ([[[UIDevice currentDevice] systemVersion] compare:v options:NSNumericSearch] != NSOrderedAscending)
+#define IS_7_1() (SYSTEM_VERSION_GREATER_THAN_OR_EQUAL_TO(@"7.1")
 
 // These values are accepted by PLCameraController as-is
 typedef enum {
-	QSCameraDeviceRear  = 0,
-	QSCameraDeviceFront = 1,
+    QSCameraDeviceRear  = 0,
+    QSCameraDeviceFront = 1,
 } QSCameraDevice; // it's the same as UIImagePickerControllerCameraDevice
 
 typedef enum {
-	QSFlashModeAuto =  0,
-	QSFlashModeOn   =  1,
-	QSFlashModeOff  = -1,
+    QSFlashModeAuto =  0,
+    QSFlashModeOn   =  1,
+    QSFlashModeOff  = -1,
 } QSFlashMode;
 
 

@@ -257,6 +257,8 @@ static void QSUserNotificationCallBack(CFUserNotificationRef userNotification, C
     [(SpringBoard *)[UIApplication sharedApplication] updateOrientationAndAccelerometerSettings];
     [[UIDevice currentDevice] beginGeneratingDeviceOrientationNotifications];
     [QSCameraController sharedInstance]; // make sure the object is created, hence setting it up to receive orientation notifs.
+    QSUpdatePrefs(NULL, NULL, CFSTR("com.caughtinflux.quickshootpro.prefschanged"), NULL, NULL);
+    QSUpdatePrefs(NULL, NULL, CFSTR("com.caughtinflux.quickshootpro.prefschanged.appicons"), NULL, NULL);
 }
 
 - (void)_reportAppLaunchFinished
@@ -472,8 +474,5 @@ static void QSUpdatePrefs(CFNotificationCenterRef center, void *observer, CFStri
         [[LAActivator sharedInstance] registerListener:[QSActivatorListener sharedInstance] forName:QSOptionsWindowListenerName];
         [[LAActivator sharedInstance] registerListener:[QSActivatorListener sharedInstance] forName:QSImageCaptureListenerName];
         [[LAActivator sharedInstance] registerListener:[QSActivatorListener sharedInstance] forName:QSVideoCaptureListenerName];
-        
-        QSUpdatePrefs(NULL, NULL, CFSTR("com.caughtinflux.quickshootpro.prefschanged"), NULL, NULL);
-        QSUpdatePrefs(NULL, NULL, CFSTR("com.caughtinflux.quickshootpro.prefschanged.appicons"), NULL, NULL);
     }
 }
