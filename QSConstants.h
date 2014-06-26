@@ -47,7 +47,8 @@
                                CFUserNotificationRef notificationRef = CFUserNotificationCreate(kCFAllocatorDefault, 0, kCFUserNotificationNoteAlertLevel, NULL, (CFDictionaryRef)fields); \
                                CFRelease(notificationRef)
 
-#define IS_7_1() (kCFCoreFoundationVersionNumber >= 847.21)
+#define SYSTEM_VERSION_GREATER_THAN_OR_EQUAL_TO(v)  ([[[UIDevice currentDevice] systemVersion] compare:v options:NSNumericSearch] != NSOrderedAscending)
+#define IS_7_1() (SYSTEM_VERSION_GREATER_THAN_OR_EQUAL_TO(@"7.1")
 
 // These values are accepted by PLCameraController as-is
 typedef enum {

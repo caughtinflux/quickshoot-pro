@@ -1,2 +1,2 @@
-#define kPackageVersion @"2.0.4"
+#define kPackageVersion @"2.0.5"
 

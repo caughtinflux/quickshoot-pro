@@ -39,9 +39,7 @@
 
 %ctor
 {
-    DLog(@"%f", kCFCoreFoundationVersionNumber);
-    if (IS_7_1()) {
-        DLog(@"Initializing 7.1 compat hooks!");
+    if ([PLCameraController instancesRespondToSelector:@selector(capturePhotoUsingHDR:)]) {
         %init(iOS7_1);
     }
 }
