@@ -10,10 +10,10 @@
 */
 
 #import "QSCameraOptionsWindow.h"
+#import "QSHDRButton.h"
 #import <PhotoLibrary/CAMTopBar.h>
 #import <PhotoLibrary/CAMFlashButton.h>
 #import <PhotoLibrary/CAMFlipButton.h>
-#import <PhotoLibrary/CAMHDRButton.h>
 #import <PhotoLibrary/CAMButtonLabel.h>
 #import <PhotoLibrary/PLCameraController.h>
 #import <QuartzCore/QuartzCore.h>
@@ -33,7 +33,7 @@
     CAMTopBar *_topBar;
     CAMFlipButton *_toggleButton;
     CAMFlashButton *_flashButton;
-    CAMHDRButton *_hdrButton;
+    QSHDRButton *_hdrButton;
     CAMButtonLabel *_cameraModeChangedLabel;
     NSTimer *_hideTimer;
     NSTimer *_labelHideTimer;
@@ -59,9 +59,9 @@
 {
     if ((self = [super initWithFrame:frame])) {
         if (shouldShowHDR) {
-            _hdrButton = [[CAMHDRButton alloc] initWithFrame:(CGRect){CGPointZero, {20, 20}}];
+            _hdrButton = [[QSHDRButton alloc] initWithFrame:(CGRect){CGPointZero, {20, 20}}];
             _hdrButton.center = (CGPoint){(self.frame.size.width * 0.5), 20};
-            [_hdrButton addTarget:self action:@selector(_HDRSettingDidChange:) forControlEvents:UIControlEventTouchUpInside];
+            [_hdrButton setTapTarget:self selector:@selector(_HDRTapped:)];
         }
         if (shouldShowFlash) {
             _flashButton = [[CAMFlashButton alloc] initWithFrame:(CGRect){CGPointZero, {20, 20}}];
@@ -178,17 +178,17 @@
     }
 }
 
-#pragma mark - SettingsView Delegate
-- (void)_HDRSettingDidChange:(CAMHDRButton *)button
+- (void)_HDRTapped:(QSHDRButton *)button
 {
     [self _restartHideTimer];
-    if (!button.on) {
+    //_hdrButton.on = (_hdrButton.on);
+    [_hdrButton setNeedsLayout];
+    if (_hdrButton.on) {
         _flashButton.flashMode = PLFlashModeOff;
     }
-    button.on = !(button.on);
     if ([self.delegate conformsToProtocol:@protocol(QSCameraOptionsWindowDelegate)]) {
-        [self.delegate optionsWindow:self hdrModeChanged:button.on];
-        [self.delegate optionsWindow:self flashModeChanged:QSFlashModeOff];
+        [self.delegate optionsWindow:self flashModeChanged:(_hdrButton.on ? QSFlashModeOff : (QSFlashMode)_flashButton.flashMode)];
+        [self.delegate optionsWindow:self hdrModeChanged:_hdrButton.on];
     }
 }
 

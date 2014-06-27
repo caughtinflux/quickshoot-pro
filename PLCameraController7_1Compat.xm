@@ -1,7 +1,5 @@
 #import <PhotoLibrary/PLCameraController.h>
-#import <SpringBoard/SpringBoard.h>
-#import <CoreFoundation/CFUserNotification.h>
-#import <objc/runtime.h>
+#import <PhotoLibrary/CAMHDRButton.h>
 
 #import "QSConstants.h"
 

@@ -82,8 +82,6 @@
             }
         };
 
-        DLog(@"isStartingRecording = %@", STRING_FROM_BOOL(isStartingRecording));
-
         if (_isCapturingVideo == NO && !isStartingRecording) {
             if ([QSCameraController sharedInstance].isCapturingVideo) {
                 // this check is necessary, because the user might be recording a video some other way, too.
@@ -137,7 +135,6 @@
 #pragma mark - Options Window Delegate
 - (void)optionsWindowCameraButtonToggled:(QSCameraOptionsWindow *)optionsWindow
 {
-    DLog(@"");
     QSCameraDevice currentDevice = [[QSCameraController sharedInstance] cameraDevice];
     [[QSCameraController sharedInstance] setCameraDevice:((currentDevice == QSCameraDeviceRear) ? QSCameraDeviceFront : QSCameraDeviceRear)];
 
@@ -148,7 +145,6 @@
 
 - (void)optionsWindow:(QSCameraOptionsWindow *)optionsWindow hdrModeChanged:(BOOL)newMode
 {
-    DLog(@"");
     [[QSCameraController sharedInstance] setEnableHDR:newMode];
     
     NSMutableDictionary *prefsDict = [NSMutableDictionary dictionaryWithContentsOfFile:kPrefPath];
@@ -158,7 +154,6 @@
 
 - (void)optionsWindow:(QSCameraOptionsWindow *)optionsWindow flashModeChanged:(QSFlashMode)newMode
 {
-    DLog(@"Flash mode now: %i", newMode);
     [[QSCameraController sharedInstance] setFlashMode:newMode];
     [[QSCameraController sharedInstance] setVideoFlashMode:newMode];
 
