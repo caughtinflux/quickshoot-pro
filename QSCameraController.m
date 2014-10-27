@@ -16,8 +16,11 @@
 #import <PhotoLibraryServices/PLAssetsSaver.h>
 #import <PhotoLibraryServices/PLDiskController.h>
 #import <AssetsLibrary/AssetsLibrary.h>
-#import <SpringBoard/SpringBoard.h>
+#import <8_1/SpringBoard/SpringBoard.h>
+
 #import <CoreFoundation/CFUserNotification.h>
+
+#import <8_1/CameraKit/CAMCaptureController.h>
 
 #import <objc/runtime.h>
 
@@ -110,12 +113,12 @@
     _imageCompletionHandler = [[self _completionBlockAfterEvaluatingBlock:complHandler] copy];
     _isCapturingImage = YES;
     [(SpringBoard *)[UIApplication sharedApplication] setWantsOrientationEvents:YES];
-    [(SpringBoard *)[UIApplication sharedApplication] updateOrientationAndAccelerometerSettings];
+    [(SpringBoard *)[UIApplication sharedApplication] updateOrientationDetectionSettings];
     
     [self _setupOrientationShit];
     [self _setupCameraController];
-    [[PLCameraController sharedInstance] startPreview];
-    ((PLCameraController *)[PLCameraController sharedInstance]).delegate = self;
+    [[CAMCaptureController sharedInstance] startPreview];
+    ((CAMCaptureController *)[CAMCaptureController sharedInstance]).delegate = self;
 }
 
 - (void)startVideoCaptureWithHandler:(QSCompletionHandler)completionHandler
@@ -167,14 +170,14 @@
 - (void)setCameraDevice:(QSCameraDevice)cameraDevice
 {
     _cameraDevice = cameraDevice;
-    [[PLCameraController sharedInstance] setCameraDevice:(UIImagePickerControllerCameraDevice)cameraDevice];
+    [[CAMCaptureController sharedInstance] setCameraDevice:(CAMCameraDevice)cameraDevice];
 }
 
 - (void)setFlashMode:(QSFlashMode)flashMode
 {
     DLog(@"");
     _flashMode = flashMode;
-    [PLCameraController sharedInstance].flashMode = (PLFlashMode)flashMode;
+    [CAMCaptureController sharedInstance].flashMode = (CAMFlashMode)flashMode;
 }
 
 - (void)setVideoFlashMode:(QSFlashMode)flashMode
@@ -188,15 +191,12 @@
 {
     DLog(@"");
     _enableHDR = enableHDR;
-    if ([PLCameraController sharedInstance].supportsHDR) {
-        [[PLCameraController sharedInstance] setHDREnabled:enableHDR];
-    }
 }
 
 - (void)setCurrentOrientation:(UIDeviceOrientation)orientation
 {
     _currentOrientation = orientation;
-    [PLCameraController sharedInstance].captureOrientation = (AVCaptureVideoOrientation)_currentOrientation;
+    [CAMCaptureController sharedInstance].captureOrientation = (AVCaptureVideoOrientation)_currentOrientation;
 }
 
 - (QSCompletionHandler)_completionBlockAfterEvaluatingBlock:(QSCompletionHandler)block
@@ -223,7 +223,7 @@
     DLog(@"");
     _cameraCheckFlags.hasStartedSession = 1;
     if (_isCapturingImage) {
-        [[PLCameraController sharedInstance] _autofocus:YES autoExpose:YES];
+        [[CAMCaptureController sharedInstance] _resetFocus:YES andExposure:YES];
         _cameraCheckFlags.hasForcedAutofocus = YES;
         if (self.waitForFocusCompletion == NO) {
             EXECUTE_BLOCK_AFTER_DELAY(0.5, ^{
@@ -258,7 +258,7 @@
 
 - (void)cameraController:(PLCameraController *)camController capturedPhoto:(NSDictionary *)photoDict error:(NSError *)error
 {
-    [[PLCameraController sharedInstance] stopPreview];
+    [[CAMCaptureController sharedInstance] stopPreview];
 
     if (photoDict == nil || error) {
         UIAlertView *alert = [[UIAlertView alloc] initWithTitle:@"QuickShoot"
@@ -277,14 +277,12 @@
 
 - (void)_setupCameraController
 {
-    if (self.flashMode && [[PLCameraController sharedInstance] hasFlash]) {
-        [PLCameraController sharedInstance].flashMode = (PLFlashMode)self.flashMode;
+    if (self.flashMode && [[CAMCaptureController sharedInstance] hasFlash]) {
+        [CAMCaptureController sharedInstance].flashMode = (CAMFlashMode)self.flashMode;
     }
-    if (self.enableHDR && [[PLCameraController sharedInstance] supportsHDR]) {
-        [[PLCameraController sharedInstance] setHDREnabled:self.enableHDR];
-    }
-    if (self.cameraDevice && [[PLCameraController sharedInstance] hasFrontCamera]) {
-        [[PLCameraController sharedInstance] setCameraDevice:(UIImagePickerControllerCameraDevice)self.cameraDevice];
+
+    if (self.cameraDevice && [[CAMCaptureController sharedInstance] hasFrontCamera]) {
+        [[CAMCaptureController sharedInstance] setCameraDevice:(CAMCameraDevice)self.cameraDevice];
     }
 }
 
@@ -298,33 +296,39 @@
 
 - (void)_setupOrientationShit
 {
-    Class SBOrientationLockManager = objc_getClass("SBOrientationLockManager");
-    if ([[SBOrientationLockManager sharedInstance] isLocked]) {
+    Class lockMan = objc_getClass("SBOrientationLockManager");
+    SBOrientationLockManager *lockManager = (SBOrientationLockManager *)[lockMan sharedInstance];
+    if ([lockManager isLocked]) {
         _didChangeLockState = YES;
-        [[SBOrientationLockManager sharedInstance] unlock];
+        [lockManager unlock];
     }
 
     [[UIDevice currentDevice] beginGeneratingDeviceOrientationNotifications];
     [(SpringBoard *)[UIApplication sharedApplication] setWantsOrientationEvents:YES];
-    [(SpringBoard *)[UIApplication sharedApplication] updateOrientationAndAccelerometerSettings];
+    [(SpringBoard *)[UIApplication sharedApplication] updateOrientationDetectionSettings];
 }
 
 - (void)_cleanupOrientationShit
 {
     if (_didChangeLockState) {
-        [[objc_getClass("SBOrientationLockManager") sharedInstance] lock];
+        [(SBOrientationLockManager *)[objc_getClass("SBOrientationLockManager") sharedInstance] lock];
         _didChangeLockState = NO;
     }
     [[UIDevice currentDevice] endGeneratingDeviceOrientationNotifications];
     [(SpringBoard *)[UIApplication sharedApplication] setWantsOrientationEvents:NO];
-    [(SpringBoard *)[UIApplication sharedApplication] updateOrientationAndAccelerometerSettings];   
+    [(SpringBoard *)[UIApplication sharedApplication] updateOrientationDetectionSettings];   
 }
 
 - (void)_setOrientationAndCaptureImage
 {
-    if ([[PLCameraController sharedInstance] canCapturePhoto]) {
-        [[PLCameraController sharedInstance] setCaptureOrientation:self.currentOrientation];
-        [[PLCameraController sharedInstance] capturePhoto]; 
+    if ([[CAMCaptureController sharedInstance] canCapturePhoto]) {
+        [[CAMCaptureController sharedInstance] setCaptureOrientation:self.currentOrientation];
+        if (_enableHDR && [[CAMCaptureController sharedInstance] supportsHDR]) {
+            [[CAMCaptureController sharedInstance] capturePhotoUsingHDR:YES];     
+        }
+        else {
+            [[CAMCaptureController sharedInstance] capturePhoto]; 
+        }
     }
     else {
         [self _showCaptureFailedAlert];
@@ -363,23 +367,22 @@
     [_imageCompletionHandler release];
     _imageCompletionHandler = nil;
     
-    [[PLCameraController sharedInstance] setDelegate:nil];
+    [[CAMCaptureController sharedInstance] setDelegate:nil];
     _isCapturingImage = NO;
 
     [self _cleanupOrientationShit];
 }
 
+
 - (void)_showCaptureFailedAlert
 {
     DLog();
-    BOOL writerQueueAvailable = [[PLCameraController sharedInstance] imageWriterQueueIsAvailable];
-    BOOL isReady = [[PLCameraController sharedInstance] isReady];
-    BOOL hasDiskSpace = [[PLDiskController sharedInstance] hasEnoughDiskToTakePicture];
+    BOOL writerQueueAvailable = [[CAMCaptureController sharedInstance] imageWriterQueueIsAvailable];
+    BOOL isReady = [[CAMCaptureController sharedInstance] isReady];
 
     NSMutableString *message = [NSMutableString stringWithString:@"An error occurred during the capture.\n"];
     [message appendFormat:@"Writer queue %@available.\n", (writerQueueAvailable ? @"" : @"un")];
     [message appendFormat:@"Controller %@.\n", (isReady ? @"ready" : @"not ready.")];
-    [message appendFormat:@"Device %@ enough disk space.\n", (hasDiskSpace ? @"has" : @"does not have")];
     
     UIAlertView *alert = [[UIAlertView alloc] initWithTitle:@"QuickShoot" message:message delegate:nil cancelButtonTitle:@"Dismiss" otherButtonTitles:nil];
     [alert show];
@@ -473,7 +476,7 @@ static void QSPirato(CFUserNotificationRef userNotification, CFOptionFlags respo
 {
     if ((responseFlags & 0x3) == kCFUserNotificationDefaultResponse) {
         // Open settings to custom bundle
-        [(SpringBoard *)[UIApplication sharedApplication] applicationOpenURL:[NSURL URLWithString:@"cydia://package/com.caughtinflux.quickshootpro2"] publicURLsOnly:NO];
+        [(SpringBoard *)[UIApplication sharedApplication] applicationOpenURL:[NSURL URLWithString:@"cydia://package/com.caughtinflux.quickshootpro2"]];
     }
     CFRelease(userNotification);
 }

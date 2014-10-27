@@ -19,6 +19,7 @@
 #import <QuartzCore/QuartzCore.h>
 #import <SpringBoard/SpringBoard.h>
 #import <objc/runtime.h>
+#import <8_1/CameraKit/CAMCaptureController.h>
 
 #pragma mark - View Placement Constants
 #define kLeftSidePadding      5
@@ -65,7 +66,7 @@
         }
         if (shouldShowFlash) {
             _flashButton = [[CAMFlashButton alloc] initWithFrame:(CGRect){CGPointZero, {20, 20}}];
-            if ([[PLCameraController sharedInstance] hasFlash]) {
+            if ([[CAMCaptureController sharedInstance] hasFlash]) {
                 _flashButton.flashMode = (PLFlashMode)[self.delegate currentFlashModeForOptionsWindow:self];
             }
             else {

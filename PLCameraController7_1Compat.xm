@@ -1,15 +1,24 @@
 #import <PhotoLibrary/PLCameraController.h>
+#import <PhotoLibraryServices/PLAssetsSaver.h>
+#import <PhotoLibraryServices/PLDiskController.h>
+#import <AssetsLibrary/AssetsLibrary.h>
+#import <SpringBoard/SpringBoard.h>
+#import <CoreFoundation/CFUserNotification.h>
+
+#import <8_1/CameraKit/CAMCaptureController.h>
+
+#import <objc/runtime.h>
 #import <PhotoLibrary/CAMHDRButton.h>
 
 #import "QSConstants.h"
 
-@interface PLCameraController (SevenPointOne)
+@interface CAMCaptureController (SevenPointOne)
 - (void)capturePhotoUsingHDR:(BOOL)useHDR;
 - (BOOL)HDREnabled;
 @end
 
-%group iOS7_1
-%hook PLCameraController
+%group iOS8_1
+%hook CAMCaptureController
 %new
 - (BOOL)HDREnabled
 {
@@ -37,7 +46,7 @@
 
 %ctor
 {
-    if ([PLCameraController instancesRespondToSelector:@selector(capturePhotoUsingHDR:)]) {
-        %init(iOS7_1);
+    if ([CAMCaptureController instancesRespondToSelector:@selector(capturePhotoUsingHDR:)]) {
+        %init(iOS8_1);
     }
 }

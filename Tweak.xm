@@ -15,7 +15,7 @@
 #import <CoreFoundation/CoreFoundation.h>
 #import <CoreFoundation/CFUserNotification.h>
 
-#import <SpringBoard/SpringBoard.h>
+// #import <8_1/SpringBoard/SpringBoard.h>
 #import <SpringBoard/SBIconController.h>
 #import <SpringBoard/SBIconModel.h>
 #import <SpringBoard/SBIconView.h>
@@ -254,7 +254,7 @@ static void QSUserNotificationCallBack(CFUserNotificationRef userNotification, C
 {
     %orig;
     [(SpringBoard *)[UIApplication sharedApplication] setWantsOrientationEvents:YES];
-    [(SpringBoard *)[UIApplication sharedApplication] updateOrientationAndAccelerometerSettings];
+    [(SpringBoard *)[UIApplication sharedApplication] updateOrientationDetectionSettings];
     [[UIDevice currentDevice] beginGeneratingDeviceOrientationNotifications];
     [QSCameraController sharedInstance]; // make sure the object is created, hence setting it up to receive orientation notifs.
     QSUpdatePrefs(NULL, NULL, CFSTR("com.caughtinflux.quickshootpro.prefschanged"), NULL, NULL);
