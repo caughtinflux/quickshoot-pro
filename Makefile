@@ -1,6 +1,5 @@
-EXPORT TARGET = iphone:clang:latest:7.0
-EXPORT ARCHS = armv7 armv7s arm64
-EXPORT DEBUG = 1
+TARGET = iphone:clang:latest:8.1
+ARCHS = armv7 armv7s arm64
 
 include theos/makefiles/common.mk
 
@@ -8,7 +7,7 @@ TWEAK_NAME = QuickShootPro
 QuickShootPro_FILES = QSConstants.m Tweak.xm QSCameraController.m QSVideoInterface.m QSActivatorListener.m QSCameraOptionsWindow.m QSHDRButton.m QSIconOverlayView.m PLCameraController7_1Compat.xm
 QuickShootPro_FRAMEWORKS = UIKit Foundation CoreGraphics AVFoundation AssetsLibrary QuartzCore AudioToolbox
 QuickShootPro_PRIVATE_FRAMEWORKS = PhotoLibrary CameraKit
-QuickShootPro_CFLAGS = -Wall -O3
+QuickShootPro_CFLAGS = -Wall
 QuickShootPro_LDFLAGS = -lactivator
 
 include $(THEOS_MAKE_PATH)/tweak.mk

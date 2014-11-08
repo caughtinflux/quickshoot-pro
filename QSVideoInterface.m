@@ -257,7 +257,7 @@ notifyDelegateOfError:
 - (BOOL)_configureFileOutput
 {
     _fileOutput = [[AVCaptureMovieFileOutput alloc] init];
-    [_fileOutput connectionWithMediaType:AVMediaTypeVideo].enablesVideoStabilizationWhenAvailable = YES;
+    // [_fileOutput connectionWithMediaType:AVMediaTypeVideo].enablesVideoStabilizationWhenAvailable = YES;
     if ([_captureSession canAddOutput:_fileOutput]) {
         [_captureSession addOutput:_fileOutput];
         return YES;
