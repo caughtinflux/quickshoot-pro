@@ -471,7 +471,7 @@ static void QSUpdatePrefs(CFNotificationCenterRef center, void *observer, CFStri
                                         NULL,
                                         CFNotificationSuspensionBehaviorHold);
         
-        [[LAActivator sharedInstance] registerListener:[QSActivatorListener sharedInstance] forName:QSOptionsWindowListenerName];
+//        [[LAActivator sharedInstance] registerListener:[QSActivatorListener sharedInstance] forName:QSOptionsWindowListenerName];
         [[LAActivator sharedInstance] registerListener:[QSActivatorListener sharedInstance] forName:QSImageCaptureListenerName];
         [[LAActivator sharedInstance] registerListener:[QSActivatorListener sharedInstance] forName:QSVideoCaptureListenerName];
     }
