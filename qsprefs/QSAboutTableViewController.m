@@ -104,8 +104,8 @@
 
     }
     else if (indexPath.section == 0 && indexPath.row == 1) {
-        string = @"To capture a photo, just double tap any of the icons you have switched on in QuickShoot Pro's preferences. Triple tapping them toggles video recording.\n"
-                 @"You can also assign activator shortcuts (see settings) to capture a photo, or to record video. The Options Window lets you change the camera settings like HDR, flash mode, and camera device without even having to enter the settings.\n"
+        string = @"To capture a photo, just double tap any of the icons you have switched on in QuickShoot Pro's preferences, or the camera grabber on the lock screen! Triple the icons you have selected toggles video recording.\n"
+                 @"You can also assign activator shortcuts (see settings) to capture a photo, or to record video.\n"
                  @"Thank you for your purchase, hope you enjoy the experience!";
     }
     else if (indexPath.section == 1) {
