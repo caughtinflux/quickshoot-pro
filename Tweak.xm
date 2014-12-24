@@ -236,7 +236,7 @@ static void QSUserNotificationCallBack(CFUserNotificationRef userNotification, C
         _isCapturingImage = NO;
         if (success) {
             if (_flashScreen) {
-                [[%c(SBScreenFlash) sharedInstance] flash];
+                [[%c(SBScreenFlash) mainScreenFlasher] flashWhiteWithCompletion:nil];
             }
         }
     }];
