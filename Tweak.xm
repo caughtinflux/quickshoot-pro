@@ -397,7 +397,7 @@ static void QSUpdateAppIconRecognizersRemovingApps(NSArray *disabledApps)
 
 static void QSUpdatePrefs(CFNotificationCenterRef center, void *observer, CFStringRef name, const void *object, CFDictionaryRef userInfo)
 {
-    NSDictionary *prefs = [[NSDictionary alloc] initWithContentsOfFile:kPrefPath];
+    NSDictionary *prefs = [[NSUserDefaults standardUserDefaults] persistentDomainForName:@"com.caughtinflux.qsproprefs"];
     if ([(NSString *)name isEqualToString:@"com.caughtinflux.quickshootpro.prefschanged"]) {
         if (!prefs) {
             _enabled = YES;
@@ -449,7 +449,6 @@ static void QSUpdatePrefs(CFNotificationCenterRef center, void *observer, CFStri
             QSUpdateAppIconRecognizersRemovingApps(disabledApps);
         }
     }
-    [prefs release];
 }
 
 #pragma mark - Constructor
