@@ -296,7 +296,7 @@
             <key>ALSettingsKeyPrefix</key>
             <string>QSApp-</string>
             <key>ALSettingsPath</key>
-            <string>/User/Library/Preferences/com.caughtinflux.qsproprefs.plist</string>
+            <string>/User/Library/Preferences/com.caughtinflux.qspropapplist.plist</string>
             <key>ALSingleEnabledMode</key>
             <false/>
         </dict>

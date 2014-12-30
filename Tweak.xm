@@ -428,13 +428,16 @@ static void QSUpdatePrefs(CFNotificationCenterRef center, void *observer, CFStri
         [[NSNotificationCenter defaultCenter] postNotificationName:QSPrefsChangedNotificationName object:nil];
     }
     else if ([(NSString *)name isEqualToString:@"com.caughtinflux.quickshootpro.prefschanged.appicons"]) {
+        NSDictionary *appPrefs = [NSDictionary dictionaryWithContentsOfFile:kAppPrefPath];
+        if (!appPrefs) {
+            [@{} writeToFile:kAppPrefPath atomically:YES];
+        }
         NSMutableArray *disabledApps = [[NSMutableArray new] autorelease];
-        
         [_enabledAppIDs release];
         _enabledAppIDs = nil;
         _enabledAppIDs = [NSMutableArray new];
 
-        for (NSString *key in [prefs allKeys]) {
+        for (NSString *key in [appPrefs allKeys]) {
             if ([key hasPrefix:@"QSApp-"]) {
                 if (([prefs[key] boolValue] == YES)) {
                     [_enabledAppIDs addObject:[key stringByReplacingOccurrencesOfString:@"QSApp-" withString:@""]];
