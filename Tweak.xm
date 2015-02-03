@@ -225,7 +225,7 @@ static void QSUserNotificationCallBack(CFUserNotificationRef userNotification, C
     }
 }
 
-%new 
+%new
 - (void)qs_handleDoubleTap:(UITapGestureRecognizer *)sender
 {
     if (!_enabled || _isCapturingImage || _isCapturingVideo) {
