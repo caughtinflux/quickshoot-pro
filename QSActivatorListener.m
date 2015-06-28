@@ -65,7 +65,7 @@
         }
         [[QSCameraController sharedInstance] takePhotoWithCompletionHandler:^(BOOL success) {
             if (self.shouldFlashScreen) {
-                [(SBScreenFlash *)[objc_getClass("SBScreenFlash") sharedInstance] flash];
+                [[objc_getClass("SBScreenFlash") mainScreenFlasher] flashWhiteWithCompletion:nil];
             }
         }];
     }
