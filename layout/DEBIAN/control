@@ -2,7 +2,7 @@ Package: com.caughtinflux.quickshootpro8
 Name: QuickShoot Pro iOS 8
 Depends: mobilesubstrate, firmware (>= 8.1), applist, libactivator, libstatusbar
 Conflicts: com.caughtinflux.quickshoot
-Version: 1.0.2
+Version: 1.0.3
 Architecture: iphoneos-arm
 Description: Capture photos or video quickly with awesome animations and more control! 
 Maintainer: flux
