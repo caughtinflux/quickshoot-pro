@@ -257,8 +257,8 @@ static void QSUserNotificationCallBack(CFUserNotificationRef userNotification, C
     [(SpringBoard *)[UIApplication sharedApplication] updateOrientationDetectionSettings];
     [[UIDevice currentDevice] beginGeneratingDeviceOrientationNotifications];
     [QSCameraController sharedInstance]; // make sure the object is created, hence setting it up to receive orientation notifs.
-    QSUpdatePrefs(NULL, NULL, CFSTR("com.caughtinflux.quickshootpro.prefschanged"), NULL, NULL);
-    QSUpdatePrefs(NULL, NULL, CFSTR("com.caughtinflux.quickshootpro.prefschanged.appicons"), NULL, NULL);
+    QSUpdatePrefs(NULL, NULL, kPrefsChangedNotificationName, NULL, NULL);
+    QSUpdatePrefs(NULL, NULL, kAppPrefsChangedNotificationName, NULL, NULL);
 }
 
 - (void)_reportAppLaunchFinished
@@ -397,8 +397,8 @@ static void QSUpdateAppIconRecognizersRemovingApps(NSArray *disabledApps)
 
 static void QSUpdatePrefs(CFNotificationCenterRef center, void *observer, CFStringRef name, const void *object, CFDictionaryRef userInfo)
 {
-    NSDictionary *prefs = [[NSUserDefaults standardUserDefaults] persistentDomainForName:@"com.caughtinflux.qsproprefs"];
-    if ([(NSString *)name isEqualToString:@"com.caughtinflux.quickshootpro.prefschanged"]) {
+    if ([(NSString *)name isEqualToString:(NSString *)kPrefsChangedNotificationName]) {
+        NSDictionary *prefs = [[NSUserDefaults standardUserDefaults] persistentDomainForName:kPrefsDomainName];
         if (!prefs) {
             _enabled = YES;
             return;
@@ -427,8 +427,14 @@ static void QSUpdatePrefs(CFNotificationCenterRef center, void *observer, CFStri
 
         [[NSNotificationCenter defaultCenter] postNotificationName:QSPrefsChangedNotificationName object:nil];
     }
-    else if ([(NSString *)name isEqualToString:@"com.caughtinflux.quickshootpro.prefschanged.appicons"]) {
-        NSDictionary *appPrefs = [NSDictionary dictionaryWithContentsOfFile:kAppPrefPath];
+    else if ([(NSString *)name isEqualToString:(NSString *)kAppPrefsChangedNotificationName]) {
+        NSDictionary *appPrefs = nil;
+        CFStringRef appID = (CFStringRef)kAppPrefsDomainName;
+        CFArrayRef keyList = CFPreferencesCopyKeyList(appID, kCFPreferencesCurrentUser, kCFPreferencesAnyHost);
+        if (keyList) {
+            appPrefs = (NSDictionary *)CFPreferencesCopyMultiple(keyList, appID, kCFPreferencesCurrentUser, kCFPreferencesAnyHost);
+            CFRelease(keyList);
+        }
         if (!appPrefs) {
             [@{} writeToFile:kAppPrefPath atomically:YES];
         }
@@ -436,10 +442,10 @@ static void QSUpdatePrefs(CFNotificationCenterRef center, void *observer, CFStri
         [_enabledAppIDs release];
         _enabledAppIDs = nil;
         _enabledAppIDs = [NSMutableArray new];
-
         for (NSString *key in [appPrefs allKeys]) {
             if ([key hasPrefix:@"QSApp-"]) {
-                if (([prefs[key] boolValue] == YES)) {
+                if (([appPrefs[key] boolValue] == YES)) {
+                    CLog(@"Adding %@", key);
                     [_enabledAppIDs addObject:[key stringByReplacingOccurrencesOfString:@"QSApp-" withString:@""]];
                 }
                 else {
@@ -451,6 +457,7 @@ static void QSUpdatePrefs(CFNotificationCenterRef center, void *observer, CFStri
             // running this before SpringBoard has loaded completely == BAD IDEA.
             QSUpdateAppIconRecognizersRemovingApps(disabledApps);
         }
+        [appPrefs release];
     }
 }
 
@@ -463,13 +470,13 @@ static void QSUpdatePrefs(CFNotificationCenterRef center, void *observer, CFStri
         CFNotificationCenterAddObserver(CFNotificationCenterGetDarwinNotifyCenter(),
                                         NULL,
                                         (CFNotificationCallback)&QSUpdatePrefs,
-                                        CFSTR("com.caughtinflux.quickshootpro.prefschanged"),
+                                        kPrefsChangedNotificationName,
                                         NULL,
                                         CFNotificationSuspensionBehaviorHold);
         CFNotificationCenterAddObserver(CFNotificationCenterGetDarwinNotifyCenter(),
                                         NULL,
                                         (CFNotificationCallback)&QSUpdatePrefs,
-                                        CFSTR("com.caughtinflux.quickshootpro.prefschanged.appicons"),
+                                        kAppPrefsChangedNotificationName,
                                         NULL,
                                         CFNotificationSuspensionBehaviorHold);
         
