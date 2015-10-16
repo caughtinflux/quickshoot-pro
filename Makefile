@@ -5,7 +5,7 @@ DEBUG = 1
 include theos/makefiles/common.mk
 
 TWEAK_NAME = QuickShootPro
-QuickShootPro_FILES = QSConstants.m Tweak.xm QSCameraController.m QSVideoInterface.m QSActivatorListener.m QSCameraOptionsWindow.m QSHDRButton.m QSIconOverlayView.m PLCameraController7_1Compat.xm
+QuickShootPro_FILES = QSConstants.m Tweak.xm QSCameraController.m QSVideoInterface.m QSActivatorListener.m QSIconOverlayView.m PLCameraController7_1Compat.xm
 QuickShootPro_FRAMEWORKS = UIKit Foundation CoreGraphics AVFoundation AssetsLibrary QuartzCore AudioToolbox
 QuickShootPro_PRIVATE_FRAMEWORKS = PhotoLibrary CameraKit
 QuickShootPro_CFLAGS = -Wall

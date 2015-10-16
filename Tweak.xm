@@ -428,13 +428,7 @@ static void QSUpdatePrefs(CFNotificationCenterRef center, void *observer, CFStri
         [[NSNotificationCenter defaultCenter] postNotificationName:QSPrefsChangedNotificationName object:nil];
     }
     else if ([(NSString *)name isEqualToString:(NSString *)kAppPrefsChangedNotificationName]) {
-        NSDictionary *appPrefs = nil;
-        CFStringRef appID = (CFStringRef)kAppPrefsDomainName;
-        CFArrayRef keyList = CFPreferencesCopyKeyList(appID, kCFPreferencesCurrentUser, kCFPreferencesAnyHost);
-        if (keyList) {
-            appPrefs = (NSDictionary *)CFPreferencesCopyMultiple(keyList, appID, kCFPreferencesCurrentUser, kCFPreferencesAnyHost);
-            CFRelease(keyList);
-        }
+        NSDictionary *appPrefs = [[NSDictionary alloc] initWithContentsOfFile:kAppPrefPath];
         if (!appPrefs) {
             [@{} writeToFile:kAppPrefPath atomically:YES];
         }
@@ -442,6 +436,7 @@ static void QSUpdatePrefs(CFNotificationCenterRef center, void *observer, CFStri
         [_enabledAppIDs release];
         _enabledAppIDs = nil;
         _enabledAppIDs = [NSMutableArray new];
+        
         for (NSString *key in [appPrefs allKeys]) {
             if ([key hasPrefix:@"QSApp-"]) {
                 if (([appPrefs[key] boolValue] == YES)) {
@@ -480,7 +475,6 @@ static void QSUpdatePrefs(CFNotificationCenterRef center, void *observer, CFStri
                                         NULL,
                                         CFNotificationSuspensionBehaviorHold);
         
-//        [[LAActivator sharedInstance] registerListener:[QSActivatorListener sharedInstance] forName:QSOptionsWindowListenerName];
         [[LAActivator sharedInstance] registerListener:[QSActivatorListener sharedInstance] forName:QSImageCaptureListenerName];
         [[LAActivator sharedInstance] registerListener:[QSActivatorListener sharedInstance] forName:QSVideoCaptureListenerName];
     }

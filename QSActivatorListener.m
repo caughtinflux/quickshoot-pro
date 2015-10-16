@@ -11,7 +11,6 @@
 
 #import "QSActivatorListener.h"
 #import "QSCameraController.h"
-#import "QSCameraOptionsWindow.h"
 #import "QSConstants.h"
 #import "QSAntiPiracy.h"
 
@@ -114,19 +113,6 @@
     }
     // options window
     else if ([[[LAActivator sharedInstance] assignedListenerNameForEvent:event] isEqualToString:QSOptionsWindowListenerName]) {
-        if (!_optionsWindow) {
-            _optionsWindow = [[QSCameraOptionsWindow alloc] initWithFrame:(CGRect){{0, 20}, {200, 102}} showFlash:YES showHDR:YES showCameraToggle:YES]; 
-            _optionsWindow.windowLevel = 2000;
-            _optionsWindow.delegate = self;
-            [self _preferencesChanged:nil]; // make sure the delay times 'n' shit are set.
-        }
-        if (_optionsWindow.hidden) {
-            [[NSClassFromString(@"SBBacklightController") sharedInstance] turnOnScreenFullyWithBacklightSource:1];
-            _optionsWindow.hidden = NO; 
-        }
-        else {
-            [_optionsWindow hideWindowAnimated];
-        }
     }
 
     [event setHandled:YES];
