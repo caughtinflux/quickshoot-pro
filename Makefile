@@ -2,7 +2,12 @@ TARGET = iphone:clang:latest:8.1
 ARCHS = armv7 armv7s arm64
 DEBUG = 1
 
+
 include theos/makefiles/common.mk
+
+ifeq ($(DEBUG), 0)
+	PACKAGE_VERSION=$(THEOS_PACKAGE_BASE_VERSION)
+endif
 
 TWEAK_NAME = QuickShootPro
 QuickShootPro_FILES = QSConstants.m Tweak.xm QSCameraController.m QSVideoInterface.m QSActivatorListener.m QSIconOverlayView.m PLCameraController7_1Compat.xm
